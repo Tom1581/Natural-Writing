@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
-const SITE_URL = 'https://naturalquill.ai';
+const SITE_URL = 'https://naturalquill.one';
 // Update this date whenever you ship a significant homepage change
 const LAST_UPDATED = '2025-04-25';
 
