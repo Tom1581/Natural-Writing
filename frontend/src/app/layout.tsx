@@ -8,6 +8,13 @@ const LAST_UPDATED = '2025-04-25';
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   applicationName: 'Natural Quill',
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
   title: {
     default: 'Natural Quill — Rewrite AI Text Into Natural, Human Writing',
     template: '%s | Natural Quill',
