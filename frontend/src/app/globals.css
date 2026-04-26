@@ -183,12 +183,19 @@ h1, h2, h3, h4, h5 { font-family: var(--font-display); }
 
 /* Components: Icon Containers */
 .icon-container-core {
-  width: 56px; height: 56px;
-  border-radius: 18px;
+  width: 64px; height: 64px;
+  border-radius: 20px;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(37, 99, 235, 0.1);
-  border: 1px solid rgba(37, 99, 235, 0.2);
-  color: var(--accent-blue);
+  background: radial-gradient(circle at 35% 30%, rgba(96, 165, 250, 0.34), rgba(37, 99, 235, 0.1) 45%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  color: #b7d2ff;
+  animation: brand-glow 4.4s ease-in-out infinite;
+}
+
+.icon-container-core svg {
+  filter:
+    drop-shadow(0 0 8px rgba(147, 197, 253, 0.7))
+    drop-shadow(0 0 18px rgba(59, 130, 246, 0.34));
 }
 
 /* Components: Input Fields */

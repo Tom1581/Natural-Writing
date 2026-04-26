@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import {
   Sparkles, RotateCcw, Copy, Check, BookOpen,
   History, AlertCircle, Loader2, TrendingDown,
-  Type, FolderOpen, MessageSquare, RefreshCw, LifeBuoy,
-  Server, FileText, ChevronDown, X, BarChart2, User,
+  Type, FolderOpen, RefreshCw, LifeBuoy,
+  Server, FileText, ChevronDown, X, BarChart2, User, Info,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
@@ -13,7 +13,6 @@ import StyleCloner, { StyleProfile } from '@/components/StyleCloner';
 import ContactSupport from '@/components/ContactSupport';
 import ManuscriptLibrary, { ManuscriptHistory } from '@/components/ManuscriptLibrary';
 import TextInputPanel from '@/components/TextInputPanel';
-import SidecarChat from '@/components/SidecarChat';
 import FlightDeck from '@/components/FlightDeck';
 import LoginModal from '@/components/LoginModal';
 import ProfileDrawer from '@/components/ProfileDrawer';
@@ -126,7 +125,7 @@ export default function Home() {
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isClonerOpen, setIsClonerOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
@@ -404,13 +403,56 @@ export default function Home() {
         onSearch={() => {}}
         isSearching={false}
       />
-      <SidecarChat
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-        manuscriptContent={inputText}
-        onApplyChange={setInputText}
-      />
       <FlightDeck isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} />
+
+      {/* ── About Us Modal ── */}
+      <AnimatePresence>
+        {isAboutOpen && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }} onClick={() => setIsAboutOpen(false)}>
+            <motion.div
+              initial={{ opacity: 0, y: 24, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.97 }}
+              transition={{ duration: 0.22 }}
+              onClick={e => e.stopPropagation()}
+              style={{ background: '#0d1117', border: '1px solid rgba(37,99,235,0.25)', borderRadius: '1.25rem', padding: '2.5rem', maxWidth: '580px', width: '100%', maxHeight: '85vh', overflowY: 'auto', position: 'relative', boxShadow: '0 0 60px rgba(37,99,235,0.15)' }}
+            >
+              <button onClick={() => setIsAboutOpen(false)} style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={18} /></button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.75rem' }}>
+                <BrandMark size={36} />
+                <div>
+                  <h2 style={{ fontSize: '1.3rem', fontWeight: 900, fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', color: 'var(--text-pure)', margin: 0 }}>Natural Quill</h2>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>AI Writing Humanizer</p>
+                </div>
+              </div>
+
+              <p style={{ fontSize: '1rem', lineHeight: 1.75, color: 'var(--text-pure)', marginBottom: '1.5rem' }}>
+                Natural Quill rewrites AI-generated text into writing that genuinely sounds human. We built this tool for students, professionals, and researchers who need their work to read with real voice — not the flat, repetitive patterns that AI detectors flag instantly.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem', marginBottom: '1.75rem' }}>
+                {[
+                  { title: 'Writing Quality', body: 'Every rewrite goes through multi-pass processing — adjusting sentence rhythm, burstiness, word choice, and flow so the output reads like a person actually sat down and wrote it.' },
+                  { title: 'Deadline-Ready', body: 'Fast turnaround with no upload limits on paid plans. Paste, adjust, convert — your paper is ready in seconds, not hours.' },
+                  { title: 'Academic Integrity', body: 'Natural Quill improves the naturalness and clarity of your writing. Your ideas stay yours — we only change how they sound, never what they say.' },
+                  { title: 'Passes AI Detection', body: 'Engineered specifically to reduce detection signals measured by Turnitin, Scribbr, GPTZero, and similar tools — targeting burstiness, perplexity, and parallel structure patterns that detectors rely on.' },
+                  { title: 'Lowest Price, No Subscriptions Traps', body: 'One-time word packs from $19.99. No auto-renew surprises. Pay once, use when you need it. Unlimited plan available for heavy users at $39.99/month.' },
+                ].map(({ title, body }) => (
+                  <div key={title} style={{ padding: '1rem 1.25rem', background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.12)', borderRadius: '0.75rem' }}>
+                    <p style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--accent-blue)', margin: '0 0 0.35rem' }}>{title}</p>
+                    <p style={{ fontSize: '0.875rem', lineHeight: 1.65, color: '#c8d0e0', margin: 0 }}>{body}</p>
+                  </div>
+                ))}
+              </div>
+
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
+                Questions? Reach us at <span style={{ color: 'var(--accent-blue)' }}>stockitupcs@gmail.com</span>
+              </p>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       <ProfileDrawer
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
@@ -430,7 +472,7 @@ export default function Home() {
         {/* Brand */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div className="icon-container-core">
-            <BrandMark size={36} />
+            <BrandMark size={42} />
           </div>
           <div>
             <h1 style={{ fontSize: '1.25rem', fontWeight: 900, fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', lineHeight: 1 }}>
@@ -447,7 +489,7 @@ export default function Home() {
         <nav style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
           <HeaderAction icon={<History size={14} />} label="History" onClick={() => setIsLibraryOpen(true)} />
           <HeaderAction icon={<LifeBuoy size={14} />} label="Support" onClick={() => setIsContactOpen(true)} />
-          <HeaderAction icon={<MessageSquare size={14} />} label="AI Chat" onClick={() => setIsChatOpen(true)} disabled={!inputText.trim()} hint="Paste text first" />
+          <HeaderAction icon={<Info size={14} />} label="About Us" onClick={() => setIsAboutOpen(true)} />
           <HeaderAction icon={<Server size={14} />} label="Stats" onClick={() => setIsStatsOpen(true)} />
         </nav>
 
@@ -1087,8 +1129,8 @@ function ProfileButton({ user, onClick }: { user: ActiveUser | null; onClick: ()
 function BackendStatusDot({ status }: { status: 'checking' | 'online' | 'offline' }) {
   const config = {
     checking: { color: '#f59e0b', label: 'Connecting' },
-    online: { color: '#10b981', label: 'API online' },
-    offline: { color: '#ef4444', label: 'API offline' },
+    online: { color: '#10b981', label: 'AI online' },
+    offline: { color: '#ef4444', label: 'AI offline' },
   }[status];
   return (
     <div title={config.label} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
