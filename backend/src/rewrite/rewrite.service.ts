@@ -245,7 +245,7 @@ const SECTION_GUIDES: Record<SectionType, string> = {
 @Injectable()
 export class RewriteService {
   private readonly logger = new Logger(RewriteService.name);
-  private openai: OpenAI;
+  private openai: OpenAI | null;
 
   constructor(
     private readonly configService: ConfigService,
@@ -272,12 +272,13 @@ export class RewriteService {
   ) {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
     if (!apiKey || apiKey === 'your_openai_api_key_here') {
-      this.logger.error(
-        '⛔  OPENAI_API_KEY is not set in backend/.env. ' +
-        'Get a key at https://platform.openai.com/api-keys and add it to backend/.env as OPENAI_API_KEY=sk-...',
+      this.logger.warn(
+        'OPENAI_API_KEY is not set. OpenAI-specific rewrite modes will be unavailable until it is configured.',
       );
+      this.openai = null;
+    } else {
+      this.openai = new OpenAI({ apiKey });
     }
-    this.openai = new OpenAI({ apiKey });
     this.loadReadability();
   }
 
@@ -2227,6 +2228,9 @@ OUTPUT: Rewritten text only. No preamble, no "Here is the rewritten text:", no c
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
     if (!apiKey || apiKey === 'your_openai_api_key_here') {
       throw new Error('OpenAI API key is not configured. Add OPENAI_API_KEY=sk-... to backend/.env and restart the server.');
+    }
+    if (!this.openai) {
+      this.openai = new OpenAI({ apiKey });
     }
     let lastError: any;
     for (let i = 0; i < retries; i++) {
