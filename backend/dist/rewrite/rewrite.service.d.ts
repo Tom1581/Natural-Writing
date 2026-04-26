@@ -9,6 +9,8 @@ import { ProjectEntity } from './entities/project.entity';
 import { UserEntity } from './entities/user.entity';
 import { CommentEntity } from './entities/comment.entity';
 import { UsageLogEntity } from './entities/usage-log.entity';
+import { FreeUsageEntity } from './entities/free-usage.entity';
+import { BillingAccountEntity } from './entities/billing-account.entity';
 export interface AnalysisMetrics {
     sentenceLengthMean: number;
     sentenceLengthStd: number;
@@ -101,9 +103,11 @@ export declare class RewriteService {
     private readonly userRepo;
     private readonly commentRepo;
     private readonly usageLogRepo;
+    private readonly freeUsageRepo;
+    private readonly billingAccountRepo;
     private readonly logger;
     private openai;
-    constructor(configService: ConfigService, profileRepo: Repository<StyleProfileEntity>, manuscriptRepo: Repository<ManuscriptEntity>, cacheRepo: Repository<CacheEntity>, versionRepo: Repository<VersionEntity>, projectRepo: Repository<ProjectEntity>, userRepo: Repository<UserEntity>, commentRepo: Repository<CommentEntity>, usageLogRepo: Repository<UsageLogEntity>);
+    constructor(configService: ConfigService, profileRepo: Repository<StyleProfileEntity>, manuscriptRepo: Repository<ManuscriptEntity>, cacheRepo: Repository<CacheEntity>, versionRepo: Repository<VersionEntity>, projectRepo: Repository<ProjectEntity>, userRepo: Repository<UserEntity>, commentRepo: Repository<CommentEntity>, usageLogRepo: Repository<UsageLogEntity>, freeUsageRepo: Repository<FreeUsageEntity>, billingAccountRepo: Repository<BillingAccountEntity>);
     private loadReadability;
     private extractProtectedSpans;
     private splitSentences;
@@ -123,7 +127,22 @@ export declare class RewriteService {
     private scoreCandidateLocally;
     analyze(text: string): Promise<AnalysisMetrics>;
     private buildHumanizationInstructions;
-    processText(text: string, options: RewriteOptions): Promise<{
+    private readonly FREE_WORD_LIMIT;
+    private static readonly ADMIN_EMAILS;
+    private resolvePaidTier;
+    private checkPaidQuota;
+    getAccessStatus(email: string): Promise<{
+        tier: string | null;
+        wordsRemaining: number;
+        totalWordsPurchased: number;
+        freeWordsUsed: number;
+        freeWordsLimit: number;
+        unlimitedActive: boolean;
+        subscriptionStatus: string | null;
+        canManageBilling: boolean;
+    }>;
+    private checkFreeQuota;
+    processText(text: string, options: RewriteOptions, userEmail?: string | null, subscriptionTier?: string | null, ipAddress?: string): Promise<{
         id: string;
         bestVersion: string;
         alternatives: string[];
@@ -143,6 +162,10 @@ export declare class RewriteService {
     analyzeEngagement(text: string): Promise<any>;
     synthesizeMasterpiece(text: string, options: any): Promise<any>;
     getPlatformStats(): Promise<any>;
+    getFreeUsage(email: string): Promise<{
+        wordsUsed: number;
+        limit: number;
+    }>;
     getProfiles(): Promise<StyleProfileEntity[]>;
     saveProfile(profile: StyleProfile): Promise<StyleProfileEntity>;
     updateRating(id: string, rating: number): Promise<void>;
@@ -163,5 +186,11 @@ export declare class RewriteService {
     private getFromCache;
     private setCache;
     private humanizeFallback;
+    generateDraft(paperType: string, wordCount: string, prompt: string): Promise<{
+        text: string;
+    }>;
+    private buildHumanizeSystemPrompt;
+    private callGroq;
+    private callGemini;
     private callOpenAI;
 }

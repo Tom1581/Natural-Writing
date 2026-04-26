@@ -1,3 +1,4 @@
+import type { Request } from 'express';
 import { RewriteService, RewriteOptions } from './rewrite.service';
 import { StyleMemoryService } from './style-memory.service';
 import { SemanticService } from './semantic.service';
@@ -8,6 +9,7 @@ import { GenesisService } from './genesis.service';
 import { BenchmarkService } from './benchmark.service';
 import { ComplianceService } from './compliance.service';
 import { FinalityService } from './finality.service';
+import { StripeService } from '../stripe/stripe.service';
 export declare class RewriteController {
     private readonly rewriteService;
     private readonly styleMemoryService;
@@ -19,22 +21,43 @@ export declare class RewriteController {
     private readonly benchmarkService;
     private readonly complianceService;
     private readonly finalityService;
-    constructor(rewriteService: RewriteService, styleMemoryService: StyleMemoryService, semanticService: SemanticService, rhythmService: RhythmService, evolutionService: EvolutionService, oracleService: OracleService, genesisService: GenesisService, benchmarkService: BenchmarkService, complianceService: ComplianceService, finalityService: FinalityService);
+    private readonly stripeService;
+    constructor(rewriteService: RewriteService, styleMemoryService: StyleMemoryService, semanticService: SemanticService, rhythmService: RhythmService, evolutionService: EvolutionService, oracleService: OracleService, genesisService: GenesisService, benchmarkService: BenchmarkService, complianceService: ComplianceService, finalityService: FinalityService, stripeService: StripeService);
     performFinalityAudit(): Promise<any>;
     performComplianceCheck(text: string): Promise<any>;
     getIndustryBenchmarks(): Promise<any>;
     getHistory(): Promise<import("./entities/manuscript.entity").ManuscriptEntity[]>;
     getPlatformStats(): Promise<any>;
+    getFreeUsage(email: string): Promise<{
+        wordsUsed: number;
+        limit: number;
+    }> | {
+        wordsUsed: number;
+        limit: number;
+    };
+    getAccessStatus(email: string): Promise<{
+        tier: string | null;
+        wordsRemaining: number;
+        totalWordsPurchased: number;
+        freeWordsUsed: number;
+        freeWordsLimit: number;
+        unlimitedActive: boolean;
+        subscriptionStatus: string | null;
+        canManageBilling: boolean;
+    }>;
     getProjects(): Promise<import("./entities/project.entity").ProjectEntity[]>;
     getOracleProjection(orgId: string): Promise<any>;
     getStyleDrift(orgId: string): Promise<any[]>;
     getRhythmAnalysis(text: string): Promise<any>;
     semanticSearch(query: string, orgId: string): Promise<any[]>;
     getSemanticMap(orgId: string): Promise<any>;
+    private static readonly ADMIN_EMAILS;
     processText(body: {
         text: string;
         options: RewriteOptions;
-    }): Promise<{
+        userEmail?: string;
+        subscriptionTier?: string;
+    }, req: Request): Promise<{
         id: string;
         bestVersion: string;
         alternatives: string[];
@@ -59,6 +82,13 @@ export declare class RewriteController {
         query: string;
         content: string;
     }): Promise<string>;
+    generateDraft(body: {
+        paperType: string;
+        wordCount: string;
+        prompt: string;
+    }): Promise<{
+        text: string;
+    }>;
     profileStyle(body: {
         text: string;
         name?: string;

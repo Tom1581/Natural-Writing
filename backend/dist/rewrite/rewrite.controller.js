@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var RewriteController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RewriteController = void 0;
 const common_1 = require("@nestjs/common");
@@ -24,7 +25,9 @@ const genesis_service_1 = require("./genesis.service");
 const benchmark_service_1 = require("./benchmark.service");
 const compliance_service_1 = require("./compliance.service");
 const finality_service_1 = require("./finality.service");
+const stripe_service_1 = require("../stripe/stripe.service");
 let RewriteController = class RewriteController {
+    static { RewriteController_1 = this; }
     rewriteService;
     styleMemoryService;
     semanticService;
@@ -35,7 +38,8 @@ let RewriteController = class RewriteController {
     benchmarkService;
     complianceService;
     finalityService;
-    constructor(rewriteService, styleMemoryService, semanticService, rhythmService, evolutionService, oracleService, genesisService, benchmarkService, complianceService, finalityService) {
+    stripeService;
+    constructor(rewriteService, styleMemoryService, semanticService, rhythmService, evolutionService, oracleService, genesisService, benchmarkService, complianceService, finalityService, stripeService) {
         this.rewriteService = rewriteService;
         this.styleMemoryService = styleMemoryService;
         this.semanticService = semanticService;
@@ -46,6 +50,7 @@ let RewriteController = class RewriteController {
         this.benchmarkService = benchmarkService;
         this.complianceService = complianceService;
         this.finalityService = finalityService;
+        this.stripeService = stripeService;
     }
     performFinalityAudit() {
         return this.finalityService.performFinalityAudit();
@@ -61,6 +66,27 @@ let RewriteController = class RewriteController {
     }
     getPlatformStats() {
         return this.rewriteService.getPlatformStats();
+    }
+    getFreeUsage(email) {
+        if (!email)
+            return { wordsUsed: 0, limit: 400 };
+        return this.rewriteService.getFreeUsage(email);
+    }
+    async getAccessStatus(email) {
+        if (!email) {
+            return {
+                tier: null,
+                wordsRemaining: 0,
+                totalWordsPurchased: 0,
+                freeWordsUsed: 0,
+                freeWordsLimit: 400,
+                unlimitedActive: false,
+                subscriptionStatus: null,
+                canManageBilling: false,
+            };
+        }
+        await this.stripeService.getCustomerState(email);
+        return this.rewriteService.getAccessStatus(email);
     }
     getProjects() {
         return this.rewriteService.getProjects();
@@ -80,8 +106,19 @@ let RewriteController = class RewriteController {
     getSemanticMap(orgId) {
         return this.semanticService.getSemanticMap(orgId);
     }
-    processText(body) {
-        return this.rewriteService.processText(body.text, body.options);
+    static ADMIN_EMAILS = ['a15817348@gmail.com'];
+    async processText(body, req) {
+        const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() ||
+            req.socket?.remoteAddress ||
+            'unknown';
+        const email = body.userEmail?.trim().toLowerCase() ?? null;
+        const isAdmin = !!email && RewriteController_1.ADMIN_EMAILS.includes(email);
+        console.log(`[process] email="${email}" isAdmin=${isAdmin} clientSubscriptionTier="${body.subscriptionTier}"`);
+        const tier = isAdmin ? 'admin' : null;
+        if (email && !isAdmin) {
+            await this.stripeService.getCustomerState(email);
+        }
+        return this.rewriteService.processText(body.text, body.options, email, tier, ip);
     }
     scaffold(body) {
         return this.genesisService.scaffoldOrganization(body.orgId, body.orgName);
@@ -95,6 +132,9 @@ let RewriteController = class RewriteController {
     async chat(body) {
         const reply = await this.rewriteService.chatWithManuscript(body.query, body.content);
         return reply;
+    }
+    generateDraft(body) {
+        return this.rewriteService.generateDraft(body.paperType, body.wordCount, body.prompt);
     }
     profileStyle(body) {
         return this.styleMemoryService.profileStyle(body.text, body.name);
@@ -148,6 +188,20 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], RewriteController.prototype, "getPlatformStats", null);
 __decorate([
+    (0, common_1.Get)('free-usage'),
+    __param(0, (0, common_1.Query)('email')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], RewriteController.prototype, "getFreeUsage", null);
+__decorate([
+    (0, common_1.Get)('access-status'),
+    __param(0, (0, common_1.Query)('email')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], RewriteController.prototype, "getAccessStatus", null);
+__decorate([
     (0, common_1.Get)('projects'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -192,9 +246,10 @@ __decorate([
 __decorate([
     (0, common_1.Post)('process'),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
 ], RewriteController.prototype, "processText", null);
 __decorate([
     (0, common_1.Post)('genesis-scaffold'),
@@ -224,6 +279,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], RewriteController.prototype, "chat", null);
+__decorate([
+    (0, common_1.Post)('generate-draft'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], RewriteController.prototype, "generateDraft", null);
 __decorate([
     (0, common_1.Post)('profile-style'),
     __param(0, (0, common_1.Body)()),
@@ -269,7 +331,7 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], RewriteController.prototype, "synthesize", null);
-exports.RewriteController = RewriteController = __decorate([
+exports.RewriteController = RewriteController = RewriteController_1 = __decorate([
     (0, common_1.Controller)('rewrite'),
     __metadata("design:paramtypes", [rewrite_service_1.RewriteService,
         style_memory_service_1.StyleMemoryService,
@@ -280,6 +342,7 @@ exports.RewriteController = RewriteController = __decorate([
         genesis_service_1.GenesisService,
         benchmark_service_1.BenchmarkService,
         compliance_service_1.ComplianceService,
-        finality_service_1.FinalityService])
+        finality_service_1.FinalityService,
+        stripe_service_1.StripeService])
 ], RewriteController);
 //# sourceMappingURL=rewrite.controller.js.map

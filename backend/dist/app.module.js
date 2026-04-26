@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const typeorm_1 = require("@nestjs/typeorm");
 const rewrite_module_1 = require("./rewrite/rewrite.module");
+const stripe_module_1 = require("./stripe/stripe.module");
 const style_profile_entity_1 = require("./rewrite/entities/style-profile.entity");
 const manuscript_entity_1 = require("./rewrite/entities/manuscript.entity");
 const cache_entity_1 = require("./rewrite/entities/cache.entity");
@@ -19,6 +20,8 @@ const project_entity_1 = require("./rewrite/entities/project.entity");
 const user_entity_1 = require("./rewrite/entities/user.entity");
 const comment_entity_1 = require("./rewrite/entities/comment.entity");
 const usage_log_entity_1 = require("./rewrite/entities/usage-log.entity");
+const free_usage_entity_1 = require("./rewrite/entities/free-usage.entity");
+const billing_account_entity_1 = require("./rewrite/entities/billing-account.entity");
 const config_2 = require("@nestjs/config");
 let AppModule = class AppModule {
 };
@@ -34,13 +37,14 @@ exports.AppModule = AppModule = __decorate([
                 useFactory: (_configService) => ({
                     type: 'sqlite',
                     database: 'database.sqlite',
-                    entities: [style_profile_entity_1.StyleProfileEntity, manuscript_entity_1.ManuscriptEntity, cache_entity_1.CacheEntity, version_entity_1.VersionEntity, project_entity_1.ProjectEntity, user_entity_1.UserEntity, comment_entity_1.CommentEntity, usage_log_entity_1.UsageLogEntity],
+                    entities: [style_profile_entity_1.StyleProfileEntity, manuscript_entity_1.ManuscriptEntity, cache_entity_1.CacheEntity, version_entity_1.VersionEntity, project_entity_1.ProjectEntity, user_entity_1.UserEntity, comment_entity_1.CommentEntity, usage_log_entity_1.UsageLogEntity, free_usage_entity_1.FreeUsageEntity, billing_account_entity_1.BillingAccountEntity],
                     synchronize: true,
                     logging: ['error', 'warn'],
                 }),
                 inject: [config_2.ConfigService],
             }),
             rewrite_module_1.RewriteModule,
+            stripe_module_1.StripeModule,
         ],
     })
 ], AppModule);

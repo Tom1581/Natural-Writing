@@ -29,6 +29,9 @@ const usage_log_entity_1 = require("./entities/usage-log.entity");
 const project_entity_1 = require("./entities/project.entity");
 const user_entity_1 = require("./entities/user.entity");
 const comment_entity_1 = require("./entities/comment.entity");
+const free_usage_entity_1 = require("./entities/free-usage.entity");
+const billing_account_entity_1 = require("./entities/billing-account.entity");
+const stripe_module_1 = require("../stripe/stripe.module");
 let RewriteModule = class RewriteModule {
 };
 exports.RewriteModule = RewriteModule;
@@ -36,7 +39,8 @@ exports.RewriteModule = RewriteModule = __decorate([
     (0, common_1.Module)({
         imports: [
             config_1.ConfigModule,
-            typeorm_1.TypeOrmModule.forFeature([style_profile_entity_1.StyleProfileEntity, manuscript_entity_1.ManuscriptEntity, cache_entity_1.CacheEntity, version_entity_1.VersionEntity, usage_log_entity_1.UsageLogEntity, project_entity_1.ProjectEntity, user_entity_1.UserEntity, comment_entity_1.CommentEntity]),
+            stripe_module_1.StripeModule,
+            typeorm_1.TypeOrmModule.forFeature([style_profile_entity_1.StyleProfileEntity, manuscript_entity_1.ManuscriptEntity, cache_entity_1.CacheEntity, version_entity_1.VersionEntity, usage_log_entity_1.UsageLogEntity, project_entity_1.ProjectEntity, user_entity_1.UserEntity, comment_entity_1.CommentEntity, free_usage_entity_1.FreeUsageEntity, billing_account_entity_1.BillingAccountEntity]),
         ],
         controllers: [rewrite_controller_1.RewriteController],
         providers: [rewrite_service_1.RewriteService, style_memory_service_1.StyleMemoryService, semantic_service_1.SemanticService, rhythm_service_1.RhythmService, evolution_service_1.EvolutionService, oracle_service_1.OracleService, genesis_service_1.GenesisService, benchmark_service_1.BenchmarkService, compliance_service_1.ComplianceService, finality_service_1.FinalityService],

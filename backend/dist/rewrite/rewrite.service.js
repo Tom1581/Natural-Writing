@@ -64,6 +64,8 @@ const project_entity_1 = require("./entities/project.entity");
 const user_entity_1 = require("./entities/user.entity");
 const comment_entity_1 = require("./entities/comment.entity");
 const usage_log_entity_1 = require("./entities/usage-log.entity");
+const free_usage_entity_1 = require("./entities/free-usage.entity");
+const billing_account_entity_1 = require("./entities/billing-account.entity");
 let rs;
 var RewriteTone;
 (function (RewriteTone) {
@@ -215,7 +217,8 @@ const SECTION_GUIDES = {
     [SectionType.CTA]: 'Elevate urgency and clarity of action without sounding aggressive.',
     [SectionType.GENERAL]: 'Balance naturalness, clarity, and engagement.',
 };
-let RewriteService = RewriteService_1 = class RewriteService {
+let RewriteService = class RewriteService {
+    static { RewriteService_1 = this; }
     configService;
     profileRepo;
     manuscriptRepo;
@@ -225,9 +228,11 @@ let RewriteService = RewriteService_1 = class RewriteService {
     userRepo;
     commentRepo;
     usageLogRepo;
+    freeUsageRepo;
+    billingAccountRepo;
     logger = new common_1.Logger(RewriteService_1.name);
     openai;
-    constructor(configService, profileRepo, manuscriptRepo, cacheRepo, versionRepo, projectRepo, userRepo, commentRepo, usageLogRepo) {
+    constructor(configService, profileRepo, manuscriptRepo, cacheRepo, versionRepo, projectRepo, userRepo, commentRepo, usageLogRepo, freeUsageRepo, billingAccountRepo) {
         this.configService = configService;
         this.profileRepo = profileRepo;
         this.manuscriptRepo = manuscriptRepo;
@@ -237,6 +242,8 @@ let RewriteService = RewriteService_1 = class RewriteService {
         this.userRepo = userRepo;
         this.commentRepo = commentRepo;
         this.usageLogRepo = usageLogRepo;
+        this.freeUsageRepo = freeUsageRepo;
+        this.billingAccountRepo = billingAccountRepo;
         const apiKey = this.configService.get('OPENAI_API_KEY');
         if (!apiKey || apiKey === 'your_openai_api_key_here') {
             this.logger.error('⛔  OPENAI_API_KEY is not set in backend/.env. ' +
@@ -582,12 +589,99 @@ let RewriteService = RewriteService_1 = class RewriteService {
 HUMANIZATION LEVEL: ${level} (${percentage}%). The input reads like AI-generated text; the output must read like a specific human wrote it.
 ${rules.map(r => `  • ${r}`).join('\n')}${tellsHint}`;
     }
-    async processText(text, options) {
+    FREE_WORD_LIMIT = 400;
+    static ADMIN_EMAILS = ['a15817348@gmail.com'];
+    resolvePaidTier(account) {
+        if (!account)
+            return null;
+        if (account.unlimitedActive)
+            return 'unlimited';
+        if (account.wordBalance > 0)
+            return account.packTier || 'starter';
+        return null;
+    }
+    async checkPaidQuota(account, incomingWords) {
+        if (account.unlimitedActive)
+            return;
+        if (account.wordBalance < incomingWords) {
+            const { HttpException } = await import('@nestjs/common');
+            throw new HttpException({
+                statusCode: 402,
+                error: 'Paid balance exceeded',
+                message: `This rewrite needs ${incomingWords} words, but your paid balance has ${account.wordBalance} words remaining.`,
+                wordsRemaining: account.wordBalance,
+                requiredWords: incomingWords,
+                tier: account.packTier,
+            }, 402);
+        }
+    }
+    async getAccessStatus(email) {
+        const normalizedEmail = email.trim().toLowerCase();
+        const [freeRow, billing] = await Promise.all([
+            this.freeUsageRepo.findOne({ where: { email: normalizedEmail } }),
+            this.billingAccountRepo.findOne({ where: { email: normalizedEmail } }),
+        ]);
+        return {
+            tier: this.resolvePaidTier(billing),
+            wordsRemaining: billing?.wordBalance ?? 0,
+            totalWordsPurchased: billing?.lifetimeWordsPurchased ?? 0,
+            freeWordsUsed: freeRow?.wordsUsed ?? 0,
+            freeWordsLimit: this.FREE_WORD_LIMIT,
+            unlimitedActive: billing?.unlimitedActive ?? false,
+            subscriptionStatus: billing?.subscriptionStatus ?? null,
+            canManageBilling: !!billing?.unlimitedActive,
+        };
+    }
+    async checkFreeQuota(email, ipAddress, incomingWords, subscriptionTier) {
+        if (email && RewriteService_1.ADMIN_EMAILS.includes(email))
+            return null;
+        if (subscriptionTier)
+            return null;
+        const where = email ? { email } : { ipAddress };
+        let row = await this.freeUsageRepo.findOne({ where: where });
+        if (!row) {
+            row = this.freeUsageRepo.create({
+                email: email ?? null,
+                ipAddress: email ? null : ipAddress,
+                wordsUsed: 0,
+            });
+        }
+        if (row.wordsUsed + incomingWords > this.FREE_WORD_LIMIT) {
+            const { HttpException } = await import('@nestjs/common');
+            throw new HttpException({
+                statusCode: 402,
+                error: 'Free quota exceeded',
+                message: `Free trial allows ${this.FREE_WORD_LIMIT} words total. You have used ${row.wordsUsed}. Subscribe to continue.`,
+                wordsUsed: row.wordsUsed,
+                limit: this.FREE_WORD_LIMIT,
+            }, 402);
+        }
+        return row;
+    }
+    async processText(text, options, userEmail = null, subscriptionTier = null, ipAddress = 'unknown') {
         const startTime = Date.now();
         const humanization = Math.max(0, Math.min(1, options.humanization ?? 0.5));
+        const BACKEND_ADMIN_EMAILS = ['a15817348@gmail.com'];
+        const isAdmin = subscriptionTier === 'admin' ||
+            (!!userEmail && BACKEND_ADMIN_EMAILS.includes(userEmail.trim().toLowerCase()));
+        const plain = text.replace(/<[^>]+>/g, '');
+        const incomingWords = plain.trim().split(/\s+/).filter(Boolean).length;
+        const billingAccount = userEmail
+            ? await this.billingAccountRepo.findOne({ where: { email: userEmail } })
+            : null;
+        const paidTier = this.resolvePaidTier(billingAccount);
+        let usageRow = null;
+        if (!isAdmin) {
+            if (paidTier && billingAccount) {
+                await this.checkPaidQuota(billingAccount, incomingWords);
+            }
+            else if (!subscriptionTier) {
+                usageRow = await this.checkFreeQuota(userEmail, ipAddress, incomingWords, subscriptionTier);
+            }
+        }
         const metrics = await this.analyze(text);
-        const { detectedLanguage, protectedSpans } = metrics;
-        const cacheHash = this.createHash({ action: 'rewrite_v3', text, options, humanization });
+        const { detectedLanguage } = metrics;
+        const cacheHash = this.createHash({ action: 'rewrite_v5_ai', text, options, humanization });
         const cached = await this.getFromCache(cacheHash);
         let bestVersion;
         let alternatives;
@@ -598,59 +692,58 @@ ${rules.map(r => `  • ${r}`).join('\n')}${tellsHint}`;
             manuscriptId = cached.id;
         }
         else {
-            const sectionGuide = SECTION_GUIDES[options.sectionType || SectionType.GENERAL];
-            const spanConstraint = protectedSpans.length > 0
-                ? `\nPROTECTED SPANS — copy these verbatim into every candidate:\n${protectedSpans.map(s => `  • ${s}`).join('\n')}`
-                : '';
-            const detectedAITells = metrics.aiTells.map(t => t.phrase);
-            const humanizationBlock = this.buildHumanizationInstructions(humanization, detectedAITells);
-            const systemPrompt = `You are a professional human editor who makes AI-generated text sound genuinely human.
-INPUT LANGUAGE: ${detectedLanguage}
-TARGET TONE: ${options.tone}
-EDIT STRENGTH: ${options.strength} (light=minimal, medium=reword, strong=restructure)
-SECTION FOCUS: ${sectionGuide}
-INTENT: ${(options.intent ?? 0) > 0.5 ? 'persuasive' : 'informative'}
-INPUT AI-DETECTION RISK: ${metrics.aiDetectionRisk}/100 — your rewrite should materially lower this.
-${options.styleProfile ? `MATCH STYLE: ${JSON.stringify(options.styleProfile)}` : ''}${spanConstraint}${humanizationBlock}
-
-RULES:
-- Preserve all HTML tags in their exact semantic positions.
-- Never alter proper names, numbers, dates, URLs, or citations.
-- Return JSON: {"candidates": [{"text": "..."}, {"text": "..."}, {"text": "..."}]}
-- Provide 3–5 distinct candidates; vary approach (sentence rhythm, opener, voice).`;
-            let candidates = [];
-            const aiKeyMissing = !this.configService.get('OPENAI_API_KEY') ||
-                this.configService.get('OPENAI_API_KEY') === 'your_openai_api_key_here';
-            if (!aiKeyMissing) {
+            let aiResult = null;
+            try {
+                aiResult = await this.callGroq(text, options.tone);
+                console.log('[humanize] Groq success');
+            }
+            catch (groqErr) {
+                console.warn('[humanize] Groq failed, trying Gemini:', groqErr instanceof Error ? groqErr.message : groqErr);
                 try {
-                    const raw = await this.callOpenAI([{ role: 'system', content: systemPrompt }, { role: 'user', content: text }], true);
-                    const parsed = JSON.parse(raw);
-                    candidates = (parsed.candidates || []).map((c) => typeof c === 'string' ? c : c.text);
+                    aiResult = await this.callGemini(text, options.tone);
+                    console.log('[humanize] Gemini success');
                 }
-                catch (err) {
-                    this.logger.warn(`OpenAI unavailable (${err?.message}), falling back to rule-based humanizer.`);
+                catch (geminiErr) {
+                    console.warn('[humanize] Gemini failed, using NLP fallback:', geminiErr instanceof Error ? geminiErr.message : geminiErr);
                 }
+            }
+            if (aiResult) {
+                if (humanization >= 0.7) {
+                    try {
+                        aiResult = await this.callGroq(aiResult, options.tone);
+                        console.log('[humanize] Groq second pass success');
+                    }
+                    catch {
+                    }
+                }
+                const origParas = text.replace(/<[^>]+>/g, '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+                const aiParas = aiResult.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+                if (origParas.length > 1 && aiParas.length !== origParas.length) {
+                    const sentences = aiResult.split(/(?<=[.!?])\s+/);
+                    const perPara = Math.ceil(sentences.length / origParas.length);
+                    const restored = [];
+                    for (let pi = 0; pi < origParas.length; pi++) {
+                        const chunk = sentences.slice(pi * perPara, (pi + 1) * perPara).join(' ').trim();
+                        if (chunk)
+                            restored.push(chunk);
+                    }
+                    if (restored.length === origParas.length)
+                        aiResult = restored.join('\n\n');
+                }
+                bestVersion = this.humanizeFallback(aiResult, humanization, options.tone, options.strength, false, options.sectionType);
             }
             else {
-                this.logger.warn('No OpenAI key — using rule-based humanizer fallback.');
-            }
-            if (candidates.length === 0) {
-                const fallback = this.humanizeFallback(text, humanization, options.tone, options.strength);
-                candidates = [fallback];
-            }
-            const scored = candidates
-                .map(c => ({ text: c, score: this.scoreCandidateLocally(c, text, protectedSpans, humanization) }))
-                .filter(c => c.score > 0)
-                .sort((a, b) => b.score - a.score);
-            const ranked = scored.length > 0 ? scored : candidates.map(c => ({ text: c, score: 0 }));
-            bestVersion = ranked[0].text;
-            if (!aiKeyMissing && text.replace(/<[^>]+>/g, '').length > 1200) {
-                try {
-                    bestVersion = await this.globalSmooth(bestVersion);
+                const cycles = humanization >= 0.9 ? 5 :
+                    humanization >= 0.8 ? 4 :
+                        humanization >= 0.7 ? 3 :
+                            humanization >= 0.6 ? 2 : 1;
+                let result = this.humanizeFallback(text, humanization, options.tone, options.strength, false, options.sectionType);
+                for (let c = 1; c < cycles; c++) {
+                    result = this.humanizeFallback(result, humanization, options.tone, options.strength, true, options.sectionType);
                 }
-                catch { }
+                bestVersion = result;
             }
-            alternatives = ranked.slice(1).map(c => c.text);
+            alternatives = [];
             const manuscript = await this.manuscriptRepo.save({
                 sourceText: text,
                 optimizedText: bestVersion,
@@ -660,16 +753,24 @@ RULES:
                 targetGradeLevel: options.targetGradeLevel,
                 language: detectedLanguage,
                 sectionType: options.sectionType || SectionType.GENERAL,
-                title: text.replace(/<[^>]+>/g, '').slice(0, 60) + (text.length > 60 ? '…' : ''),
+                title: plain.slice(0, 60) + (plain.length > 60 ? '…' : ''),
             });
             manuscriptId = manuscript.id;
             await this.setCache(cacheHash, { id: manuscriptId, bestVersion, alternatives });
+        }
+        if (!isAdmin && billingAccount && paidTier !== 'unlimited') {
+            billingAccount.wordBalance = Math.max(0, billingAccount.wordBalance - incomingWords);
+            await this.billingAccountRepo.save(billingAccount);
+        }
+        else if (!isAdmin && usageRow) {
+            usageRow.wordsUsed += incomingWords;
+            await this.freeUsageRepo.save(usageRow);
         }
         const outputMetrics = await this.analyze(bestVersion);
         const humanizationDelta = metrics.aiDetectionRisk - outputMetrics.aiDetectionRisk;
         const latencyMs = Date.now() - startTime;
         await this.usageLogRepo.save({
-            modelUsed: 'gpt-4o',
+            modelUsed: 'nlp-rules',
             promptTokens: text.length / 4,
             completionTokens: bestVersion.length / 4,
             totalTokens: (text.length + bestVersion.length) / 4,
@@ -797,6 +898,10 @@ Preserve all HTML tags.`;
             avgLatencyMs: Math.round(parseFloat(latencyResult?.avg || '0')),
             throughput: (totalManuscripts / 7).toFixed(1),
         };
+    }
+    async getFreeUsage(email) {
+        const row = await this.freeUsageRepo.findOne({ where: { email } });
+        return { wordsUsed: row?.wordsUsed ?? 0, limit: this.FREE_WORD_LIMIT };
     }
     async getProfiles() {
         return this.profileRepo.find({ order: { createdAt: 'DESC' } });
@@ -952,23 +1057,35 @@ QUERY: ${query}`,
     async setCache(hash, value) {
         await this.cacheRepo.save({ hash, value: JSON.stringify(value) });
     }
-    humanizeFallback(text, humanization, tone, strength) {
+    humanizeFallback(text, humanization, tone, strength, vocabOnly = false, sectionType) {
+        const rawParagraphs = text.replace(/<[^>]+>/g, ' ').split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 0);
+        if (rawParagraphs.length > 1) {
+            return rawParagraphs
+                .map(para => this.humanizeFallback(para, humanization, tone, strength, vocabOnly, sectionType))
+                .join('\n\n');
+        }
         let result = text.replace(/<[^>]+>/g, ' ').trim();
         const isFormal = tone === 'formal' || tone === 'academic';
-        const aggressive = humanization > 0.5 || strength === 'strong';
+        const moderate = (humanization > 0.35 || strength === 'medium' || strength === 'strong') && strength !== 'light';
+        const aggressive = (humanization > 0.65 || strength === 'strong') && strength !== 'light';
         const REPLACEMENTS = [
             [/\bplays? (?:a |an )?(?:crucial|vital|key|important|significant|central) role\b/gi, 'matters a great deal'],
-            [/\bis (?:essential|critical|vital|crucial|necessary) (?:to|for)\b/gi, 'is needed for'],
-            [/\bare (?:essential|critical|vital|crucial|necessary) (?:to|for)\b/gi, 'are needed for'],
-            [/\bit is (?:important|essential|necessary|vital|crucial|critical) to\b/gi, 'you really need to'],
+            [/\b(?:furthermore|moreover|additionally),?\s*it is important to note(?: that)?\b/gi, 'Worth noting, '],
+            [/\b(?:furthermore|moreover|additionally),?\s*it is worth noting(?: that)?\b/gi, 'Worth noting, '],
+            [/\bit is important to note(?: that)?\b/gi, 'worth noting,'],
             [/\bit is worth noting(?: that)?\b/gi, 'worth noting—'],
-            [/\bit should be noted(?: that)?\b/gi, ''],
-            [/\bit is important to note(?: that)?\b/gi, ''],
+            [/\bit should be noted(?: that)?\b/gi, 'worth noting,'],
+            [/\bit is (?:important|essential|necessary|vital|crucial|critical) to\b/gi, 'it helps to'],
+            [/\bis (?:essential|critical|vital|crucial|necessary) (?:to|for)\b/gi, 'is needed to'],
+            [/\bare (?:essential|critical|vital|crucial|necessary) (?:to|for)\b/gi, 'are needed to'],
+            [/\bit has been (?:shown|demonstrated|proven)(?: that)?\b/gi, 'studies show'],
+            [/\bit has been (?:found|established|confirmed)(?: that)?\b/gi, 'research found'],
+            [/\bit has been (?:argued|suggested|proposed)(?: that)?\b/gi, 'some argue'],
             [/\bas previously mentioned\b/gi, ''],
             [/\bas mentioned (?:earlier|above)\b/gi, ''],
             [/\bresearch has shown(?: that)?\b/gi, 'research shows'],
             [/\bstudies have shown(?: that)?\b/gi, 'studies show'],
-            [/\bevidence suggests(?: that)?\b/gi, 'the evidence points to'],
+            [/\bevidence suggests(?: that)?\b/gi, 'evidence shows'],
             [/\bprovides? an opportunity\b/gi, 'opens a door'],
             [/\bstudents are able to\b/gi, 'students can'],
             [/\blearners are able to\b/gi, 'learners can'],
@@ -978,6 +1095,10 @@ QUERY: ${query}`,
             [/\bELD (?:instruction|support|teaching)\b/gi, 'English-language teaching'],
             [/\bsupport ELD\b/gi, 'help English learners'],
             [/\bELD\b/gi, 'English learning'],
+            [/\bis (?:strongly|significantly|positively|negatively|closely|highly) correlated with\b/gi, 'links closely to'],
+            [/\bare (?:strongly|significantly|positively|negatively|closely|highly) correlated with\b/gi, 'link closely to'],
+            [/\bis correlated with\b/gi, 'ties to'],
+            [/\bare correlated with\b/gi, 'tie to'],
             [/\ba key (?:component|factor|aspect|element)\b/gi, 'one important part'],
             [/\beffective strategies\b/gi, 'solid methods'],
             [/\bwide (?:range|variety) of\b/gi, 'many kinds of'],
@@ -1000,17 +1121,17 @@ QUERY: ${query}`,
             [/\bconsequently,?\s*/gi, 'Because of that, '],
             [/\bnevertheless,?\s*/gi, 'Even so, '],
             [/\bnonetheless,?\s*/gi, 'Still, '],
-            [/\btherefore,?\s*/gi, 'So '],
-            [/\bthus,?\s*/gi, 'So '],
-            [/\bhence,?\s*/gi, 'Which means '],
-            [/\bultimately,?\s*/gi, 'When you step back, '],
-            [/\bcrucially,?\s*/gi, 'Critically, '],
+            [/\btherefore,?\s*/gi, 'so '],
+            [/\bthus,?\s*/gi, 'so '],
+            [/\bhence,?\s*/gi, 'which means '],
+            [/\bultimately,\s*/gi, 'When you step back, '],
+            [/\bcrucially,\s*/gi, 'Critically, '],
             [/\bthe (?:importance|role|impact|significance) of\b/gi, 'why'],
             [/\bby (?:providing|ensuring|allowing|enabling)\b/gi, 'by giving'],
             [/\bthis (?:ensures|enables|allows|helps)\b/gi, 'this means'],
             [/\bas well as\b/gi, 'and also'],
             [/\bnot only\b/gi, 'also'],
-            [/\bin today's (?:world|society|classroom|context)?\b/gi, 'nowadays,'],
+            [/\bin today's (?:world|society|classroom|context)?\b/gi, 'nowadays, '],
             [/\bin this digital age\b/gi, 'these days'],
             [/\bthis approach\b/gi, 'this way of doing things'],
             [/\bthese strategies\b/gi, 'these methods'],
@@ -1068,6 +1189,7 @@ QUERY: ${query}`,
             [/\bintegrated\b/gi, 'combined'],
             [/\bintegrate(?:s)?\b/gi, 'combine'],
             [/\bintegrating\b/gi, 'combining'],
+            [/\bintegration of ([\w\s]+?) into\b/gi, 'use of $1 in'],
             [/\bintegration\b/gi, 'combination'],
             [/\bacquired\b/gi, 'picked up'],
             [/\bacquire(?:s)?\b/gi, 'pick up'],
@@ -1124,6 +1246,264 @@ QUERY: ${query}`,
             [/\bscaffolding\b/gi, 'step-by-step support'],
             [/\bscaffolded\b/gi, 'supported step by step'],
             [/\bscaffold(?:s)?\b/gi, 'support'],
+            [/\bindividuals\b/gi, 'people'],
+            [/\bencountered\b/gi, 'came across'],
+            [/\bencounters?\b/gi, 'comes across'],
+            [/\bencountering\b/gi, 'coming across'],
+            [/\bopportunities\b/gi, 'chances'],
+            [/\bopportunity\b/gi, 'chance'],
+            [/\bmeaningfully\b/gi, 'in a real way'],
+            [/\bmeaningful\b/gi, 'real'],
+            [/\bincreasingly\b/gi, 'more and more'],
+            [/\bprimarily\b/gi, 'mostly'],
+            [/\btypically\b/gi, 'usually'],
+            [/\bcommonly\b/gi, 'often'],
+            [/\bfrequently\b/gi, 'often'],
+            [/\bthe majority of\b/gi, 'most'],
+            [/\ba majority of\b/gi, 'most'],
+            [/\bapproximately\b/gi, 'roughly'],
+            [/\brelatively\b/gi, 'fairly'],
+            [/\bconsiderably\b/gi, 'quite a bit'],
+            [/\bparticularly\b/gi, 'especially'],
+            [/\beventually\b/gi, 'over time'],
+            [/\binevitably\b/gi, 'at some point'],
+            [/\binevitable\b/gi, 'certain to happen'],
+            [/\bthereby\b/gi, 'which means'],
+            [/\btransactional\b/gi, 'impersonal'],
+            [/\bconvenience\b/gi, 'ease'],
+            [/\bgenuine\b/gi, 'real'],
+            [/\bgenuinely\b/gi, 'really'],
+            [/\bsignificant\b/gi, 'notable'],
+            [/\bsignificantly\b/gi, 'quite a bit'],
+            [/\bsubstantially\b/gi, 'quite a bit'],
+            [/\bdramatically\b/gi, 'quite a bit'],
+            [/\bthe potential to\b/gi, 'the ability to'],
+            [/\bpotential to\b/gi, 'ability to'],
+            [/\bpotential for\b/gi, 'chance for'],
+            [/\bpotential (?=\w)/gi, 'possible '],
+            [/\bpotentially\b/gi, 'possibly'],
+            [/\boverall,\s*/gi, 'all in all, '],
+            [/\bdemonstrated\b/gi, 'showed'],
+            [/\bdemonstrate(?:s)?\b/gi, 'show'],
+            [/\bdemonstrating\b/gi, 'showing'],
+            [/\bhighlighted\b/gi, 'showed'],
+            [/\bhighlights\b/gi, 'shows'],
+            [/\bhighlighting\b/gi, 'showing'],
+            [/\bnotably\b/gi, 'worth noting,'],
+            [/\bwidespread\b/gi, 'common'],
+            [/\bexamined\b/gi, 'looked at'],
+            [/\binvestigated\b/gi, 'looked into'],
+            [/\bindicated\b/gi, 'showed'],
+            [/\brevealed\b/gi, 'showed'],
+            [/\bcontributed to\b/gi, 'added to'],
+            [/\benhanced\b/gi, 'improved'],
+            [/\bexacerbated\b/gi, 'worsened'],
+            [/\bmitigated\b/gi, 'reduced'],
+            [/\bperpetuated\b/gi, 'reinforced'],
+            [/\bunderscored\b/gi, 'showed'],
+            [/\bcharacterized\b/gi, 'described'],
+            [/\bimplemented\b/gi, 'put in place'],
+            [/\boptimized\b/gi, 'improved'],
+            [/\bprioritized\b/gi, 'focused on'],
+            [/\bcultivated\b/gi, 'built'],
+            [/\bleveraged\b/gi, 'used'],
+            [/\bexamines\b/gi, 'looks at'],
+            [/\binvestigates\b/gi, 'looks into'],
+            [/\bindicates\b/gi, 'shows'],
+            [/\breveals\b/gi, 'shows'],
+            [/\bcontributes to\b/gi, 'adds to'],
+            [/\benhances\b/gi, 'improves'],
+            [/\bexacerbates\b/gi, 'worsens'],
+            [/\bmitigates\b/gi, 'reduces'],
+            [/\bperpetuates\b/gi, 'reinforces'],
+            [/\bunderscores\b/gi, 'shows'],
+            [/\bcharacterizes\b/gi, 'describes'],
+            [/\bconstitutes\b/gi, 'makes up'],
+            [/\bencompasses\b/gi, 'covers'],
+            [/\bimplements\b/gi, 'puts in place'],
+            [/\boptimizes\b/gi, 'improves'],
+            [/\bprioritizes\b/gi, 'focuses on'],
+            [/\bcultivates\b/gi, 'builds'],
+            [/\bleverages\b/gi, 'uses'],
+            [/\bexamining\b/gi, 'looking at'],
+            [/\binvestigating\b/gi, 'looking into'],
+            [/\bindicating\b/gi, 'showing'],
+            [/\brevealing\b/gi, 'showing'],
+            [/\bcontributing to\b/gi, 'adding to'],
+            [/\benhancing\b/gi, 'improving'],
+            [/\bexacerbating\b/gi, 'worsening'],
+            [/\bmitigating\b/gi, 'reducing'],
+            [/\bperpetuating\b/gi, 'reinforcing'],
+            [/\bunderscoring\b/gi, 'showing'],
+            [/\bcharacterizing\b/gi, 'describing'],
+            [/\bconstituting\b/gi, 'making up'],
+            [/\bencompassing\b/gi, 'covering'],
+            [/\bimplementing\b/gi, 'putting in place'],
+            [/\boptimizing\b/gi, 'improving'],
+            [/\bprioritizing\b/gi, 'focusing on'],
+            [/\bcultivating\b/gi, 'building'],
+            [/\bleveraging\b/gi, 'using'],
+            [/\bexamine\b/gi, 'look at'],
+            [/\binvestigate\b/gi, 'look into'],
+            [/\bindicate\b/gi, 'show'],
+            [/\breveal\b/gi, 'show'],
+            [/\bcontribute to\b/gi, 'add to'],
+            [/\benhance\b/gi, 'improve'],
+            [/\bexacerbate\b/gi, 'worsen'],
+            [/\bmitigate\b/gi, 'reduce'],
+            [/\bperpetuate\b/gi, 'reinforce'],
+            [/\bunderscore\b/gi, 'show'],
+            [/\bcharacterize\b/gi, 'describe'],
+            [/\bconstitute\b/gi, 'make up'],
+            [/\bencompass\b/gi, 'cover'],
+            [/\bimplement\b/gi, 'put in place'],
+            [/\boptimize\b/gi, 'improve'],
+            [/\bprioritize\b/gi, 'focus on'],
+            [/\bcultivate\b/gi, 'build'],
+            [/\bleverage\b/gi, 'use'],
+            [/\binherently\b/gi, 'by nature'],
+            [/\binherent\b/gi, 'built-in'],
+            [/\bcontemporary\b/gi, "today's"],
+            [/\bubiquitous\b/gi, 'everywhere'],
+            [/\bunprecedented\b/gi, 'unmatched'],
+            [/\bcompelling\b/gi, 'strong'],
+            [/\bnuanced\b/gi, 'layered'],
+            [/\bprofound\b/gi, 'deep'],
+            [/\bpivotal\b/gi, 'key'],
+            [/\bpertinent\b/gi, 'relevant'],
+            [/\bdetrimental\b/gi, 'harmful'],
+            [/\bbeneficial\b/gi, 'helpful'],
+            [/\bcomprehensively\b/gi, 'thoroughly'],
+            [/\bcomprehensive\b/gi, 'thorough'],
+            [/\brigorously\b/gi, 'carefully'],
+            [/\brigorous\b/gi, 'careful'],
+            [/\bfeasible\b/gi, 'doable'],
+            [/\bviable\b/gi, 'workable'],
+            [/\badequately\b/gi, 'well enough'],
+            [/\badequate\b/gi, 'enough'],
+            [/\bsufficiently\b/gi, 'well enough'],
+            [/\bsufficient\b/gi, 'enough'],
+            [/\bsustainable\b/gi, 'lasting'],
+            [/\binnovative\b/gi, 'new'],
+            [/\bcollaborative\b/gi, 'shared'],
+            [/\binterdependent\b/gi, 'linked'],
+            [/\bsystematically\b/gi, 'step by step'],
+            [/\bsystematic\b/gi, 'step-by-step'],
+            [/\bsubstantially\b/gi, 'quite a bit'],
+            [/\bsubstantial\b/gi, 'large'],
+            [/\bfundamentally\b/gi, 'deeply'],
+            [/\bfundamental to\b/gi, 'key to'],
+            [/\bfundamental\b/gi, 'core'],
+            [/\bmost visible examples?\b/gi, 'clearest signs'],
+            [/\beveryday life\b/gi, 'daily life'],
+            [/\bmillions of people\b/gi, 'huge numbers of people'],
+            [/\bthese mobile platforms?\b/gi, 'these apps'],
+            [/\bmobile platforms?\b/gi, 'apps'],
+            [/\bhas (?:changed|shifted|evolved|transformed) (?:significantly|dramatically|considerably|substantially)\b/gi, 'has changed quite a bit'],
+            [/\bdespite (?:these|the|all|any)? ?(?:challenges?|difficulties|obstacles|issues)\b/gi, 'even with all that,'],
+            [/\bcontinues? to evolve\b/gi, 'keeps changing'],
+            [/\bcontinues? to grow\b/gi, 'keeps growing'],
+            [/\bcontinues? to (?:shape|impact|influence|affect)\b/gi, 'keeps affecting'],
+            [/\blong-term\b/gi, 'lasting'],
+            [/\bshort-term\b/gi, 'quick'],
+            [/\bin recent (?:years?|months?|decades?|times?)\b/gi, 'lately'],
+            [/\bover the (?:past|last|recent) (?:few )?(?:years?|decades?|months?)\b/gi, 'in recent years'],
+            [/\bin (?:today's|the modern) (?:world|society|landscape|era|age)\b/gi, 'these days'],
+            [/\bin this digital age\b/gi, 'these days'],
+            [/\bhas (?:the potential|(?:great )?potential) to\b/gi, 'could'],
+            [/\bplays? a (?:vital|key|crucial|important|major|significant|central) (?:role|part)\b/gi, 'matters quite a bit'],
+            [/\ba wide range of\b/gi, 'all kinds of'],
+            [/\bfoster(?:ing|s|ed)? (?:a sense of )?\b/gi, 'build up '],
+            [/\bnurtur(?:e|es|ing|ed) (?:a sense of )?\b/gi, 'grow '],
+            [/\bhuman connection\b/gi, 'real connection'],
+            [/\bwherein\b/gi, 'where'],
+            [/\boverabundance\b/gi, 'overwhelming number'],
+            [/\bcommodification\b/gi, 'dehumanization'],
+            [/\bgamification\b/gi, 'game-like structure'],
+            [/\bintentionality\b/gi, 'purpose'],
+            [/\bintentional(?:ly)?\b/gi, 'deliberate'],
+            [/\bmindfulness\b/gi, 'care'],
+            [/\bin the context of\b/gi, 'when it comes to'],
+            [/\bdemographic(?:s)?\b/gi, 'group'],
+            [/\bcorrelation between\b/gi, 'link between'],
+            [/\bcorrelation of\b/gi, 'link in'],
+            [/\bparadigm\b/gi, 'approach'],
+            [/\bmethodology\b/gi, 'approach'],
+            [/\btheoretical framework\b/gi, 'framework'],
+            [/\bin conjunction with\b/gi, 'alongside'],
+            [/\bin tandem with\b/gi, 'together with'],
+            [/\bproliferation of\b/gi, 'rise of'],
+            [/\bprevalence of\b/gi, 'how common'],
+            [/\bwhereby\b/gi, 'where'],
+            [/\bhereby\b/gi, 'now'],
+            [/\bthereafter\b/gi, 'after that'],
+            [/\bhereafter\b/gi, 'from here on'],
+            [/\bnotwithstanding\b/gi, 'despite'],
+            [/\binasmuch as\b/gi, 'because'],
+            [/\binsofar as\b/gi, 'to the extent that'],
+            [/\binterplay between\b/gi, 'relationship between'],
+            [/\bdynamic(?:s)? between\b/gi, 'tension between'],
+            [/\bnexus of\b/gi, 'connection between'],
+            [/\bplethora of\b/gi, 'many'],
+            [/\bmyriad of\b/gi, 'many'],
+            [/\bmyriad\b/gi, 'many'],
+            [/\bhas been (?:shown|demonstrated|proven) that\b/gi, 'studies show'],
+            [/\bhave been (?:shown|demonstrated|proven) that\b/gi, 'studies show'],
+            [/\bhas been (?:shown|demonstrated|proven) to\b/gi, 'tends to'],
+            [/\bhave been (?:shown|demonstrated|proven) to\b/gi, 'tend to'],
+            [/\bhas been (?:found|established|confirmed) that\b/gi, 'research found'],
+            [/\bhas been (?:found|established|confirmed) to\b/gi, 'tends to'],
+            [/\bwas found to\b/gi, 'proved to'],
+            [/\bare found to\b/gi, 'tend to'],
+            [/\bis (?:widely|generally|commonly) (?:recognized|acknowledged|accepted|understood)(?: that)?\b/gi, "it's well known that"],
+            [/\bit is (?:widely|generally|commonly) (?:recognized|acknowledged|accepted|understood)(?: that)?\b/gi, 'most agree that'],
+            [/\bis (?:widely|generally|commonly) (?:known|believed|assumed)(?: to| that)?\b/gi, 'most believe'],
+            [/\bcan be (?:attributed|linked|connected) to\b/gi, 'comes from'],
+            [/\bis considered (?:to be )?\b/gi, 'is seen as'],
+            [/\bare considered (?:to be )?\b/gi, 'are seen as'],
+            [/\bis (?:often|sometimes|generally|typically|commonly) (?:referred to as|called|termed|described as)\b/gi, 'is known as'],
+            [/\bare (?:often|usually|typically|generally|commonly) (?:associated|linked|connected) with\b/gi, 'often tie to'],
+            [/\bis (?:often|generally|typically) (?:associated|linked|connected) with\b/gi, 'often ties to'],
+            [/\bare required to\b/gi, 'need to'],
+            [/\bis required to\b/gi, 'needs to'],
+            [/\bhas the potential to\b/gi, 'could'],
+            [/\bhave the potential to\b/gi, 'could'],
+            [/\bthe (?:implementation|adoption|application|introduction|use) of\b/gi, 'using'],
+            [/\bthe (?:development|creation|establishment|formation) of\b/gi, 'developing'],
+            [/\bhave (?:a|an|the) (?:significant|major|profound|direct|strong|notable|real|considerable) (?:impact|effect|influence) on\b/gi, 'greatly affect'],
+            [/\bhas (?:a|an|the) (?:significant|major|profound|direct|strong|notable|real|considerable) (?:impact|effect|influence) on\b/gi, 'greatly affects'],
+            [/\bhad (?:a|an|the) (?:significant|major|profound|direct|strong|notable|real|considerable) (?:impact|effect|influence) on\b/gi, 'greatly affected'],
+            [/\bhave (?:an?|the) impact on\b/gi, 'affect'],
+            [/\bhas (?:an?|the) impact on\b/gi, 'affects'],
+            [/\bhad (?:an?|the) impact on\b/gi, 'affected'],
+            [/\bmake it possible to\b/gi, 'let us'],
+            [/\bmakes it possible to\b/gi, 'lets us'],
+            [/\bthere is a need for\b/gi, 'we need'],
+            [/\bthere is a lack of\b/gi, "there isn't enough"],
+            [/\bthere are a number of\b/gi, 'there are several'],
+            [/\bin a number of\b/gi, 'in several'],
+            [/\bthe fact that\b/gi, 'that'],
+            [/\bdue to the fact that\b/gi, 'because'],
+            [/\bin spite of the fact that\b/gi, 'even though'],
+            [/\bdespite the fact that\b/gi, 'even though'],
+            [/\bin addition,?\s*/gi, 'Also, '],
+            [/\bin addition to\b/gi, 'beyond'],
+            [/\bsuch as\b/gi, 'like'],
+            [/\bin terms of\b/gi, 'when it comes to'],
+            [/\bwith respect to\b/gi, 'about'],
+            [/\bwith regard to\b/gi, 'about'],
+            [/\bin relation to\b/gi, 'compared to'],
+            [/\bas a consequence,\s*/gi, 'Because of this, '],
+            [/\bas a result,\s*/gi, 'Because of this, '],
+            [/\bto a (?:certain|large|great) extent\b/gi, 'to some degree'],
+            [/\bto some extent\b/gi, 'somewhat'],
+            [/\bin many ways\b/gi, 'often'],
+            [/\bin some ways\b/gi, 'partly'],
+            [/\bfor example,?\s*/gi, 'For instance, '],
+            [/\bfor instance,?\s*/gi, 'Take '],
+            [/\bnamely,?\s*/gi, 'specifically: '],
+            [/\bthat is to say,?\s*/gi, 'in other words, '],
+            [/\bin other words,?\s*/gi, 'Put simply, '],
         ];
         for (const [pattern, replacement] of REPLACEMENTS) {
             result = result.replace(pattern, replacement);
@@ -1166,23 +1546,31 @@ QUERY: ${query}`,
                 result = result.replace(pattern, contraction);
             }
         }
+        if (vocabOnly)
+            return result.trim();
         const rawSentences = result
             .replace(/([.!?])\s+([A-Z"'])/g, '$1\n$2')
             .split('\n')
             .map(s => s.trim())
             .filter(s => s.length > 2);
-        const PARENTHETICALS = [
-            '—and this matters more than it sounds—',
-            '—something a lot of people overlook—',
-            '—which isn\'t always easy to pull off—',
-            '—in real classrooms, at least—',
-            '—this is the tricky part—',
-            '—teachers see this firsthand—',
-            '—worth pausing on—',
+        const OPENERS_FORMAL = ['Beyond that,', 'Worth noting:', 'In practice,', 'Building on that,', "Here's what that means:", 'Step back.', 'Look closer:', 'The data tells a story:', 'Consider this:', 'And yet,'];
+        const OPENERS_INFORMAL = ["Here's the thing:", 'Put differently,', 'Think about it:', 'Basically,', 'In practice,', 'Truth is,', 'The tricky part?', 'Step back for a second.', 'Look at it this way:', 'And that matters.'];
+        const BASE_OPENERS = isFormal ? OPENERS_FORMAL : OPENERS_INFORMAL;
+        const OPENERS = sectionType === 'conclusion' || sectionType === 'cta'
+            ? ['All told,', 'The takeaway:', 'Bottom line:', 'In the end,', 'Looking back,', 'To put it plainly,', 'When all is said and done,']
+            : sectionType === 'introduction'
+                ? ["Here's the deal:", 'To start:', 'Before anything else,', 'From the outset,', 'Worth understanding:', 'Let me set the stage:', 'Start here:']
+                : sectionType === 'narrative'
+                    ? ['Picture this:', 'At that point,', 'Looking back,', 'That changed things.', "Here's what happened:", 'A bit further on,', 'And then,']
+                    : sectionType === 'data_disclosure'
+                        ? ['The numbers show', 'Worth noting:', 'In practice,', 'The data says:', 'Statistically speaking,', 'By the numbers,', 'The evidence points to']
+                        : BASE_OPENERS;
+        let punchIdx = 0;
+        const GENERIC_PUNCHES = [
+            "That's the shift.", "And it's real.", "Worth sitting with.", "That matters.",
+            "People notice.", "The gap is real.", "That's the tension.", "Simple as that.",
+            "It adds up.", "No question.", "That's worth remembering.", "Hard to ignore.",
         ];
-        const OPENERS_FORMAL = ['Beyond that,', 'Worth noting:', 'In practice,', 'Building on that,', 'Here\'s what that means:'];
-        const OPENERS_INFORMAL = ['Here\'s the thing—', 'Put differently,', 'Think about it:', 'Basically,', 'In practice,', 'Truth is,', 'The tricky part?'];
-        const OPENERS = isFormal ? OPENERS_FORMAL : OPENERS_INFORMAL;
         const getPunch = (s) => {
             const lower = s.toLowerCase();
             if (lower.includes('english') && lower.includes('learn'))
@@ -1203,7 +1591,57 @@ QUERY: ${query}`,
                 return "Words are the building blocks.";
             if (lower.includes('academ'))
                 return "Academic growth is slow but real.";
-            return "That's the part that sticks.";
+            if (lower.includes('dat') && (lower.includes('app') || lower.includes('swipe')))
+                return "Dating's changed.";
+            if (lower.includes('tech') || lower.includes('digital') || lower.includes('online'))
+                return "Tech moves fast.";
+            if (lower.includes('relat') || lower.includes('connect') || lower.includes('partner'))
+                return "Connection is tricky.";
+            if (lower.includes('social') || lower.includes('media') || lower.includes('platform'))
+                return "That's the new normal.";
+            if (lower.includes('mental') || lower.includes('health') || lower.includes('stress'))
+                return "That takes a toll.";
+            if (lower.includes('work') || lower.includes('career') || lower.includes('job'))
+                return "That's the trade-off.";
+            if (lower.includes('money') || lower.includes('financ') || lower.includes('econom'))
+                return "Numbers don't lie.";
+            if (lower.includes('climat') || lower.includes('emission') || lower.includes('warming'))
+                return "The science is clear.";
+            if (lower.includes('environment') || lower.includes('sustainab') || lower.includes('ecosystem'))
+                return "The stakes are high.";
+            if (lower.includes('govern') || lower.includes('policy') || lower.includes('legislat'))
+                return "Policy lags behind reality.";
+            if (lower.includes('research') || lower.includes('study') || lower.includes('data'))
+                return "The evidence is building.";
+            if (lower.includes('ai') || lower.includes('artificial') || lower.includes('machine'))
+                return "That's a fast-moving field.";
+            if (lower.includes('ethic') || lower.includes('moral') || lower.includes('value'))
+                return "That line isn't always clear.";
+            if (lower.includes('histor') || lower.includes('ancient') || lower.includes('century'))
+                return "History repeats patterns.";
+            if (lower.includes('cultur') || lower.includes('societ') || lower.includes('community'))
+                return "Culture shapes everything.";
+            if (lower.includes('psycholog') || lower.includes('behavio') || lower.includes('cognit'))
+                return "Behavior is complex.";
+            if (lower.includes('biolog') || lower.includes('genetic') || lower.includes('evolut'))
+                return "The biology is fascinating.";
+            if (lower.includes('global') || lower.includes('nation') || lower.includes('international'))
+                return "Scale matters here.";
+            return GENERIC_PUNCHES[punchIdx++ % GENERIC_PUNCHES.length];
+        };
+        const SECTION_PUNCHES = {
+            conclusion: ["That's the point.", "It matters.", "Keep that in mind.", "That's what it comes down to.", "The answer is there."],
+            cta: ["Take that step.", "Now's the time.", "It starts here.", "Don't wait on it.", "That's the move."],
+            introduction: ["That's the gap.", "Worth understanding.", "This is where it starts.", "That's the question.", "It shapes everything after."],
+            narrative: ["Telling, isn't it.", "That's the shift.", "Hard to forget.", "Everything changed from there.", "It stuck."],
+            data_disclosure: ["The data confirms it.", "Numbers don't lie.", "The trend is clear.", "That's significant.", "Hard to argue with that."],
+        };
+        const getSectionPunch = (s) => {
+            if (sectionType && SECTION_PUNCHES[sectionType]) {
+                const pool = SECTION_PUNCHES[sectionType];
+                return pool[punchIdx++ % pool.length];
+            }
+            return getPunch(s);
         };
         const CONJ_BREAKS = {
             and: '. And',
@@ -1221,11 +1659,14 @@ QUERY: ${query}`,
         for (let i = 0; i < rawSentences.length; i++) {
             let s = rawSentences[i].trim();
             const wc = (s.match(/\b\w+\b/g) || []).length;
-            if (wc > 20) {
+            if (wc > 16) {
                 const split1 = s.replace(/,\s+(and|but|while|although|whereas|yet|since|because|though)\s+/gi, (full, conj, offset, str) => {
                     const afterConj = str.slice(offset + full.length);
                     const startsNewClause = /^(?:the |a |an |this |these |that |those |it |they |he |she |we |you |I |[A-Z][a-z]+s?\s+(?:can|will|should|must|have|had|were|was|are|is))/i.test(afterConj);
-                    if (conj.toLowerCase() === 'and' && !startsNewClause)
+                    const hasVerb = /\b(?:is|are|was|were|has|have|had|will|would|can|could|should|do|does|did|make|makes|made|get|gets|got|keep|keeps|help|helps|allow|allows|give|gives|create|creates|show|shows|find|finds|use|uses|lead|leads|work|works|mean|means|need|needs|provide|provides|offer|offers|continue|continues)\b/i.test(afterConj);
+                    const beforeConj = str.slice(0, offset);
+                    const beforeWords = (beforeConj.match(/\b\w+\b/g) || []).length;
+                    if (conj.toLowerCase() === 'and' && (!startsNewClause || !hasVerb || beforeWords < 8))
                         return full;
                     const br = CONJ_BREAKS[conj.toLowerCase()];
                     return br ? `${br} ` : `. ${conj.charAt(0).toUpperCase() + conj.slice(1)} `;
@@ -1237,27 +1678,10 @@ QUERY: ${query}`,
                     s = s.replace(/;\s+/g, '. ');
                 }
             }
-            if (i > 0 && i % 4 === 0 && wc >= 5) {
-                const opener = OPENERS[Math.floor(i / 4) % OPENERS.length];
-                if (!/^(also|but|so|and|yet|still|even|here|put|think|basic|truth|in prac|beyond|worth|building|that's)/i.test(s)) {
+            if (moderate && i > 0 && i % 3 === 0 && wc >= 5) {
+                const opener = OPENERS[Math.floor(i / 3) % OPENERS.length];
+                if (!/^(also|but|so|and|yet|still|even|here|put|think|basic|truth|in prac|beyond|worth|building|that's|however|although|though|while|meanwhile|furthermore|moreover|additionally|nevertheless|nonetheless|therefore|thus|hence|ultimately|consequently|when|if|since|because|despite|although|on top|on the|take |for inst|step back|look clos|look at|consider|the sci|the evid|the data)/i.test(s)) {
                     s = opener + ' ' + s.charAt(0).toLowerCase() + s.slice(1);
-                }
-            }
-            if (aggressive && wc > 18 && i % 3 === 1) {
-                const aside = PARENTHETICALS[i % PARENTHETICALS.length];
-                let insertIdx = -1;
-                let commaCount = 0;
-                for (let k = 0; k < s.length; k++) {
-                    if (s[k] === ',') {
-                        commaCount++;
-                        if (k > s.length * 0.3 && k < s.length * 0.75) {
-                            insertIdx = k;
-                            break;
-                        }
-                    }
-                }
-                if (insertIdx > 0) {
-                    s = s.slice(0, insertIdx) + ` ${aside}` + s.slice(insertIdx);
                 }
             }
             if (aggressive && i % 6 === 2 && !s.startsWith('In ') && !s.startsWith('When ') && !s.startsWith('For ')) {
@@ -1272,8 +1696,8 @@ QUERY: ${query}`,
             s = s.replace(/^(Beyond that,?\s*){2,}/i, 'Beyond that, ');
             s = s.replace(/^\s*[,;]\s*/, '');
             rewritten.push(s);
-            if (humanization > 0.3 && wc > 18 && i % 4 === 3 && i < rawSentences.length - 1) {
-                rewritten.push(getPunch(s));
+            if (moderate && wc >= 10 && i % 3 === 2 && i < rawSentences.length - 1) {
+                rewritten.push(getSectionPunch(s));
             }
         }
         result = rewritten.join(' ')
@@ -1296,8 +1720,135 @@ QUERY: ${query}`,
             .replace(/(And\s*){2,}/gi, 'And ')
             .replace(/\bAnd\b(?=\s+And\b)/gi, 'Also')
             .replace(/\. And ([a-z])/g, '. And $1')
+            .replace(/\b(have|has|had)\s+showed\b/gi, '$1 shown')
+            .replace(/\ba ([aeiouAEIOU])/g, 'an $1')
+            .replace(/(?:^|(?<=[.!?]\s+))([a-z])/g, (_, c) => c.toUpperCase())
             .trim();
         return result;
+    }
+    async generateDraft(paperType, wordCount, prompt) {
+        const apiKey = this.configService.get('GEMINI_API_KEY');
+        if (!apiKey)
+            throw new Error('GEMINI_API_KEY not set');
+        const typeLabel = {
+            essay: 'essay', research: 'research paper', report: 'report',
+            blog: 'blog post', email: 'professional email', summary: 'summary',
+            analysis: 'analysis', proposal: 'proposal',
+        };
+        const label = typeLabel[paperType] ?? paperType;
+        const fullPrompt = `You are an AI writing assistant. Write a ${label} of approximately ${wordCount} words about the following topic. Use proper structure, transitions, and formal language appropriate for the document type. Output ONLY the content itself — no meta-commentary, no preamble, no closing notes.\n\nTopic: ${prompt.trim()}`;
+        const callGemini = async (model) => {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: fullPrompt }] }],
+                    generationConfig: { temperature: 0.75, maxOutputTokens: 4096 },
+                }),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(`Gemini error (${model}) ${res.status}: ${err?.error?.message || 'unknown'}`);
+            }
+            const data = await res.json();
+            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text)
+                throw new Error(`No content from Gemini (${model})`);
+            return text.trim();
+        };
+        try {
+            return { text: await callGemini('gemini-2.5-flash') };
+        }
+        catch {
+            return { text: await callGemini('gemini-2.5-flash-lite') };
+        }
+    }
+    buildHumanizeSystemPrompt(tone) {
+        const toneInstruction = tone === 'formal' || tone === 'academic'
+            ? 'Maintain a formal academic register throughout, but write as a knowledgeable human expert — not an AI assistant.'
+            : 'Write in a direct, conversational voice. Use contractions freely.';
+        return `You are an expert ghostwriter who specialises in making AI-generated text completely undetectable by Scribbr, GPTZero, Turnitin, and Copyleaks. You understand exactly what these tools measure.
+
+HOW AI DETECTORS WORK (and how to beat them):
+• They measure BURSTINESS — AI sentences are all similar lengths (15-20 words each). Beat it by mixing ultra-short sentences (3-6 words) with long complex ones (28-40 words) in EVERY paragraph.
+• They measure PERPLEXITY — AI picks the most predictable next word. Beat it by choosing unexpected but natural phrasing. Never write the obvious sentence.
+• They flag PARALLEL STRUCTURE — AI loves "First... Second... Third..." and matching grammar patterns. Break every parallel structure you find.
+• They flag UNIFORM TRANSITIONS — AI uses "Furthermore," "Additionally," "Moreover," constantly. Never use them.
+• They flag PASSIVE VOICE overuse — cut passive constructions by 80%.
+• They flag HEDGING CLUSTERS — AI groups hedges together. Spread them or cut them.
+
+MANDATORY RULES — every single one must be followed:
+1. BURSTINESS: Every paragraph must contain at least one sentence under 6 words AND one sentence over 28 words. Count them.
+2. FRAGMENTS: Use at least one sentence fragment per paragraph. Real writers do this. It's natural.
+3. CONTRACTIONS: Use them throughout — it's, that's, don't, can't, they're, wouldn't, you'd. Even in formal writing.
+4. RHETORICAL QUESTIONS: At least one every three paragraphs.
+5. SENTENCE OPENERS: At least 30% of sentences must start with something other than the subject: a prepositional phrase, an adverb, a conjunction, or a participial phrase.
+6. START WITH "And" OR "But": Do this at least twice in the full text. Humans do it. AI avoids it.
+7. CONCRETE SPECIFICS: Replace any vague generalisation with a concrete detail, number, or example.
+8. BREAK LISTS: If the original has a list structure (A, B, and C), rewrite it as flowing prose.
+9. ${toneInstruction}
+10. NO DASHES: Do not use em-dashes (—) or hyphens as stylistic punctuation. Use commas, colons, or full stops instead.
+11. PARAGRAPHS: Preserve the exact same number of paragraphs as the original text. Separate paragraphs with a blank line. Do not merge or split paragraphs.
+
+BANNED WORDS AND PHRASES — using any of these instantly triggers detection:
+furthermore, moreover, additionally, it is important to note, it is worth noting, in conclusion, to summarize, in essence, plays a crucial role, it is essential to, delve into, navigate, paradigm, utilize, facilitate, leverage, it has been shown, studies have demonstrated, in today's world, game-changing, groundbreaking, holistic, multifaceted, robust, seamlessly, fundamentally transformed, it is noteworthy, a myriad of, it cannot be overstated, tapestry, landscape, realm, fostering, spearheading, underscores, demonstrates, encompasses, comprehensive, rigorous, systematic, substantial, unprecedented, synergy, pivotal, transformative, cutting-edge, state-of-the-art, ever-evolving, nuanced, multidimensional, overarching
+
+PRESERVE: Every fact, statistic, argument, and piece of evidence from the original. Do not invent new information.
+OUTPUT: Rewritten text only. No preamble, no "Here is the rewritten text:", no commentary.`;
+    }
+    async callGroq(text, tone) {
+        const apiKey = this.configService.get('GROQ_API_KEY');
+        if (!apiKey)
+            throw new Error('GROQ_API_KEY not set');
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+                model: 'llama-3.3-70b-versatile',
+                messages: [
+                    { role: 'system', content: this.buildHumanizeSystemPrompt(tone) },
+                    { role: 'user', content: `Rewrite this text to be completely undetectable as AI:\n\n${text}` },
+                ],
+                temperature: 0.92,
+                max_tokens: 4096,
+            }),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(`Groq API error ${res.status}: ${err?.error?.message || 'unknown'}`);
+        }
+        const data = await res.json();
+        const result = data?.choices?.[0]?.message?.content;
+        if (!result)
+            throw new Error('No content returned from Groq');
+        return result.trim();
+    }
+    async callGemini(text, tone) {
+        const apiKey = this.configService.get('GEMINI_API_KEY');
+        if (!apiKey)
+            throw new Error('GEMINI_API_KEY not set');
+        const prompt = `${this.buildHumanizeSystemPrompt(tone)}\n\nText to rewrite:\n${text}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.9, maxOutputTokens: 4096 },
+            }),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(`Gemini API error ${res.status}: ${err?.error?.message || 'unknown'}`);
+        }
+        const data = await res.json();
+        const result = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!result)
+            throw new Error('No content returned from Gemini');
+        return result.trim();
     }
     async callOpenAI(messages, json = false, retries = 3) {
         const apiKey = this.configService.get('OPENAI_API_KEY');
@@ -1338,7 +1889,11 @@ exports.RewriteService = RewriteService = RewriteService_1 = __decorate([
     __param(6, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
     __param(7, (0, typeorm_1.InjectRepository)(comment_entity_1.CommentEntity)),
     __param(8, (0, typeorm_1.InjectRepository)(usage_log_entity_1.UsageLogEntity)),
+    __param(9, (0, typeorm_1.InjectRepository)(free_usage_entity_1.FreeUsageEntity)),
+    __param(10, (0, typeorm_1.InjectRepository)(billing_account_entity_1.BillingAccountEntity)),
     __metadata("design:paramtypes", [config_1.ConfigService,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
