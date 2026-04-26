@@ -18,7 +18,7 @@ export interface StyleProfile {
 
 @Injectable()
 export class StyleMemoryService {
-  private readonly openai: OpenAI;
+  private readonly openai: OpenAI | null;
   private readonly logger = new Logger(StyleMemoryService.name);
 
   constructor(
@@ -29,7 +29,7 @@ export class StyleMemoryService {
     private readonly manuscriptRepo: Repository<ManuscriptEntity>,
   ) {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
-    this.openai = new OpenAI({ apiKey });
+    this.openai = apiKey && apiKey !== 'your_openai_api_key_here' ? new OpenAI({ apiKey }) : null;
   }
 
   async getStyleContext(orgId: string): Promise<string> {
@@ -59,6 +59,10 @@ export class StyleMemoryService {
   }
 
   async profileStyle(sampleText: string, name: string = 'Current Writer'): Promise<StyleProfile> {
+    if (!this.openai) {
+      return this.profileStyleLocally(sampleText, name);
+    }
+
     try {
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o',
@@ -86,5 +90,23 @@ export class StyleMemoryService {
       this.logger.error('Error profiling style:', error);
       throw error;
     }
+  }
+
+  private profileStyleLocally(sampleText: string, name: string): StyleProfile {
+    const words = sampleText.trim().split(/\s+/).filter(Boolean);
+    const sentences = sampleText.split(/[.!?]+/).map(s => s.trim()).filter(Boolean);
+    const avgSentenceLength = sentences.length ? words.length / sentences.length : 0;
+    const contractions = (sampleText.match(/\b\w+'(?:t|re|ve|ll|d|m|s)\b/gi) || []).length;
+    const adjectiveHints = (sampleText.match(/\b\w+(?:ive|ous|ful|less|able|al|ic)\b/gi) || []).length;
+
+    return {
+      name,
+      adjectiveLevel: Math.min(1, adjectiveHints / Math.max(words.length, 1) * 10),
+      sentenceComplexity: Math.min(1, avgSentenceLength / 28),
+      preferredTransitions: ['however', 'also', 'because'],
+      toneDescriptors: avgSentenceLength > 24 ? ['formal', 'analytical'] : ['clear', 'conversational'],
+      contractionRate: contractions / Math.max(sentences.length, 1) > 0.25 ? 'high' : contractions > 0 ? 'medium' : 'low',
+      vocabularyBand: avgSentenceLength > 24 ? 'academic' : avgSentenceLength > 16 ? 'sophisticated' : 'common',
+    };
   }
 }
