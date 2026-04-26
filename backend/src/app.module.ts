@@ -22,9 +22,9 @@ import { ConfigService } from '@nestjs/config';
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (_configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         type: 'sqlite',
-        database: 'database.sqlite',
+        database: configService.get<string>('DATABASE_PATH') || 'database.sqlite',
         entities: [StyleProfileEntity, ManuscriptEntity, CacheEntity, VersionEntity, ProjectEntity, UserEntity, CommentEntity, UsageLogEntity, FreeUsageEntity, BillingAccountEntity],
         synchronize: true, // Auto-scaffold for immediate double-check
         logging: ['error', 'warn'],
