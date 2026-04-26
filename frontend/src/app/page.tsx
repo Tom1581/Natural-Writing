@@ -1219,8 +1219,8 @@ function HumanizationSlider({ value, onChange }: { value: number; onChange: (v: 
           cursor: 'pointer',
         }}
       />
-      <span style={{ fontSize: '0.6rem', color: 'var(--text-dark)' }}>
-        How aggressively to strip AI-tells, increase burstiness, and add contractions
+      <span style={{ fontSize: '0.72rem', color: 'var(--accent-blue)', fontWeight: 700 }}>
+        How aggressively to strip AI-tells, increase burstiness, and add contractions — <span style={{ opacity: 0.75 }}>we recommend ~80%</span>
       </span>
     </div>
   );
