@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
+import { getAuthRedirectUrl } from '@/lib/authRedirect';
 import BrandMark from '@/components/BrandMark';
 
 type AuthMode = 'login' | 'register' | 'forgot';
@@ -112,7 +113,10 @@ export default function LoginPage() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { name: name || 'New Writer' } },
+          options: {
+            data: { name: name || 'New Writer' },
+            emailRedirectTo: getAuthRedirectUrl(),
+          },
         });
         if (error) throw error;
 
@@ -127,7 +131,7 @@ export default function LoginPage() {
         }
       } else if (authMode === 'forgot') {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getAuthRedirectUrl(),
         });
         if (error) throw error;
         toast.success('Password reset link sent — check your email.');
@@ -146,7 +150,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getAuthRedirectUrl(),
         },
       });
       if (error) throw error;

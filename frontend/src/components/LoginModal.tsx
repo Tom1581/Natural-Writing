@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
+import { getAuthRedirectUrl } from '../lib/authRedirect';
 import BrandMark from './BrandMark';
 
 interface LoginModalProps {
@@ -97,14 +98,19 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { name: name || 'New Writer' } }
+          options: {
+            data: { name: name || 'New Writer' },
+            emailRedirectTo: getAuthRedirectUrl(),
+          }
         });
         if (error) throw error;
         onLogin({ name: data.user?.user_metadata?.name || 'New Writer', role: 'user', email });
         onClose();
         toast.success('Registration Complete • Neural Sync Initiated');
       } else if (authMode === 'forgot') {
-        const { error } = await supabase.auth.resetPasswordForEmail(email);
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: getAuthRedirectUrl(),
+        });
         if (error) throw error;
         setAuthMode('login');
         toast.success('Recovery Sequence Initiated. Check your inbound stream.');
@@ -163,7 +169,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: getAuthRedirectUrl(),
         },
       });
       if (error) throw error;
