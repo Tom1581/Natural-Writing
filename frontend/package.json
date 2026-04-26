@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^9.3.1",
     "@supabase/supabase-js": "^2.104.0",
     "@tailwindcss/postcss": "^4.2.4",
     "@tiptap/extension-character-count": "^3.22.4",
@@ -28,7 +29,6 @@
     "next": "16.2.4",
     "pdfjs-dist": "^5.6.205",
     "react": "19.2.4",
-    "react-diff-viewer-next": "^0.1.0-alpha",
     "react-dom": "19.2.4",
     "react-hot-toast": "^2.6.0",
     "recharts": "^3.8.1"

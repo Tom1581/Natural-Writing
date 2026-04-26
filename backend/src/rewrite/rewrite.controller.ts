@@ -1,4 +1,5 @@
-import { Controller, Post, Get, Body, Param, Query } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Query, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { RewriteService, RewriteOptions } from './rewrite.service';
 import { StyleMemoryService } from './style-memory.service';
 import { SemanticService } from './semantic.service';
@@ -9,6 +10,7 @@ import { GenesisService } from './genesis.service';
 import { BenchmarkService } from './benchmark.service';
 import { ComplianceService } from './compliance.service';
 import { FinalityService } from './finality.service';
+import { StripeService } from '../stripe/stripe.service';
 
 @Controller('rewrite')
 export class RewriteController {
@@ -23,6 +25,7 @@ export class RewriteController {
     private readonly benchmarkService: BenchmarkService,
     private readonly complianceService: ComplianceService,
     private readonly finalityService: FinalityService,
+    private readonly stripeService: StripeService,
   ) {}
 
   // ─── Static routes first (prevent /:id shadowing) ─────────────────────────
@@ -50,6 +53,30 @@ export class RewriteController {
   @Get('stats')
   getPlatformStats() {
     return this.rewriteService.getPlatformStats();
+  }
+
+  @Get('free-usage')
+  getFreeUsage(@Query('email') email: string) {
+    if (!email) return { wordsUsed: 0, limit: 400 };
+    return this.rewriteService.getFreeUsage(email);
+  }
+
+  @Get('access-status')
+  async getAccessStatus(@Query('email') email: string) {
+    if (!email) {
+      return {
+        tier: null,
+        wordsRemaining: 0,
+        totalWordsPurchased: 0,
+        freeWordsUsed: 0,
+        freeWordsLimit: 400,
+        unlimitedActive: false,
+        subscriptionStatus: null,
+        canManageBilling: false,
+      };
+    }
+    await this.stripeService.getCustomerState(email);
+    return this.rewriteService.getAccessStatus(email);
   }
 
   @Get('projects')
@@ -84,9 +111,37 @@ export class RewriteController {
 
   // ─── Static POST routes ───────────────────────────────────────────────────
 
+  private static readonly ADMIN_EMAILS = ['a15817348@gmail.com'];
+
   @Post('process')
-  processText(@Body() body: { text: string; options: RewriteOptions }) {
-    return this.rewriteService.processText(body.text, body.options);
+  async processText(
+    @Body() body: { text: string; options: RewriteOptions; userEmail?: string; subscriptionTier?: string },
+    @Req() req: Request,
+  ) {
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() ||
+      req.socket?.remoteAddress ||
+      'unknown';
+
+    const email = body.userEmail?.trim().toLowerCase() ?? null;
+    const isAdmin = !!email && RewriteController.ADMIN_EMAILS.includes(email);
+
+    console.log(`[process] email="${email}" isAdmin=${isAdmin} clientSubscriptionTier="${body.subscriptionTier}"`);
+
+    // Paid access is resolved server-side from Stripe entitlements.
+    // Only admin keeps a forced bypass tier.
+    const tier = isAdmin ? 'admin' : null;
+    if (email && !isAdmin) {
+      await this.stripeService.getCustomerState(email);
+    }
+
+    return this.rewriteService.processText(
+      body.text,
+      body.options,
+      email,
+      tier,
+      ip,
+    );
   }
 
   @Post('genesis-scaffold')
@@ -109,6 +164,11 @@ export class RewriteController {
     const reply = await this.rewriteService.chatWithManuscript(body.query, body.content);
     // Return plain text (SidecarChat calls .text() on the response)
     return reply;
+  }
+
+  @Post('generate-draft')
+  generateDraft(@Body() body: { paperType: string; wordCount: string; prompt: string }) {
+    return this.rewriteService.generateDraft(body.paperType, body.wordCount, body.prompt);
   }
 
   @Post('profile-style')

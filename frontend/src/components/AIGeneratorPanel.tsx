@@ -5,8 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Loader2, ChevronDown, ChevronUp, Wand2, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const GEMINI_KEY = 'AIzaSyAaQwVlVf-mRbFQnty9jRNQTStTAxvNLAM';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 const PAPER_TYPES = [
   { value: 'essay', label: 'Essay' },
@@ -51,29 +50,24 @@ export default function AIGeneratorPanel({ onGenerate }: AIGeneratorPanelProps) 
     setIsGenerating(true);
     setPreview('');
 
-    const systemPrompt = `Write a ${paperType} of approximately ${wordCount} words about the following topic. Write in a typical AI/academic style — use proper structure, transitions, and formal language. Do not add any meta-commentary, just the content itself.\n\nTopic: ${prompt.trim()}`;
-
     try {
-      const res = await fetch(GEMINI_URL, {
+      const res = await fetch(`${BACKEND_URL}/rewrite/generate-draft`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: systemPrompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
-        }),
+        body: JSON.stringify({ paperType, wordCount, prompt: prompt.trim() }),
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error?.message || `Gemini API error ${res.status}`);
+        throw new Error((err as any)?.message || `API error ${res.status}`);
       }
 
       const data = await res.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) throw new Error('No content returned from Gemini.');
+      const text = (data as any)?.text;
+      if (!text) throw new Error('No content returned.');
 
       setPreview(text.trim());
-      toast.success('AI draft generated — click "Use this text" to load it.');
+      toast.success('Draft generated — click "Use this text" to load it.');
     } catch (err: any) {
       toast.error(err.message || 'Generation failed.');
     } finally {
@@ -131,7 +125,7 @@ export default function AIGeneratorPanel({ onGenerate }: AIGeneratorPanelProps) 
               Generate AI Draft
             </p>
             <p style={{ fontSize: '0.68rem', color: 'rgba(167,139,250,0.6)', margin: 0, marginTop: '0.15rem' }}>
-              Use Gemini to write a draft · then humanize it with Natural Quill
+              Generate an AI draft · then humanize it with Natural Quill
             </p>
           </div>
         </div>
@@ -231,7 +225,7 @@ export default function AIGeneratorPanel({ onGenerate }: AIGeneratorPanelProps) 
                 }}
               >
                 {isGenerating
-                  ? <><Loader2 size={14} className="animate-spin" /> Generating with Gemini…</>
+                  ? <><Loader2 size={14} className="animate-spin" /> Generating…</>
                   : <><Sparkles size={14} /> Generate AI Draft</>
                 }
               </button>

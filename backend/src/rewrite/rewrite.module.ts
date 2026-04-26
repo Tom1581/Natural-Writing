@@ -20,11 +20,15 @@ import { UsageLogEntity } from './entities/usage-log.entity';
 import { ProjectEntity } from './entities/project.entity';
 import { UserEntity } from './entities/user.entity';
 import { CommentEntity } from './entities/comment.entity';
+import { FreeUsageEntity } from './entities/free-usage.entity';
+import { BillingAccountEntity } from './entities/billing-account.entity';
+import { StripeModule } from '../stripe/stripe.module';
 
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([StyleProfileEntity, ManuscriptEntity, CacheEntity, VersionEntity, UsageLogEntity, ProjectEntity, UserEntity, CommentEntity]),
+    StripeModule,
+    TypeOrmModule.forFeature([StyleProfileEntity, ManuscriptEntity, CacheEntity, VersionEntity, UsageLogEntity, ProjectEntity, UserEntity, CommentEntity, FreeUsageEntity, BillingAccountEntity]),
   ],
   controllers: [RewriteController],
   providers: [RewriteService, StyleMemoryService, SemanticService, RhythmService, EvolutionService, OracleService, GenesisService, BenchmarkService, ComplianceService, FinalityService],

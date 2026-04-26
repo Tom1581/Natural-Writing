@@ -4,12 +4,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Sparkles, RotateCcw, Copy, Check, BookOpen,
   History, AlertCircle, Loader2, TrendingDown,
-  Type, FolderOpen, MessageSquare,
+  Type, FolderOpen, MessageSquare, RefreshCw, LifeBuoy,
   Server, FileText, ChevronDown, X, BarChart2, User,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
 import StyleCloner, { StyleProfile } from '@/components/StyleCloner';
+import ContactSupport from '@/components/ContactSupport';
 import ManuscriptLibrary, { ManuscriptHistory } from '@/components/ManuscriptLibrary';
 import TextInputPanel from '@/components/TextInputPanel';
 import SidecarChat from '@/components/SidecarChat';
@@ -17,6 +18,7 @@ import FlightDeck from '@/components/FlightDeck';
 import LoginModal from '@/components/LoginModal';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import AIGeneratorPanel from '@/components/AIGeneratorPanel';
+import PricingModal from '@/components/PricingModal';
 import { supabase } from '@/lib/supabase';
 import BrandMark from '@/components/BrandMark';
 
@@ -54,6 +56,17 @@ interface AnalysisMetrics {
   protectedSpans: string[];
 }
 
+interface AccessStatus {
+  tier: string | null;
+  wordsRemaining: number;
+  totalWordsPurchased: number;
+  freeWordsUsed: number;
+  freeWordsLimit: number;
+  unlimitedActive: boolean;
+  subscriptionStatus: string | null;
+  canManageBilling: boolean;
+}
+
 interface ActiveUser {
   name: string;
   email: string;
@@ -61,6 +74,8 @@ interface ActiveUser {
 }
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+const ADMIN_EMAILS = ['a15817348@gmail.com'];
 
 // ─── Small helpers ────────────────────────────────────────────────────────────
 
@@ -86,6 +101,7 @@ function ScoreBar({ value, label, good = 'high' }: { value: number; label: strin
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Home() {
+  const [authChecked, setAuthChecked] = useState(false);
   const [inputText, setInputText] = useState('');
   const [outputText, setOutputText] = useState('');
   const [alternatives, setAlternatives] = useState<string[]>([]);
@@ -100,6 +116,7 @@ export default function Home() {
   const [sectionType, setSectionType] = useState<SectionType>('general');
   const [humanization, setHumanization] = useState(60); // 0–100
   const [selectedProfile, setSelectedProfile] = useState<StyleProfile | null>(null);
+  const [variationSeed, setVariationSeed] = useState(0); // increments each regeneration
 
   // Library & history
   const [history, setHistory] = useState<ManuscriptHistory[]>([]);
@@ -108,6 +125,7 @@ export default function Home() {
   // Panel visibility
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isClonerOpen, setIsClonerOpen] = useState(false);
+  const [isContactOpen, setIsContactOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -115,13 +133,26 @@ export default function Home() {
   const [showAlternatives, setShowAlternatives] = useState(false);
   const [activeUser, setActiveUser] = useState<ActiveUser | null>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isPricingOpen, setIsPricingOpen] = useState(false);
+  const [subscriptionTier, setSubscriptionTier] = useState<string | null>(null);
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [useCount, setUseCount] = useState(0);
+  const [cooldownUntil, setCooldownUntil] = useState(0);
+  const [cooldownSecondsLeft, setCooldownSecondsLeft] = useState(0);
 
   useEffect(() => {
-    fetchHistory();
+    if (cooldownUntil <= Date.now()) return;
+    const id = setInterval(() => {
+      const left = Math.ceil((cooldownUntil - Date.now()) / 1000);
+      if (left <= 0) { setCooldownSecondsLeft(0); clearInterval(id); }
+      else setCooldownSecondsLeft(left);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [cooldownUntil]);
+
+  useEffect(() => {
     let isMounted = true;
 
-    // Resolve existing session or cached user without forcing the login modal.
     const resolveUser = async () => {
       try {
         const { data } = await supabase.auth.getSession();
@@ -134,21 +165,18 @@ export default function Home() {
             role: 'user',
           };
           setActiveUser(nextUser);
+          setSubscriptionTier(null);
           try { window.localStorage.setItem('nw_active_user', JSON.stringify(nextUser)); } catch { /* ignore */ }
-          return;
+          fetchHistory();
         }
       } catch { /* offline / supabase unreachable */ }
-
-      // Fall back to cached local user — still no auto-opened modal.
-      try {
-        const raw = window.localStorage.getItem('nw_active_user');
-        if (raw && isMounted) setActiveUser(JSON.parse(raw));
-      } catch { /* ignore */ }
+      // Always allow access — guests get free 400-word trial
+      if (isMounted) setAuthChecked(true);
     };
 
     resolveUser();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted) return;
       const sessionUser = session?.user;
       if (sessionUser) {
@@ -159,9 +187,11 @@ export default function Home() {
         };
         setActiveUser(nextUser);
         setIsLoginOpen(false);
+        setSubscriptionTier(null);
         try { window.localStorage.setItem('nw_active_user', JSON.stringify(nextUser)); } catch { /* ignore */ }
-      } else {
+      } else if (event === 'SIGNED_OUT') {
         setActiveUser(null);
+        setSubscriptionTier(null);
         try { window.localStorage.removeItem('nw_active_user'); } catch { /* ignore */ }
       }
     });
@@ -171,6 +201,32 @@ export default function Home() {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!activeUser?.email) {
+      setSubscriptionTier(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch(`${API}/rewrite/access-status?email=${encodeURIComponent(activeUser.email)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then((data: AccessStatus | null) => {
+        if (!cancelled) {
+          setSubscriptionTier(data?.tier ?? null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSubscriptionTier(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeUser?.email]);
 
   const fetchHistory = async () => {
     try {
@@ -190,6 +246,10 @@ export default function Home() {
       toast.error('Please enter some text to improve.');
       return;
     }
+
+    // Increment seed on each call when there's already output (regeneration)
+    const nextSeed = outputText ? variationSeed + 1 : 0;
+    setVariationSeed(nextSeed);
     setIsRewriting(true);
     setShowDiagnostics(false);
     try {
@@ -198,15 +258,27 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: inputText,
+          userEmail: activeUser?.email ?? null,
+          subscriptionTier: subscriptionTier ?? null,
           options: {
             tone,
             strength,
             sectionType,
             humanization: humanization / 100,
+            seed: nextSeed,
             styleProfile: selectedProfile ?? undefined,
           },
         }),
       });
+
+      // 402 = free quota exceeded — open pricing modal
+      if (res.status === 402) {
+        const body = await res.json().catch(() => ({}));
+        setIsRewriting(false);
+        setIsPricingOpen(true);
+        toast.error(body?.message || 'Free trial limit reached. Upgrade to continue.');
+        return;
+      }
 
       if (!res.ok) {
         let errMsg = `Server error ${res.status}`;
@@ -225,6 +297,12 @@ export default function Home() {
       setCurrentManuscriptId(data.id);
       setShowDiagnostics(true);
       fetchHistory();
+      if (!ADMIN_EMAILS.includes(activeUser?.email ?? '')) {
+        setUseCount(prev => prev + 1);
+        const until = Date.now() + 60000;
+        setCooldownUntil(until);
+        setCooldownSecondsLeft(60);
+      }
 
       if (data.humanizationDelta > 0) {
         toast.success(`AI-detection risk dropped by ${data.humanizationDelta} points.`);
@@ -253,6 +331,7 @@ export default function Home() {
     setOutputMetrics(null);
     setAlternatives([]);
     setShowDiagnostics(false);
+    setVariationSeed(0);
   };
 
   const handleSelectHistory = (item: ManuscriptHistory) => {
@@ -285,16 +364,37 @@ export default function Home() {
 
   // ─── Render ─────────────────────────────────────────────────────────────────
 
+  if (!authChecked) {
+    return (
+      <div style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'var(--bg-primary)',
+      }}>
+        <Loader2 size={24} style={{ animation: 'spin 1s linear infinite', color: 'var(--text-muted)' }} />
+      </div>
+    );
+  }
+
   return (
     <main className="main-wrapper">
       <Toaster position="bottom-right" toastOptions={{ style: { background: '#1a1a1f', color: '#fff', border: '1px solid rgba(255,255,255,0.08)' } }} />
       <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} onLogin={handleLogin} />
+      <PricingModal
+        isOpen={isPricingOpen}
+        onClose={() => setIsPricingOpen(false)}
+        user={activeUser}
+        onLoginRequired={() => { setIsPricingOpen(false); setIsLoginOpen(true); }}
+      />
 
       {/* Modals / Drawers */}
       <StyleCloner
         isOpen={isClonerOpen}
         onClose={() => setIsClonerOpen(false)}
         onStyleCreated={(p) => { setSelectedProfile(p); setIsClonerOpen(false); }}
+      />
+      <ContactSupport
+        isOpen={isContactOpen}
+        onClose={() => setIsContactOpen(false)}
       />
       <ManuscriptLibrary
         isOpen={isLibraryOpen}
@@ -317,6 +417,8 @@ export default function Home() {
         user={activeUser}
         onSignOut={handleSignOut}
         onOpenLogin={() => { setIsProfileOpen(false); setIsLoginOpen(true); }}
+        subscriptionTier={subscriptionTier}
+        onOpenPricing={() => { setIsProfileOpen(false); setIsPricingOpen(true); }}
       />
 
       {/* ── Header ── */}
@@ -327,8 +429,8 @@ export default function Home() {
       }}>
         {/* Brand */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div className="icon-container-core" style={{ width: '40px', height: '40px' }}>
-            <BrandMark size={20} />
+          <div className="icon-container-core">
+            <BrandMark size={36} />
           </div>
           <div>
             <h1 style={{ fontSize: '1.25rem', fontWeight: 900, fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', lineHeight: 1 }}>
@@ -344,7 +446,7 @@ export default function Home() {
         {/* Center: workspace actions */}
         <nav style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
           <HeaderAction icon={<History size={14} />} label="History" onClick={() => setIsLibraryOpen(true)} />
-          <HeaderAction icon={<BookOpen size={14} />} label="Style Profile" onClick={() => setIsClonerOpen(true)} />
+          <HeaderAction icon={<LifeBuoy size={14} />} label="Support" onClick={() => setIsContactOpen(true)} />
           <HeaderAction icon={<MessageSquare size={14} />} label="AI Chat" onClick={() => setIsChatOpen(true)} disabled={!inputText.trim()} hint="Paste text first" />
           <HeaderAction icon={<Server size={14} />} label="Stats" onClick={() => setIsStatsOpen(true)} />
         </nav>
@@ -366,17 +468,6 @@ export default function Home() {
           )}
 
           <ProfileButton user={activeUser} onClick={() => setIsProfileOpen(true)} />
-
-          <button
-            onClick={handleRewrite}
-            disabled={isRewriting || !inputText.trim() || backendStatus === 'offline'}
-            className="btn btn-primary"
-            style={{ padding: '0.6rem 1.4rem', minWidth: '150px' }}
-            title={backendStatus === 'offline' ? 'Backend is offline — start the API server' : !inputText.trim() ? 'Enter some text first' : 'Improve the text'}
-          >
-            {isRewriting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-            {isRewriting ? 'Improving…' : 'Improve Text'}
-          </button>
         </div>
       </header>
 
@@ -396,6 +487,37 @@ export default function Home() {
           </span>
           <button onClick={fetchHistory} className="btn btn-glass" style={{ marginLeft: 'auto', padding: '0.3rem 0.7rem', fontSize: '0.65rem' }}>
             Retry
+          </button>
+        </div>
+      )}
+
+      {/* ── Free tier banner ── */}
+      {!subscriptionTier && (
+        <div style={{
+          margin: '0 1.5rem',
+          padding: '0.55rem 1rem',
+          background: 'rgba(124,58,237,0.06)',
+          border: '1px solid rgba(124,58,237,0.2)',
+          borderRadius: 'var(--radius-md)',
+          display: 'flex', alignItems: 'center', gap: '0.75rem',
+        }}>
+          <span style={{ fontSize: '0.7rem', color: 'rgba(167,139,250,0.85)', flex: 1 }}>
+            <strong style={{ color: '#a78bfa' }}>Free trial:</strong>{' '}
+            400 words total across all your rewrites.
+            Subscribe for 10,000–unlimited words.
+          </span>
+          <button
+            onClick={() => setIsPricingOpen(true)}
+            style={{
+              padding: '0.35rem 0.85rem',
+              background: 'linear-gradient(135deg, #7c3aed, #2563eb)',
+              border: 'none', borderRadius: '999px',
+              color: '#fff', fontSize: '0.6rem', fontWeight: 800,
+              textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Upgrade
           </button>
         </div>
       )}
@@ -435,6 +557,120 @@ export default function Home() {
         </div>
       </div>
 
+      {/* ── Tool strip: Text Diagnostics + AI Generator — above the editor grid ── */}
+      <div style={{ padding: '0 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+
+        {/* Text Diagnostics — always visible; shows placeholder until first rewrite */}
+        <div className="glass-panel" style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+          <button
+            onClick={() => setShowDiagnostics(v => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              width: '100%', padding: '0.85rem 1.25rem',
+              background: 'transparent', border: 'none',
+              borderBottom: showDiagnostics ? '1px solid rgba(255,255,255,0.06)' : 'none',
+              cursor: 'pointer',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg,#1d4ed8,#3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <BarChart2 size={15} color="#fff" />
+              </div>
+              <div style={{ textAlign: 'left' }}>
+                <p style={{ fontSize: '0.82rem', fontWeight: 800, color: showDiagnostics ? '#93c5fd' : '#60a5fa', margin: 0, letterSpacing: '-0.01em' }}>Text Diagnostics</p>
+                <p style={{ fontSize: '0.65rem', color: 'rgba(96,165,250,0.6)', margin: 0, marginTop: '0.1rem' }}>
+                  {metrics
+                    ? <>AI risk: {metrics.aiDetectionRisk}% → {outputMetrics ? `${outputMetrics.aiDetectionRisk}%` : '—'} · Burstiness: {metrics.burstiness.toFixed(2)} → {outputMetrics ? outputMetrics.burstiness.toFixed(2) : '—'}</>
+                    : 'Click "Convert to Natural Writing" to analyse your text'}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.3rem 0.65rem', background: showDiagnostics ? 'rgba(37,99,235,0.2)' : 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.3)', borderRadius: '999px', color: '#60a5fa', fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              {showDiagnostics ? <><ChevronDown size={11} style={{ transform: 'rotate(180deg)' }} /> Hide</> : <><ChevronDown size={11} /> Show</>}
+            </div>
+          </button>
+
+          <AnimatePresence>
+            {showDiagnostics && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: 'hidden' }}>
+                {metrics ? (
+                  <div style={{ padding: '1.25rem 1.75rem' }}>
+                    {metrics.detectedLanguage && metrics.detectedLanguage !== 'en' && (
+                      <p style={{ fontSize: '0.65rem', color: 'var(--text-dark)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Language detected: {metrics.detectedLanguage}</p>
+                    )}
+                    <AIRiskComparison inputRisk={metrics.aiDetectionRisk} outputRisk={outputMetrics?.aiDetectionRisk ?? null} />
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem', marginTop: '1rem' }}>
+                      <ScoreBar value={metrics.humanityScore} label="Naturalness" good="high" />
+                      <ScoreBar value={Math.min(metrics.burstiness / 0.7, 1)} label="Sentence variety" good="high" />
+                      <ScoreBar value={metrics.contractionRate} label="Contraction rate" good="high" />
+                      <ScoreBar value={Math.min(metrics.readability.readingEase / 100, 1)} label="Reading ease" good="high" />
+                      <ScoreBar value={1 - metrics.passiveVoice.ratio} label="Active voice" good="high" />
+                      <ScoreBar value={1 - Math.min(metrics.hedgeDensity * 20, 1)} label="Directness" good="high" />
+                      <ScoreBar value={1 - Math.min(metrics.nominalizationDensity * 5, 1)} label="Verb-forward" good="high" />
+                      <ScoreBar value={1 - metrics.semanticRedundancy} label="No redundancy" good="high" />
+                      <ScoreBar value={1 - Math.min(metrics.transitionOveruse, 1)} label="Transition balance" good="high" />
+                      <ScoreBar value={metrics.lexicalDiversity.ttr} label="Word variety" good="high" />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
+                      <DiagStat label="Grade level" value={`${grade(metrics.readability.gradeLevel)} (Flesch-Kincaid)`} />
+                      <DiagStat label="Avg sentence" value={`${grade(metrics.sentenceLengthMean)} words (σ=${grade(metrics.sentenceLengthStd)})`} />
+                      <DiagStat label="Sentences" value={`${metrics.sentenceCount} across ${metrics.paragraphCount} paragraphs`} />
+                      <DiagStat label="Unique words" value={`${metrics.lexicalDiversity.uniqueWords} (TTR ${pct(metrics.lexicalDiversity.ttr)})`} />
+                      {metrics.passiveVoice.count > 0 && <DiagStat label="Passive voice" value={`${metrics.passiveVoice.count} sentences`} warn />}
+                      {metrics.roboticMarkers.length > 0 && <DiagStat label="AI-like phrases" value={metrics.roboticMarkers.slice(0, 3).join(', ')} warn />}
+                    </div>
+                    {metrics.aiTells.length > 0 && (
+                      <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-light)' }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>AI-tell phrases in input: </span>
+                        {metrics.aiTells.slice(0, 8).map(t => (
+                          <span key={t.phrase} style={{ fontSize: '0.7rem', color: '#ef4444', marginRight: '0.75rem', fontWeight: 500 }}>
+                            &quot;{t.phrase}&quot;{t.count > 1 && ` ×${t.count}`}
+                          </span>
+                        ))}
+                        {outputMetrics && outputMetrics.aiTells.length === 0 && (
+                          <span style={{ fontSize: '0.7rem', color: 'var(--accent-blue)', marginLeft: '0.5rem', fontWeight: 600 }}>→ all removed in improved version</span>
+                        )}
+                      </div>
+                    )}
+                    {(metrics.repeatedNGrams.length > 0 || metrics.sentenceStarterRepetition.length > 0) && (
+                      <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-light)' }}>
+                        {metrics.repeatedNGrams.length > 0 && (
+                          <div style={{ marginBottom: '0.5rem' }}>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>Repeated phrases: </span>
+                            {metrics.repeatedNGrams.slice(0, 5).map(n => (
+                              <span key={n.ngram} style={{ fontSize: '0.7rem', color: '#f59e0b', marginRight: '0.75rem' }}>&quot;{n.ngram}&quot; ×{n.count}</span>
+                            ))}
+                          </div>
+                        )}
+                        {metrics.sentenceStarterRepetition.length > 0 && (
+                          <div>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>Repeated openers: </span>
+                            {metrics.sentenceStarterRepetition.slice(0, 3).map(s => (
+                              <span key={s.starter} style={{ fontSize: '0.7rem', color: '#f59e0b', marginRight: '0.75rem' }}>&quot;{s.starter}…&quot; ×{s.count}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(96,165,250,0.4)', fontSize: '0.8rem' }}>
+                    Paste your text and click <strong style={{ color: 'rgba(96,165,250,0.7)' }}>Convert to Natural Writing</strong> to see AI-detection metrics here.
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* AI Generator */}
+        <div className="glass-panel" style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+          <AIGeneratorPanel onGenerate={(text) => { setInputText(text); }} />
+        </div>
+      </div>
+
       {/* ── Main editor grid ── */}
       <div className="grid-workspace" style={{ flex: 1, minHeight: 0 }}>
         {/* Left: Editor */}
@@ -449,7 +685,7 @@ export default function Home() {
             </button>
           </div>
           <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-            {/* Textarea gets all remaining space */}
+            {/* Textarea */}
             <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
               <TextInputPanel
                 value={inputText}
@@ -457,90 +693,95 @@ export default function Home() {
                 placeholder="Paste or type the AI-generated text you want to humanize — or upload a .pdf / .docx file above."
               />
             </div>
-            <AIGeneratorPanel onGenerate={(text) => { setInputText(text); }} />
 
-            {/* ── Inline process button ── */}
-            <div style={{
-              padding: '1rem 1.25rem 1.25rem',
-              borderTop: '1px solid rgba(37,99,235,0.15)',
-              background: 'rgba(37,99,235,0.04)',
-              flexShrink: 0,
-              position: 'relative',
-            }}>
-              {/* Ambient glow layer behind the button */}
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(37,99,235,0.18) 0%, transparent 70%)',
-                pointerEvents: 'none',
-              }} />
-
-              <button
-                onClick={handleRewrite}
-                disabled={isRewriting || !inputText.trim() || backendStatus === 'offline'}
-                title={
-                  backendStatus === 'offline' ? 'Backend is offline — start the API server'
-                  : !inputText.trim() ? 'Enter or generate some text first'
-                  : 'Convert to natural writing'
-                }
-                style={{
-                  position: 'relative',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem',
-                  width: '100%',
-                  padding: '1rem 1rem',
-                  background: isRewriting || !inputText.trim() || backendStatus === 'offline'
-                    ? 'rgba(37,99,235,0.2)'
-                    : 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%)',
-                  border: inputText.trim() && !isRewriting && backendStatus !== 'offline'
-                    ? '1px solid rgba(96,165,250,0.5)'
-                    : '1px solid rgba(37,99,235,0.2)',
-                  borderRadius: '14px',
-                  color: '#fff',
-                  fontSize: '0.88rem', fontWeight: 900,
-                  textTransform: 'uppercase', letterSpacing: '0.12em',
-                  cursor: isRewriting || !inputText.trim() || backendStatus === 'offline' ? 'not-allowed' : 'pointer',
-                  opacity: !inputText.trim() || backendStatus === 'offline' ? 0.45 : 1,
-                  boxShadow: inputText.trim() && !isRewriting && backendStatus !== 'offline'
-                    ? '0 0 0 1px rgba(59,130,246,0.3), 0 4px 20px rgba(37,99,235,0.5), 0 8px 40px rgba(37,99,235,0.3), inset 0 1px 0 rgba(255,255,255,0.15)'
-                    : 'none',
-                  transition: 'all 0.2s ease',
-                  fontFamily: 'var(--font-display)',
-                  animation: inputText.trim() && !isRewriting && backendStatus !== 'offline'
-                    ? 'btnPulse 2.5s ease-in-out infinite' : 'none',
-                }}
-                onMouseEnter={e => {
-                  if (!isRewriting && inputText.trim() && backendStatus !== 'offline') {
-                    e.currentTarget.style.transform = 'translateY(-2px) scale(1.01)';
-                    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(96,165,250,0.5), 0 8px 32px rgba(37,99,235,0.7), 0 16px 60px rgba(37,99,235,0.4), inset 0 1px 0 rgba(255,255,255,0.2)';
-                    e.currentTarget.style.animation = 'none';
-                  }
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  if (inputText.trim() && backendStatus !== 'offline') {
-                    e.currentTarget.style.boxShadow = '0 0 0 1px rgba(59,130,246,0.3), 0 4px 20px rgba(37,99,235,0.5), 0 8px 40px rgba(37,99,235,0.3), inset 0 1px 0 rgba(255,255,255,0.15)';
-                    e.currentTarget.style.animation = 'btnPulse 2.5s ease-in-out infinite';
-                  }
-                }}
-              >
-                {isRewriting
-                  ? <><Loader2 size={18} className="animate-spin" /> Converting to natural writing…</>
-                  : <><Sparkles size={18} /> Convert to Natural Writing</>
-                }
-              </button>
-
-              <style>{`
-                @keyframes btnPulse {
-                  0%, 100% { box-shadow: 0 0 0 1px rgba(59,130,246,0.3), 0 4px 20px rgba(37,99,235,0.5), 0 8px 40px rgba(37,99,235,0.3), inset 0 1px 0 rgba(255,255,255,0.15); }
-                  50%       { box-shadow: 0 0 0 3px rgba(59,130,246,0.2), 0 4px 28px rgba(37,99,235,0.75), 0 12px 60px rgba(37,99,235,0.45), inset 0 1px 0 rgba(255,255,255,0.2); }
-                }
-              `}</style>
-              {backendStatus === 'offline' && (
-                <p style={{ fontSize: '0.6rem', color: '#ef4444', textAlign: 'center', marginTop: '0.4rem' }}>
-                  API offline — start the backend server first
-                </p>
-              )}
-            </div>
+            {/* ── Generate button ── */}
+            {(() => {
+              const isAdmin = ADMIN_EMAILS.includes(activeUser?.email ?? '');
+              const onCooldown = !isAdmin && cooldownSecondsLeft > 0;
+              const maxed     = !isAdmin && useCount >= 3;
+              const disabled  = isRewriting || !inputText.trim() || backendStatus === 'offline' || onCooldown || maxed;
+              const ready     = !disabled;
+              return (
+                <div style={{
+                  padding: '0.9rem 1.25rem 1.1rem',
+                  borderTop: '1px solid rgba(37,99,235,0.14)',
+                  background: 'rgba(37,99,235,0.03)',
+                  flexShrink: 0, position: 'relative',
+                }}>
+                  <div style={{
+                    position: 'absolute', inset: 0, pointerEvents: 'none',
+                    background: 'radial-gradient(ellipse 70% 55% at 50% 100%, rgba(37,99,235,0.14) 0%, transparent 70%)',
+                  }} />
+                  <button
+                    onClick={handleRewrite}
+                    disabled={disabled}
+                    title={
+                      backendStatus === 'offline' ? 'Backend offline — start the server'
+                      : !inputText.trim() ? 'Enter some text first'
+                      : maxed ? 'Session limit reached (3 rewrites)'
+                      : onCooldown ? `Cooldown — ${cooldownSecondsLeft}s`
+                      : 'Humanize this text'
+                    }
+                    style={{
+                      position: 'relative', width: '100%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem',
+                      padding: '0.95rem 1rem',
+                      background: ready
+                        ? 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%)'
+                        : 'rgba(37,99,235,0.18)',
+                      border: ready
+                        ? '1px solid rgba(96,165,250,0.5)'
+                        : '1px solid rgba(37,99,235,0.18)',
+                      borderRadius: '12px',
+                      color: ready ? '#fff' : 'rgba(255,255,255,0.25)',
+                      fontSize: '0.85rem', fontWeight: 900,
+                      textTransform: 'uppercase', letterSpacing: '0.1em',
+                      cursor: disabled ? 'not-allowed' : 'pointer',
+                      opacity: disabled && !isRewriting ? 0.5 : 1,
+                      boxShadow: ready
+                        ? '0 0 0 1px rgba(59,130,246,0.3), 0 4px 20px rgba(37,99,235,0.5), 0 8px 40px rgba(37,99,235,0.25), inset 0 1px 0 rgba(255,255,255,0.12)'
+                        : 'none',
+                      transition: 'all 0.2s ease',
+                      fontFamily: 'var(--font-display)',
+                      animation: ready ? 'btnPulse 2.5s ease-in-out infinite' : 'none',
+                    }}
+                    onMouseEnter={e => {
+                      if (ready) {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 0 0 2px rgba(96,165,250,0.5), 0 8px 32px rgba(37,99,235,0.7), 0 16px 60px rgba(37,99,235,0.35), inset 0 1px 0 rgba(255,255,255,0.18)';
+                        e.currentTarget.style.animation = 'none';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.transform = '';
+                      if (ready) e.currentTarget.style.boxShadow = '0 0 0 1px rgba(59,130,246,0.3), 0 4px 20px rgba(37,99,235,0.5), 0 8px 40px rgba(37,99,235,0.25), inset 0 1px 0 rgba(255,255,255,0.12)';
+                    }}
+                  >
+                    {isRewriting
+                      ? <><Loader2 size={18} className="animate-spin" />{outputText ? 'Generating new version…' : 'Humanizing…'}</>
+                      : maxed
+                      ? 'Session limit reached'
+                      : onCooldown
+                      ? `Wait ${cooldownSecondsLeft}s before next rewrite`
+                      : outputText
+                      ? <><RefreshCw size={18} /> Generate New Version</>
+                      : <><Sparkles size={18} /> Convert to Natural Writing</>
+                    }
+                  </button>
+                  <style>{`
+                    @keyframes btnPulse {
+                      0%,100% { box-shadow: 0 0 0 1px rgba(59,130,246,0.3), 0 4px 20px rgba(37,99,235,0.5), 0 8px 40px rgba(37,99,235,0.25), inset 0 1px 0 rgba(255,255,255,0.12); }
+                      50%     { box-shadow: 0 0 0 3px rgba(59,130,246,0.18), 0 4px 28px rgba(37,99,235,0.75), 0 12px 60px rgba(37,99,235,0.4), inset 0 1px 0 rgba(255,255,255,0.18); }
+                    }
+                  `}</style>
+                  {backendStatus === 'offline' && (
+                    <p style={{ fontSize: '0.6rem', color: '#ef4444', textAlign: 'center', marginTop: '0.35rem', position: 'relative' }}>
+                      API offline — run <code style={{ background: 'rgba(0,0,0,0.3)', padding: '0 0.3rem', borderRadius: 3 }}>npm run start:dev</code> in the backend
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -552,6 +793,71 @@ export default function Home() {
               <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--text-muted)' }}>Improved Version</span>
             </div>
             <div className="flex-row" style={{ gap: '0.5rem' }}>
+              {/* ── Improve Text button with cooldown ── */}
+              {(() => {
+                const isAdmin = ADMIN_EMAILS.includes(activeUser?.email ?? '');
+                const isOnCooldown = !isAdmin && cooldownSecondsLeft > 0;
+                const isMaxed = !isAdmin && useCount >= 3;
+                const isDisabled = isRewriting || !inputText.trim() || backendStatus === 'offline' || isOnCooldown || isMaxed;
+                const label = isRewriting
+                  ? 'Improving…'
+                  : isMaxed
+                  ? 'Limit reached'
+                  : isOnCooldown
+                  ? `Wait ${cooldownSecondsLeft}s`
+                  : outputText
+                  ? 'Regenerate'
+                  : 'Improve Text';
+                const title = isMaxed
+                  ? 'Maximum 3 uses per session'
+                  : isOnCooldown
+                  ? `Cooldown — ${cooldownSecondsLeft}s remaining`
+                  : backendStatus === 'offline'
+                  ? 'Backend is offline'
+                  : !inputText.trim()
+                  ? 'Enter some text first'
+                  : 'Improve this text using the NLP algorithm';
+                return (
+                  <button
+                    onClick={handleRewrite}
+                    disabled={isDisabled}
+                    title={title}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.4rem',
+                      padding: '0.45rem 1rem',
+                      background: isDisabled
+                        ? 'rgba(37,99,235,0.08)'
+                        : 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
+                      border: isDisabled
+                        ? '1px solid rgba(37,99,235,0.15)'
+                        : '1px solid rgba(96,165,250,0.4)',
+                      borderRadius: '8px',
+                      color: isDisabled ? 'rgba(255,255,255,0.3)' : '#fff',
+                      fontSize: '0.65rem', fontWeight: 800,
+                      textTransform: 'uppercase', letterSpacing: '0.1em',
+                      cursor: isDisabled ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap',
+                      boxShadow: isDisabled ? 'none' : '0 2px 12px rgba(37,99,235,0.4)',
+                      animation: !isDisabled ? 'headerBtnPulse 2.5s ease-in-out infinite' : 'none',
+                    }}
+                  >
+                    {isRewriting
+                      ? <Loader2 size={12} className="animate-spin" />
+                      : isOnCooldown || isMaxed
+                      ? null
+                      : <Sparkles size={12} />}
+                    {label}
+                    {useCount > 0 && !isMaxed && !isAdmin && (
+                      <span style={{ opacity: 0.5, fontSize: '0.55rem' }}>({useCount}/3)</span>
+                    )}
+                    {isAdmin && (
+                      <span style={{ opacity: 0.45, fontSize: '0.55rem' }}>∞</span>
+                    )}
+                  </button>
+                );
+              })()}
+
               {alternatives.length > 0 && (
                 <button onClick={() => setShowAlternatives(v => !v)} className="btn btn-glass" style={{ padding: '0.4rem 0.9rem', fontSize: '0.65rem' }}>
                   <ChevronDown size={13} /> {alternatives.length} alt.
@@ -565,22 +871,29 @@ export default function Home() {
               )}
             </div>
           </div>
+          <style>{`
+            @keyframes headerBtnPulse {
+              0%, 100% { box-shadow: 0 2px 12px rgba(37,99,235,0.4); }
+              50%       { box-shadow: 0 2px 20px rgba(37,99,235,0.7), 0 0 0 2px rgba(59,130,246,0.15); }
+            }
+          `}</style>
 
           <div className="custom-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', position: 'relative' }}>
             {outputText ? (
               <div style={{ padding: '1.75rem 2rem' }}>
                 {/* Improved text — always readable */}
-                <p style={{
-                  fontSize: '0.95rem',
-                  lineHeight: 1.8,
-                  color: '#e8e8ed',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  fontFamily: 'var(--font-body), system-ui, sans-serif',
-                  margin: 0,
-                }}>
-                  {outputText.replace(/<[^>]+>/g, '')}
-                </p>
+                {outputText.replace(/<[^>]+>/g, '').split(/\n\n+/).map((para, idx) => (
+                  <p key={idx} style={{
+                    fontSize: '0.95rem',
+                    lineHeight: 1.8,
+                    color: '#e8e8ed',
+                    wordBreak: 'break-word',
+                    fontFamily: 'var(--font-body), system-ui, sans-serif',
+                    margin: idx === 0 ? 0 : '1em 0 0',
+                  }}>
+                    {para.trim()}
+                  </p>
+                ))}
 
                 {/* Show diff toggle */}
                 {inputText && (
@@ -626,7 +939,7 @@ export default function Home() {
                   Improved text appears here
                 </p>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                  Paste text on the left, then click Convert to Natural Writing
+                  Paste text on the left, then click <strong>Improve Text</strong> above
                 </p>
               </div>
             )}
@@ -654,99 +967,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Diagnostics panel ── */}
-      <AnimatePresence>
-        {showDiagnostics && metrics && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
-            className="glass-panel"
-            style={{ padding: '1.25rem 1.75rem' }}
-          >
-            <div className="flex-between" style={{ marginBottom: '1rem' }}>
-              <div className="flex-row">
-                <BarChart2 size={15} style={{ color: 'var(--text-muted)' }} />
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--text-muted)' }}>
-                  Text Diagnostics
-                </span>
-                {metrics.detectedLanguage && metrics.detectedLanguage !== 'en' && (
-                  <span style={{ fontSize: '0.65rem', color: 'var(--text-dark)', textTransform: 'uppercase' }}>· Language: {metrics.detectedLanguage}</span>
-                )}
-              </div>
-              <button onClick={() => setShowDiagnostics(false)} className="btn btn-glass" style={{ padding: '0.25rem 0.5rem' }}><X size={14} /></button>
-            </div>
-
-            {/* AI Detection Risk — before / after */}
-            <AIRiskComparison inputRisk={metrics.aiDetectionRisk} outputRisk={outputMetrics?.aiDetectionRisk ?? null} />
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem', marginTop: '1rem' }}>
-              <ScoreBar value={metrics.humanityScore} label="Naturalness" good="high" />
-              <ScoreBar value={Math.min(metrics.burstiness / 0.7, 1)} label="Sentence variety" good="high" />
-              <ScoreBar value={metrics.contractionRate} label="Contraction rate" good="high" />
-              <ScoreBar value={Math.min(metrics.readability.readingEase / 100, 1)} label="Reading ease" good="high" />
-              <ScoreBar value={1 - metrics.passiveVoice.ratio} label="Active voice" good="high" />
-              <ScoreBar value={1 - Math.min(metrics.hedgeDensity * 20, 1)} label="Directness" good="high" />
-              <ScoreBar value={1 - Math.min(metrics.nominalizationDensity * 5, 1)} label="Verb-forward" good="high" />
-              <ScoreBar value={1 - metrics.semanticRedundancy} label="No redundancy" good="high" />
-              <ScoreBar value={1 - Math.min(metrics.transitionOveruse, 1)} label="Transition balance" good="high" />
-              <ScoreBar value={metrics.lexicalDiversity.ttr} label="Word variety" good="high" />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
-              <DiagStat label="Grade level" value={`${grade(metrics.readability.gradeLevel)} (Flesch-Kincaid)`} />
-              <DiagStat label="Avg sentence" value={`${grade(metrics.sentenceLengthMean)} words (σ=${grade(metrics.sentenceLengthStd)})`} />
-              <DiagStat label="Sentences" value={`${metrics.sentenceCount} across ${metrics.paragraphCount} paragraphs`} />
-              <DiagStat label="Unique words" value={`${metrics.lexicalDiversity.uniqueWords} (TTR ${pct(metrics.lexicalDiversity.ttr)})`} />
-              {metrics.passiveVoice.count > 0 && (
-                <DiagStat label="Passive voice" value={`${metrics.passiveVoice.count} sentences`} warn />
-              )}
-              {metrics.roboticMarkers.length > 0 && (
-                <DiagStat label="AI-like phrases" value={metrics.roboticMarkers.slice(0, 3).join(', ')} warn />
-              )}
-            </div>
-
-            {metrics.aiTells.length > 0 && (
-              <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-light)' }}>
-                <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>AI-tell phrases in input: </span>
-                {metrics.aiTells.slice(0, 8).map(t => (
-                  <span key={t.phrase} style={{ fontSize: '0.7rem', color: '#ef4444', marginRight: '0.75rem', fontWeight: 500 }}>
-                    "{t.phrase}"{t.count > 1 && ` ×${t.count}`}
-                  </span>
-                ))}
-                {outputMetrics && outputMetrics.aiTells.length === 0 && (
-                  <span style={{ fontSize: '0.7rem', color: 'var(--accent-blue)', marginLeft: '0.5rem', fontWeight: 600 }}>
-                    → all removed in improved version
-                  </span>
-                )}
-              </div>
-            )}
-
-            {(metrics.repeatedNGrams.length > 0 || metrics.sentenceStarterRepetition.length > 0) && (
-              <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-light)' }}>
-                {metrics.repeatedNGrams.length > 0 && (
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>Repeated phrases: </span>
-                    {metrics.repeatedNGrams.slice(0, 5).map(n => (
-                      <span key={n.ngram} style={{ fontSize: '0.7rem', color: '#f59e0b', marginRight: '0.75rem' }}>
-                        "{n.ngram}" ×{n.count}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {metrics.sentenceStarterRepetition.length > 0 && (
-                  <div>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>Repeated openers: </span>
-                    {metrics.sentenceStarterRepetition.slice(0, 3).map(s => (
-                      <span key={s.starter} style={{ fontSize: '0.7rem', color: '#f59e0b', marginRight: '0.75rem' }}>
-                        "{s.starter}…" ×{s.count}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </main>
   );
 }

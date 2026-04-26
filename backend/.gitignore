@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Environment variables — contains API keys, never commit
+.env
+.env.*
+
+# Build output
+dist/
+
+# Database
+*.sqlite
+*.sqlite-journal
+
+# Logs
+*.log
+
+# OS
+.DS_Store

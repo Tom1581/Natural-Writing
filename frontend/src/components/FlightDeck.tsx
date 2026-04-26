@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Zap, Activity, HardDrive, Cpu, Server, X, Activity as ActivityIcon, BarChart, Clock, Database } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart2, Zap, Clock, FileText, Cpu, X, RefreshCw, Activity, CheckCircle2 } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
 
 interface FlightDeckProps {
@@ -11,113 +11,212 @@ interface FlightDeckProps {
   onClose: () => void;
 }
 
-export default function FlightDeck({ isOpen, onClose }: FlightDeckProps) {
-  const [stats, setStats] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+const CHART_DATA = [
+  { time: '6h ago', v: 22 },
+  { time: '5h ago', v: 41 },
+  { time: '4h ago', v: 29 },
+  { time: '3h ago', v: 63 },
+  { time: '2h ago', v: 44 },
+  { time: '1h ago', v: 57 },
+  { time: 'now',    v: 48 },
+];
 
-  useEffect(() => {
-    if (isOpen) fetchStats();
-  }, [isOpen]);
+const STATUS_ROWS = [
+  { label: 'Primary Node',   status: 'Active' },
+  { label: 'NLP Engine',     status: 'Running' },
+  { label: 'Semantic Cache', status: 'Synchronized' },
+  { label: 'SQLite Store',   status: 'Healthy' },
+];
+
+export default function FlightDeck({ isOpen, onClose }: FlightDeckProps) {
+  const [stats, setStats]       = useState<any>(null);
+  const [isLoading, setLoading] = useState(true);
+
+  useEffect(() => { if (isOpen) fetchStats(); }, [isOpen]);
 
   const fetchStats = async () => {
-    setIsLoading(true);
+    setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/rewrite/stats`);
+      const res  = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/rewrite/stats`);
       const data = await res.json();
       setStats(data);
-    } catch (err) {
-      toast.error('Telemetry offline');
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { toast.error('Telemetry offline'); }
+    finally   { setLoading(false); }
   };
 
-  const chartData = [
-    { name: '00:00', load: 45 },
-    { name: '04:00', load: 52 },
-    { name: '08:00', load: 38 },
-    { name: '12:00', load: 65 },
-    { name: '16:00', load: 48 },
-    { name: '20:00', load: 55 },
-    { name: '23:59', load: 42 },
+  const CARDS = [
+    { label: 'Total Tokens',  value: stats?.totalTokens?.toLocaleString() ?? '—',              color: '#f59e0b', icon: <Zap size={13}      /> },
+    { label: 'Avg Latency',   value: stats?.avgLatencyMs ? `${stats.avgLatencyMs}ms` : '—',   color: '#3b82f6', icon: <Clock size={13}     /> },
+    { label: 'Manuscripts',   value: stats?.totalManuscripts?.toLocaleString() ?? '—',          color: '#a78bfa', icon: <FileText size={13}  /> },
+    { label: 'Efficiency',    value: '99.8%',                                                   color: '#4ade80', icon: <Cpu size={13}       /> },
   ];
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-black/90 backdrop-blur-3xl z-[250]" />
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="fixed inset-12 bg-[#050505] border border-white/5 z-[260] rounded-[4rem] shadow-[0_0_200px_rgba(0,0,0,1)] flex flex-col overflow-hidden"
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={onClose}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(10px)', zIndex: 250 }}
+          />
+
+          {/* Panel — slides up from bottom */}
+          <motion.div
+            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+            style={{
+              position: 'fixed', left: '3rem', right: '3rem', bottom: 0, top: '3.5rem',
+              background: '#060606',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: '1.5rem 1.5rem 0 0',
+              boxShadow: '0 -60px 160px rgba(0,0,0,1)',
+              zIndex: 260,
+              display: 'flex', flexDirection: 'column', overflow: 'hidden',
+            }}
           >
-            <div className="p-12 border-b border-white/5 bg-white/[0.01] flex justify-between items-center">
-               <div className="flex items-center gap-6">
-                  <div className="p-4 bg-blue-500/10 rounded-2xl shadow-inner"><Shield className="text-blue-500" size={32} /></div>
-                  <div>
-                     <h2 className="text-3xl font-black uppercase tracking-tighter italic">The Flight Deck</h2>
-                     <p className="text-[10px] text-[#222] font-black uppercase tracking-[0.6em]">Neural Infrastructure Observability</p>
-                  </div>
-               </div>
-               <button onClick={onClose} className="text-[#222] hover:text-white transition-all"><X size={32} /></button>
+            {/* ── Header ── */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '1.25rem 1.75rem',
+              borderBottom: '1px solid rgba(255,255,255,0.05)',
+              flexShrink: 0,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 9,
+                  background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <BarChart2 size={16} style={{ color: '#3b82f6' }} />
+                </div>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.06em', fontStyle: 'italic' }}>
+                    The Flight Deck
+                  </h2>
+                  <p style={{ margin: 0, fontSize: '0.57rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.45em', color: '#2a2a2a' }}>
+                    Neural Infrastructure Observability
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <button
+                  onClick={fetchStats}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 32, height: 32, borderRadius: 8,
+                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+                    color: '#444', cursor: 'pointer',
+                  }}
+                >
+                  <RefreshCw size={13} style={{ animation: isLoading ? 'fdSpin 1s linear infinite' : 'none' }} />
+                </button>
+                <button
+                  onClick={onClose}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: 'none', border: 'none', color: '#444', cursor: 'pointer' }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-20 custom-scroll">
-               <div className="grid grid-cols-4 gap-12 mb-20">
-                  <div className="p-10 bg-white/[0.01] border border-white/5 rounded-[3rem] space-y-6 shadow-2xl">
-                     <p className="text-[9px] font-black uppercase tracking-widest text-[#222] flex items-center gap-3"><Zap size={14} /> Total Tokens</p>
-                     <p className="text-5xl font-black italic">{stats?.totalTokens?.toLocaleString() || '0'}</p>
-                  </div>
-                  <div className="p-10 bg-white/[0.01] border border-white/5 rounded-[3rem] space-y-6 shadow-2xl">
-                     <p className="text-[9px] font-black uppercase tracking-widest text-[#222] flex items-center gap-3"><Clock size={14} /> Avg Latency</p>
-                     <p className="text-5xl font-black italic text-blue-500">{stats?.avgLatencyMs || '0'}<span className="text-sm">ms</span></p>
-                  </div>
-                  <div className="p-10 bg-white/[0.01] border border-white/5 rounded-[3rem] space-y-6 shadow-2xl">
-                     <p className="text-[9px] font-black uppercase tracking-widest text-[#222] flex items-center gap-3"><Database size={14} /> Manuscripts</p>
-                     <p className="text-5xl font-black italic">{stats?.totalManuscripts || '0'}</p>
-                  </div>
-                  <div className="p-10 bg-white/[0.01] border border-white/5 rounded-[3rem] space-y-6 shadow-2xl">
-                     <p className="text-[9px] font-black uppercase tracking-widest text-[#222] flex items-center gap-3"><Cpu size={14} /> Efficiency</p>
-                     <p className="text-5xl font-black italic text-green-500">99.8<span className="text-sm">%</span></p>
-                  </div>
-               </div>
+            {/* ── Body ── */}
+            <div style={{ flex: 1, overflow: 'auto', padding: '1.25rem 1.75rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
-               <div className="grid grid-cols-2 gap-12">
-                  <div className="p-12 bg-white/[0.01] border border-white/5 rounded-[4rem] space-y-12">
-                     <h3 className="text-xl font-black uppercase tracking-widest text-[#333] flex items-center gap-4"><ActivityIcon size={20} /> Semantic Throughput</h3>
-                     <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                           <AreaChart data={chartData}>
-                              <defs>
-                                 <linearGradient id="colorLoad" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                                 </linearGradient>
-                              </defs>
-                              <Area type="monotone" dataKey="load" stroke="#3b82f6" fillOpacity={1} fill="url(#colorLoad)" />
-                           </AreaChart>
-                        </ResponsiveContainer>
-                     </div>
+              {/* Stat cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+                {CARDS.map(({ label, value, color, icon }) => (
+                  <div key={label} style={{
+                    padding: '1.1rem 1.25rem',
+                    background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '1rem',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.7rem' }}>
+                      <span style={{ color }}>{icon}</span>
+                      <span style={{ fontSize: '0.57rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#2e2e2e' }}>{label}</span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '1.9rem', fontWeight: 900, fontStyle: 'italic', color: color === '#fff' ? '#fff' : color }}>
+                      {isLoading ? '…' : value}
+                    </p>
                   </div>
-                  <div className="p-12 bg-white/[0.01] border border-white/5 rounded-[4rem] flex flex-col justify-between">
-                     <div className="space-y-4">
-                        <h3 className="text-xl font-black uppercase tracking-widest text-[#333] flex items-center gap-4"><Server size={20} /> Cluster Integrity</h3>
-                        <p className="text-xs text-[#555] font-black uppercase tracking-widest leading-relaxed">Neural clusters are operating within optimal temperature and semantic drift boundaries. Automated backup mirrors synchronized.</p>
-                     </div>
-                     <div className="space-y-6">
-                        <div className="flex justify-between items-end border-b border-white/5 pb-4">
-                           <span className="text-[10px] font-black uppercase text-[#222]">Primary Node</span>
-                           <span className="text-[10px] font-black uppercase text-green-500">Active</span>
-                        </div>
-                        <div className="flex justify-between items-end border-b border-white/5 pb-4">
-                           <span className="text-[10px] font-black uppercase text-[#222]">Semantic Cache</span>
-                           <span className="text-[10px] font-black uppercase text-green-500">Synchronized</span>
-                        </div>
-                     </div>
+                ))}
+              </div>
+
+              {/* Chart + Status */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '0.75rem', flex: 1, minHeight: '220px' }}>
+
+                {/* Throughput chart */}
+                <div style={{
+                  padding: '1.25rem', background: 'rgba(255,255,255,0.01)',
+                  border: '1px solid rgba(255,255,255,0.05)', borderRadius: '1rem',
+                  display: 'flex', flexDirection: 'column', gap: '0.75rem',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Activity size={13} style={{ color: '#3b82f6' }} />
+                    <span style={{ fontSize: '0.58rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.25em', color: '#2e2e2e' }}>
+                      Semantic Throughput
+                    </span>
                   </div>
-               </div>
+                  <div style={{ flex: 1, minHeight: 0 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={CHART_DATA} margin={{ top: 4, right: 8, bottom: 0, left: -16 }}>
+                        <defs>
+                          <linearGradient id="fdGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.25} />
+                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}    />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                        <XAxis dataKey="time" tick={{ fontSize: 8, fill: '#333', fontWeight: 700 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 8, fill: '#333', fontWeight: 700 }} axisLine={false} tickLine={false} domain={[0, 100]} />
+                        <Tooltip
+                          contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: '0.68rem' }}
+                          labelStyle={{ color: '#666', fontWeight: 700 }}
+                          itemStyle={{ color: '#3b82f6', fontWeight: 700 }}
+                          cursor={{ stroke: 'rgba(59,130,246,0.2)', strokeWidth: 1 }}
+                        />
+                        <Area type="monotone" dataKey="v" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#fdGrad)" dot={false} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Cluster status */}
+                <div style={{
+                  padding: '1.25rem', background: 'rgba(255,255,255,0.01)',
+                  border: '1px solid rgba(255,255,255,0.05)', borderRadius: '1rem',
+                  display: 'flex', flexDirection: 'column', gap: '1rem',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80', display: 'inline-block', boxShadow: '0 0 6px #4ade80' }} />
+                    <span style={{ fontSize: '0.58rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.25em', color: '#2e2e2e' }}>
+                      Cluster Integrity
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.65rem', color: '#333', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1.7 }}>
+                    Neural clusters operating within optimal temperature and semantic drift boundaries. Backup mirrors synchronized.
+                  </p>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '0' }}>
+                    {STATUS_ROWS.map(({ label, status }) => (
+                      <div key={label} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '0.6rem 0', borderBottom: '1px solid rgba(255,255,255,0.04)',
+                      }}>
+                        <span style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#2a2a2a' }}>{label}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <CheckCircle2 size={11} style={{ color: '#4ade80' }} />
+                          <span style={{ fontSize: '0.58rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4ade80' }}>{status}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
+
+          <style>{`@keyframes fdSpin { to { transform: rotate(360deg); } }`}</style>
         </>
       )}
     </AnimatePresence>

@@ -1,29 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Library, 
-  Search, 
-  Trash2, 
-  RotateCcw, 
-  BookText, 
-  X, 
-  FileText, 
-  Clock, 
-  SearchCode, 
-  AlertCircle, 
-  ChevronRight, 
-  Plus, 
-  FolderPlus, 
-  Folder,
-  LayoutGrid,
-  List,
-  Filter,
-  CheckCircle2,
-  MoreVertical,
-  Zap,
-  Layers,
-  ArrowRight
+import {
+  Search, Trash2, SearchCode, X,
+  Plus, Folder, Layers, ChevronRight,
+  Copy, Clock, BookOpen,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -57,193 +38,348 @@ interface ManuscriptLibraryProps {
   isSearching: boolean;
 }
 
+function scoreColor(score: number): string {
+  if (score >= 0.75) return '#4ade80';
+  if (score >= 0.5)  return '#f59e0b';
+  return '#ef4444';
+}
+
+function ScoreBadge({ score }: { score: number | undefined }) {
+  const pct = score != null ? Math.round(score * 100) : null;
+  const color = pct != null ? scoreColor(score!) : '#333';
+  return (
+    <div style={{
+      width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
+      border: `2px solid ${pct != null ? color + '55' : 'rgba(255,255,255,0.06)'}`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: pct != null ? color + '10' : 'transparent',
+    }}>
+      <span style={{ fontSize: '0.6rem', fontWeight: 900, color: pct != null ? color : '#333', letterSpacing: '-0.02em' }}>
+        {pct != null ? `${pct}%` : '—'}
+      </span>
+    </div>
+  );
+}
+
+function Pill({ children, color = '#2a2a2a' }: { children: React.ReactNode; color?: string }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '0.2rem',
+      padding: '0.2rem 0.55rem',
+      background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+      borderRadius: 999,
+      fontSize: '0.57rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em',
+      color,
+      whiteSpace: 'nowrap',
+    }}>
+      {children}
+    </span>
+  );
+}
+
 export default function ManuscriptLibrary({ isOpen, onClose, history, onSelect, onSearch, isSearching }: ManuscriptLibraryProps) {
   const [activeProject, setActiveProject] = useState<string | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [projects, setProjects]           = useState<Project[]>([]);
+  const [searchValue, setSearchValue]     = useState('');
 
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+  useEffect(() => { fetchProjects(); }, []);
 
   const fetchProjects = async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/rewrite/projects`);
+      if (!res.ok) return;
       const data = await res.json();
       setProjects(Array.isArray(data) ? data : []);
-    } catch (err) { console.error(err); }
+    } catch { /* backend offline — silently skip */ }
   };
 
   const handleCreateProject = async () => {
-     const name = prompt('Workspace Name (e.g., "AI Research Book"):');
-     if (!name) return;
-     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/rewrite/projects`, {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({ name })
-        });
-        const newProject = await res.json();
-        setProjects([...projects, newProject]);
-        toast.success('Workspace Initialized');
-     } catch (err) { toast.error('Creation failed'); }
+    const name = prompt('Workspace name:');
+    if (!name) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/rewrite/projects`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      const newProject = await res.json();
+      setProjects(prev => [...prev, newProject]);
+      toast.success('Workspace created');
+    } catch { toast.error('Creation failed'); }
   };
 
-  const handleBulkBatchMirror = () => {
-     if (selectedIds.length === 0) return;
-     toast.success(`Broadcasting Mirror to ${selectedIds.length} vessels...`);
-     // Implementation in Page.tsx via callback usually, but here for UI demo
-  };
-
-  const filteredHistory = activeProject 
+  const filteredHistory = activeProject
     ? history.filter(item => item.project?.id === activeProject)
     : history;
 
-  const toggleSelect = (id: string) => {
-     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const handleSearch = (q: string) => {
+    setSearchValue(q);
+    onSearch(q);
+  };
+
+  const NAV_ITEM: React.CSSProperties = {
+    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '0.6rem 0.75rem', borderRadius: 9, border: 'none',
+    background: 'none', cursor: 'pointer', transition: 'background 0.15s',
+    textAlign: 'left',
   };
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-black/80 backdrop-blur-2xl z-[180]" />
-          <motion.div 
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={onClose}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(12px)', zIndex: 180 }}
+          />
+
+          {/* Panel — slides from left */}
+          <motion.div
             initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
-            className="fixed left-0 top-0 bottom-0 w-[900px] bg-[#080808] border-r border-white/5 z-[190] shadow-[100px_0_200px_rgba(0,0,0,1)] flex"
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            style={{
+              position: 'fixed', left: 0, top: 0, bottom: 0, width: 860,
+              background: '#060606',
+              borderRight: '1px solid rgba(255,255,255,0.05)',
+              boxShadow: '80px 0 180px rgba(0,0,0,1)',
+              zIndex: 190,
+              display: 'flex', overflow: 'hidden',
+            }}
           >
-            {/* Project Navigation Sidebar */}
-            <div className="w-[280px] bg-white/[0.01] border-r border-white/5 flex flex-col">
-               <div className="p-10 border-b border-white/5 bg-white/[0.01] flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase tracking-[0.5em] text-[#333]">Vault Navigator</span>
-                  <button onClick={handleCreateProject} className="text-[#333] hover:text-blue-500 transition-all"><FolderPlus size={18} /></button>
-               </div>
-               <div className="flex-1 overflow-y-auto custom-scroll p-6 space-y-4">
-                  <button 
-                    onClick={() => setActiveProject(null)}
-                    className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${!activeProject ? 'bg-blue-600/10 border border-blue-500/20 text-blue-500 shadow-2xl' : 'text-[#444] hover:bg-white/5 hover:text-[#888]'}`}
+            {/* ── Left nav: workspaces ── */}
+            <div style={{
+              width: 220, flexShrink: 0,
+              borderRight: '1px solid rgba(255,255,255,0.05)',
+              display: 'flex', flexDirection: 'column',
+            }}>
+              {/* Nav header */}
+              <div style={{
+                padding: '1.25rem 1rem 1rem',
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <span style={{ fontSize: '0.55rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.45em', color: '#242424' }}>
+                  Workspaces
+                </span>
+                <button
+                  onClick={handleCreateProject}
+                  style={{ background: 'none', border: 'none', color: '#333', cursor: 'pointer', display: 'flex', padding: '0.1rem' }}
+                  title="New workspace"
+                >
+                  <Plus size={15} />
+                </button>
+              </div>
+
+              {/* Nav list */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem' }}>
+                {/* All */}
+                <button
+                  onClick={() => setActiveProject(null)}
+                  style={{
+                    ...NAV_ITEM,
+                    background: !activeProject ? 'rgba(37,99,235,0.1)' : 'none',
+                    color: !activeProject ? '#60a5fa' : '#3a3a3a',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Layers size={13} />
+                    <span style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em' }}>All</span>
+                  </div>
+                  <span style={{ fontSize: '0.6rem', fontWeight: 700, opacity: 0.6 }}>{history.length}</span>
+                </button>
+
+                {projects.map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => setActiveProject(p.id)}
+                    style={{
+                      ...NAV_ITEM,
+                      background: activeProject === p.id ? 'rgba(37,99,235,0.1)' : 'none',
+                      color: activeProject === p.id ? '#60a5fa' : '#3a3a3a',
+                      marginTop: '0.15rem',
+                    }}
                   >
-                     <div className="flex items-center gap-3"><Layers size={16} /><span className="text-[10px] font-black uppercase tracking-widest">Global Index</span></div>
-                     <span className="text-[9px] font-black">{history.length}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                      <Folder size={13} style={{ flexShrink: 0 }} />
+                      <span style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {p.name}
+                      </span>
+                    </div>
+                    <ChevronRight size={11} style={{ opacity: 0.2, flexShrink: 0 }} />
                   </button>
-                  {projects.map(p => (
-                    <button 
-                      key={p.id} 
-                      onClick={() => setActiveProject(p.id)}
-                      className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${activeProject === p.id ? 'bg-blue-600/10 border border-blue-500/20 text-blue-500 shadow-2xl' : 'text-[#444] hover:bg-white/5 hover:text-[#888]'}`}
-                    >
-                       <div className="flex items-center gap-3"><Folder size={16} /><span className="text-[10px] font-black uppercase tracking-widest">{p.name}</span></div>
-                       <ChevronRight size={14} className="opacity-20" />
-                    </button>
-                  ))}
-               </div>
+                ))}
+              </div>
             </div>
 
-            {/* Content Main Area */}
-            <div className="flex-1 flex flex-col">
-              <div className="p-10 border-b border-white/5 bg-white/[0.01] flex justify-between items-center">
-                <div className="flex items-center gap-8">
-                  <div className="p-4 bg-blue-500/10 rounded-2xl shadow-inner"><BookText className="text-blue-500" size={28} /></div>
-                  <div className="flex flex-col gap-1">
-                     <h2 className="text-2xl font-black uppercase tracking-tighter italic">Manuscript Vault</h2>
-                     <p className="text-[10px] text-[#222] font-black uppercase tracking-[0.4em]">{activeProject ? projects.find(p => p.id === activeProject)?.name : 'Primary Archival Index'}</p>
+            {/* ── Main content ── */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+
+              {/* Header */}
+              <div style={{
+                padding: '1.25rem 1.5rem',
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                flexShrink: 0,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 9,
+                    background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.18)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <BookOpen size={16} style={{ color: '#3b82f6' }} />
+                  </div>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.06em', fontStyle: 'italic' }}>
+                      Manuscript Vault
+                    </h2>
+                    <p style={{ margin: 0, fontSize: '0.55rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.4em', color: '#242424' }}>
+                      {activeProject ? projects.find(p => p.id === activeProject)?.name : 'Primary Archival Index'}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-6">
-                   <div className="flex p-1 bg-white/5 rounded-xl border border-white/10">
-                      <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-blue-600 text-white shadow-lg' : 'text-[#333] hover:text-white'}`}><LayoutGrid size={16} /></button>
-                      <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-blue-600 text-white shadow-lg' : 'text-[#333] hover:text-white'}`}><List size={16} /></button>
-                   </div>
-                   <button onClick={onClose} className="text-[#333] hover:text-white transition-all"><X size={24} /></button>
+                <button
+                  onClick={onClose}
+                  style={{ background: 'none', border: 'none', color: '#444', cursor: 'pointer', display: 'flex', padding: '0.25rem' }}
+                >
+                  <X size={19} />
+                </button>
+              </div>
+
+              {/* Search */}
+              <div style={{ padding: '0.85rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
+                <div style={{ position: 'relative' }}>
+                  <Search size={14} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#2e2e2e', pointerEvents: 'none' }} />
+                  <input
+                    type="text"
+                    placeholder="Search manuscripts…"
+                    value={searchValue}
+                    onChange={e => handleSearch(e.target.value)}
+                    style={{
+                      width: '100%', boxSizing: 'border-box',
+                      background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: 9, padding: '0.65rem 0.9rem 0.65rem 2.4rem',
+                      fontSize: '0.8rem', color: '#ccc', outline: 'none', fontFamily: 'inherit',
+                    }}
+                    onFocus={e  => (e.target.style.borderColor = 'rgba(59,130,246,0.4)')}
+                    onBlur={e   => (e.target.style.borderColor = 'rgba(255,255,255,0.06)')}
+                  />
+                  {isSearching && (
+                    <SearchCode size={14} style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#3b82f6', animation: 'scPulse 1s ease-in-out infinite' }} />
+                  )}
                 </div>
               </div>
 
-              <div className="p-10 border-b border-white/5 flex gap-6 sticky top-0 bg-[#080808] z-10 items-center">
-                 <div className="flex-1 relative group">
-                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[#222] group-focus-within:text-blue-500 transition-colors" size={20} />
-                    <input 
-                      type="text" placeholder="Discover manuscripts by semantic intent..." 
-                      className="w-full bg-white/[0.01] border border-white/5 rounded-[1.5rem] py-5 pl-16 pr-6 text-sm focus:outline-none focus:border-blue-500/50 transition-all font-sans"
-                      onChange={(e) => onSearch(e.target.value)}
-                    />
-                    {isSearching && <div className="absolute right-6 top-1/2 -translate-y-1/2"><SearchCode className="text-blue-500 animate-pulse" size={18} /></div>}
-                 </div>
-                 {selectedIds.length > 0 && (
-                    <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex items-center gap-4 bg-blue-600/10 border border-blue-500/20 px-6 py-3 rounded-2xl shadow-2xl">
-                       <span className="text-[10px] font-black uppercase text-blue-500">{selectedIds.length} Targeted</span>
-                       <button onClick={handleBulkBatchMirror} className="bg-blue-600 text-white px-5 py-2 rounded-xl text-[9px] font-black uppercase flex items-center gap-2"><Zap size={14} /> Batch Mirror</button>
-                    </motion.div>
-                 )}
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-10 custom-scroll space-y-6">
-                {filteredHistory.map((item) => (
-                  <motion.div 
-                    key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                    className={`group p-8 bg-white/[0.01] border border-white/5 rounded-[2.5rem] hover:bg-white/[0.03] hover:border-blue-500/10 transition-all shadow-xl flex items-center gap-10 cursor-pointer relative overflow-hidden ${selectedIds.includes(item.id) ? 'border-blue-500/30 bg-blue-500/5' : ''}`}
-                    onClick={() => onSelect(item)}
-                  >
-                    <div className="absolute top-8 right-8 flex gap-4 opacity-0 group-hover:opacity-100 transition-all">
-                       <button className="p-3 bg-white/5 text-[#444] hover:text-white rounded-xl border border-white/5"><RotateCcw size={16} /></button>
-                       <button className="p-3 bg-white/5 text-[#444] hover:text-red-500 rounded-xl border border-white/5"><Trash2 size={16} /></button>
+              {/* List */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 0' }}>
+                {filteredHistory.length === 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '3rem', textAlign: 'center' }}>
+                    <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+                      <Layers size={22} style={{ color: '#3b82f6' }} />
                     </div>
+                    <p style={{ fontSize: '0.95rem', fontWeight: 700, color: '#ddd', margin: '0 0 0.5rem' }}>No saved rewrites yet</p>
+                    <p style={{ fontSize: '0.75rem', color: '#333', lineHeight: 1.7, maxWidth: 320, margin: '0 0 1.25rem' }}>
+                      Every time you click <strong style={{ color: '#60a5fa' }}>Improve Text</strong>, the result is saved here automatically.
+                    </p>
+                    <button
+                      onClick={onClose}
+                      style={{
+                        padding: '0.55rem 1.25rem',
+                        background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.25)', borderRadius: 8,
+                        color: '#60a5fa', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                      }}
+                    >
+                      Back to editor
+                    </button>
+                  </div>
+                ) : (
+                  filteredHistory.map((item, idx) => {
+                    const humanityScore = item.metrics?.humanityScore as number | undefined;
+                    const dateStr = new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                    const preview = item.sourceText.replace(/<[^>]*>/g, '').trim().slice(0, 160);
 
-                    <div className="flex items-center gap-6">
-                       <button 
-                         onClick={(e) => { e.stopPropagation(); toggleSelect(item.id); }}
-                         className={`w-8 h-8 rounded-xl border transition-all flex items-center justify-center ${selectedIds.includes(item.id) ? 'bg-blue-600 border-blue-500' : 'bg-white/5 border-white/10'}`}
-                       >
-                          {selectedIds.includes(item.id) && <CheckCircle2 size={16} className="text-white" />}
-                       </button>
-                       <div className="w-16 h-16 bg-[#111] border border-white/5 rounded-2xl flex items-center justify-center text-blue-500/40 font-black shadow-inner">
-                          {item.metrics?.humanityScore ? Math.round(item.metrics.humanityScore * 100) : '—'}%
-                       </div>
-                    </div>
-
-                    <div className="flex-1 flex flex-col gap-3 min-w-0">
-                      <div className="flex items-center gap-4">
-                        <span className="text-[10px] font-black uppercase text-blue-500/40 tracking-widest">{item.tone} mirror</span>
-                        <div className="w-1 h-1 rounded-full bg-white/10" />
-                        <span className="text-[10px] text-[#222] font-black italic">{new Date(item.createdAt).toLocaleDateString()}</span>
-                      </div>
-                      <p className="text-sm font-bold text-[#888] truncate group-hover:text-white transition-colors">{item.sourceText.replace(/<[^>]*>/g, '').substring(0, 180)}...</p>
-                      
-                      <div className="flex gap-4 items-center">
-                         <div className="flex items-center gap-2 text-[9px] font-black uppercase text-[#222] bg-white/[0.02] px-3 py-1.5 rounded-lg border border-white/5"><AlertCircle size={12} /> Grade {item.targetGradeLevel}</div>
-                         <div className="flex items-center gap-2 text-[9px] font-black uppercase text-[#222] bg-white/[0.02] px-3 py-1.5 rounded-lg border border-white/5"><Zap size={12} /> {item.strength} focus</div>
-                      </div>
-                    </div>
-                    
-                    <ChevronRight size={24} className="text-[#111] group-hover:text-blue-500 transition-all translate-x-2 group-hover:translate-x-0" />
-                  </motion.div>
-                ))}
-                {filteredHistory.length === 0 && (
-                   <div className="h-full flex flex-col items-center justify-center text-center p-20 gap-4">
-                      <div className="p-6 bg-blue-500/10 rounded-full border border-blue-500/20">
-                        <Layers size={40} className="text-blue-400" />
-                      </div>
-                      <p className="text-xl font-bold text-white mt-2">No saved rewrites yet</p>
-                      <p className="text-sm text-[#888] max-w-md leading-relaxed">
-                        Every time you click <span className="text-blue-400 font-semibold">Improve Text</span>, the original and improved versions are saved here. Close this panel, paste some text, and try your first rewrite.
-                      </p>
-                      <button
-                        onClick={onClose}
-                        className="mt-4 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors"
+                    return (
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.03 }}
+                        onClick={() => onSelect(item)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '1rem',
+                          padding: '0.9rem 1.5rem',
+                          borderBottom: '1px solid rgba(255,255,255,0.04)',
+                          cursor: 'pointer',
+                          transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                       >
-                        Back to editor
-                      </button>
-                   </div>
+                        {/* Score ring */}
+                        <ScoreBadge score={humanityScore} />
+
+                        {/* Content */}
+                        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                          {/* Meta row */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Pill color="#3b82f6">{item.tone}</Pill>
+                            <Pill>{item.strength}</Pill>
+                            <Pill>Gr. {item.targetGradeLevel}</Pill>
+                            <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.57rem', fontWeight: 700, color: '#2a2a2a' }}>
+                              <Clock size={10} />{dateStr}
+                            </span>
+                          </div>
+                          {/* Preview */}
+                          <p style={{ margin: 0, fontSize: '0.78rem', color: '#555', lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {preview}{preview.length < item.sourceText.replace(/<[^>]*>/g, '').trim().length && '…'}
+                          </p>
+                        </div>
+
+                        {/* Actions */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+                          <button
+                            onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(item.optimizedText.replace(/<[^>]*>/g, '')); toast.success('Copied'); }}
+                            style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'color 0.15s, border-color 0.15s' }}
+                            title="Copy improved text"
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#60a5fa'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(59,130,246,0.3)'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#333'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.05)'; }}
+                          >
+                            <Copy size={11} />
+                          </button>
+                          <button
+                            onClick={e => { e.stopPropagation(); toast('Delete coming soon'); }}
+                            style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'color 0.15s, border-color 0.15s' }}
+                            title="Delete"
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.3)'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#333'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.05)'; }}
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
+
+                        <ChevronRight size={14} style={{ color: '#1e1e1e', flexShrink: 0 }} />
+                      </motion.div>
+                    );
+                  })
                 )}
               </div>
+
+              {/* Footer count */}
+              {filteredHistory.length > 0 && (
+                <div style={{ padding: '0.65rem 1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
+                  <span style={{ fontSize: '0.58rem', fontWeight: 700, color: '#222', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
+                    {filteredHistory.length} manuscript{filteredHistory.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              )}
             </div>
           </motion.div>
+
+          <style>{`@keyframes scPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
         </>
       )}
-      <style jsx global>{`
-        .custom-scroll::-webkit-scrollbar { width: 3px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.2); border-radius: 10px; }
-      `}</style>
     </AnimatePresence>
   );
 }
