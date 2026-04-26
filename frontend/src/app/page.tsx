@@ -150,6 +150,23 @@ export default function Home() {
   }, [cooldownUntil]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    fetch(`${API}/health`, { cache: 'no-store' })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!cancelled) setBackendStatus('online');
+      })
+      .catch(() => {
+        if (!cancelled) setBackendStatus('offline');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
 
     const resolveUser = async () => {

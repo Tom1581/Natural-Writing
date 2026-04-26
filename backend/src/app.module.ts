@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RewriteModule } from './rewrite/rewrite.module';
 import { StripeModule } from './stripe/stripe.module';
+import { HealthModule } from './health/health.module';
 import { StyleProfileEntity } from './rewrite/entities/style-profile.entity';
 import { ManuscriptEntity } from './rewrite/entities/manuscript.entity';
 import { CacheEntity } from './rewrite/entities/cache.entity';
@@ -33,6 +34,7 @@ import { ConfigService } from '@nestjs/config';
     }),
     RewriteModule,
     StripeModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
