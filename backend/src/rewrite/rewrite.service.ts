@@ -897,7 +897,7 @@ ${rules.map(r => `  • ${r}`).join('\n')}${tellsHint}`;
     const metrics = await this.analyze(text);
     const { detectedLanguage } = metrics;
 
-    const cacheHash = this.createHash({ action: 'rewrite_v6_ai', text, options, humanization });
+    const cacheHash = this.createHash({ action: 'rewrite_v7_ai', text, options, humanization });
     const cached = await this.getFromCache<any>(cacheHash);
 
     let bestVersion: string;
@@ -2159,7 +2159,7 @@ MANDATORY RULES — every single one must be followed:
 11. PARAGRAPHS: Preserve the exact same number of paragraphs as the original text. Separate paragraphs with a blank line. Do not merge or split paragraphs.
 
 BANNED WORDS AND PHRASES — using any of these instantly triggers detection:
-furthermore, moreover, additionally, it is important to note, it is worth noting, in conclusion, to summarize, in essence, plays a crucial role, it is essential to, delve into, navigate, paradigm, utilize, facilitate, leverage, it has been shown, studies have demonstrated, in today's world, game-changing, groundbreaking, holistic, multifaceted, robust, seamlessly, fundamentally transformed, it is noteworthy, a myriad of, it cannot be overstated, tapestry, landscape, realm, fostering, spearheading, underscores, demonstrates, encompasses, comprehensive, rigorous, systematic, substantial, unprecedented, synergy, pivotal, transformative, cutting-edge, state-of-the-art, ever-evolving, nuanced, multidimensional, overarching
+furthermore, moreover, additionally, it is important to note, it is worth noting, in conclusion, to summarize, in essence, plays a crucial role, it is essential to, delve into, navigate, paradigm, utilize, facilitate, leverage, it has been shown, studies have demonstrated, in today's world, game-changing, groundbreaking, holistic, multifaceted, robust, seamlessly, fundamentally transformed, it is noteworthy, a myriad of, it cannot be overstated, tapestry, landscape, realm, fostering, spearheading, underscores, demonstrates, encompasses, comprehensive, rigorous, systematic, substantial, unprecedented, synergy, pivotal, transformative, cutting-edge, state-of-the-art, ever-evolving, nuanced, multidimensional, overarching, put differently, in other words, to put it another way, to put it simply, simply put, that is to say, put simply, in simpler terms, to rephrase
 
 PRESERVE: Every fact, statistic, argument, and piece of evidence from the original. Do not invent new information.
 OUTPUT: Rewritten text only. No preamble, no "Here is the rewritten text:", no commentary.`;
