@@ -13,10 +13,10 @@ export const metadata: Metadata = {
   applicationName: 'Natural Quill',
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon', type: 'image/png', sizes: '64x64' },
     ],
-    shortcut: '/icon.svg',
-    apple: '/icon.svg',
+    shortcut: '/icon',
+    apple: '/icon',
   },
   title: {
     default: 'Natural Quill — Humanize AI Text, Bypass AI Detection | Undetectable AI Writing',
