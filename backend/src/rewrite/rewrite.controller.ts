@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Body, Param, Query, Req } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { RewriteService, RewriteOptions } from './rewrite.service';
 import { StyleMemoryService } from './style-memory.service';
@@ -113,6 +114,7 @@ export class RewriteController {
 
   private static readonly ADMIN_EMAILS = ['a15817348@gmail.com'];
 
+  @Throttle({ short: { ttl: 60000, limit: 8 } })
   @Post('process')
   async processText(
     @Body() body: { text: string; options: RewriteOptions; userEmail?: string; subscriptionTier?: string },
