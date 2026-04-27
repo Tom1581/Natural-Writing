@@ -821,18 +821,18 @@ ${rules.map(r => `  • ${r}`).join('\n')}${tellsHint}`;
     incomingWords: number,
     subscriptionTier: string | null,
   ): Promise<FreeUsageEntity | null> {
-    if (email && RewriteService.ADMIN_EMAILS.includes(email)) return null; // admin — unlimited
+    if (email && RewriteService.ADMIN_EMAILS.includes(email.trim().toLowerCase())) return null; // admin — unlimited
     if (subscriptionTier) return null; // paid access handled elsewhere
 
     const where = email ? { email } : { ipAddress };
     let row = await this.freeUsageRepo.findOne({ where: where as any });
 
     if (!row) {
-      row = this.freeUsageRepo.create({
+      row = await this.freeUsageRepo.save(this.freeUsageRepo.create({
         email: email ?? null,
         ipAddress: email ? null : ipAddress,
         wordsUsed: 0,
-      });
+      }));
     }
 
     if (row.wordsUsed + incomingWords > this.FREE_WORD_LIMIT) {
@@ -878,7 +878,7 @@ ${rules.map(r => `  • ${r}`).join('\n')}${tellsHint}`;
     const plain = text.replace(/<[^>]+>/g, '');
     const incomingWords = plain.trim().split(/\s+/).filter(Boolean).length;
     const billingAccount = userEmail
-      ? await this.billingAccountRepo.findOne({ where: { email: userEmail } })
+      ? await this.billingAccountRepo.findOne({ where: { email: userEmail.trim().toLowerCase() } })
       : null;
     const paidTier = this.resolvePaidTier(billingAccount);
 

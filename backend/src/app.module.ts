@@ -14,6 +14,8 @@ import { CommentEntity } from './rewrite/entities/comment.entity';
 import { UsageLogEntity } from './rewrite/entities/usage-log.entity';
 import { FreeUsageEntity } from './rewrite/entities/free-usage.entity';
 import { BillingAccountEntity } from './rewrite/entities/billing-account.entity';
+import { OrganizationEntity } from './rewrite/entities/organization.entity';
+import { TeamEntity } from './rewrite/entities/team.entity';
 import { ConfigService } from '@nestjs/config';
 
 @Module({
@@ -26,7 +28,7 @@ import { ConfigService } from '@nestjs/config';
       useFactory: (configService: ConfigService) => {
         const rawDatabaseUrl = configService.get<string>('DATABASE_URL')?.trim();
         const isProduction = configService.get<string>('VERCEL_ENV') === 'production' || process.env.NODE_ENV === 'production';
-        const entities = [StyleProfileEntity, ManuscriptEntity, CacheEntity, VersionEntity, ProjectEntity, UserEntity, CommentEntity, UsageLogEntity, FreeUsageEntity, BillingAccountEntity];
+        const entities = [StyleProfileEntity, ManuscriptEntity, CacheEntity, VersionEntity, ProjectEntity, UserEntity, CommentEntity, UsageLogEntity, FreeUsageEntity, BillingAccountEntity, OrganizationEntity, TeamEntity];
         let databaseUrl: string | null = null;
 
         if (rawDatabaseUrl) {
