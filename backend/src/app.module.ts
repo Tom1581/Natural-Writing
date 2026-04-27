@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
 import { RewriteModule } from './rewrite/rewrite.module';
 import { StripeModule } from './stripe/stripe.module';
 import { HealthModule } from './health/health.module';
@@ -23,15 +21,28 @@ import { ConfigService } from '@nestjs/config';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    ThrottlerModule.forRoot([
-      { name: 'short',  ttl: 60000,  limit: 20  }, // 20 requests per minute per IP (all routes)
-      { name: 'rewrite', ttl: 60000, limit: 8   }, // 8 rewrite requests per minute (applied per endpoint)
-    ]),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
-        const databaseUrl = configService.get<string>('DATABASE_URL');
+        const rawDatabaseUrl = configService.get<string>('DATABASE_URL')?.trim();
         const entities = [StyleProfileEntity, ManuscriptEntity, CacheEntity, VersionEntity, ProjectEntity, UserEntity, CommentEntity, UsageLogEntity, FreeUsageEntity, BillingAccountEntity];
+        let databaseUrl: string | null = null;
+
+        if (rawDatabaseUrl) {
+          try {
+            const parsed = new URL(rawDatabaseUrl);
+            const hasCompleteHost = parsed.hostname.includes('.');
+            if (parsed.protocol.startsWith('postgres') && hasCompleteHost) {
+              databaseUrl = rawDatabaseUrl;
+            } else {
+              console.warn(
+                `Ignoring invalid DATABASE_URL host "${parsed.hostname}". Falling back to SQLite.`,
+              );
+            }
+          } catch {
+            console.warn('Ignoring malformed DATABASE_URL. Falling back to SQLite.');
+          }
+        }
 
         if (databaseUrl) {
           return {
@@ -57,9 +68,6 @@ import { ConfigService } from '@nestjs/config';
     RewriteModule,
     StripeModule,
     HealthModule,
-  ],
-  providers: [
-    { provide: APP_GUARD, useClass: ThrottlerGuard }, // applies 'short' limit globally
   ],
 })
 export class AppModule {}
