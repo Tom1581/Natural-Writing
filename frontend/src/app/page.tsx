@@ -508,6 +508,11 @@ export default function Home() {
           <HeaderAction icon={<LifeBuoy size={14} />} label="Support" onClick={() => setIsContactOpen(true)} />
           <HeaderAction icon={<Info size={14} />} label="About Us" onClick={() => setIsAboutOpen(true)} />
           <HeaderAction icon={<Server size={14} />} label="Stats" onClick={() => setIsStatsOpen(true)} />
+          <a href="/blog" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.75rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600, textDecoration: 'none', transition: 'color 0.15s' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}>
+            Blog
+          </a>
         </nav>
 
         {/* Right: style chip + profile + primary action */}
