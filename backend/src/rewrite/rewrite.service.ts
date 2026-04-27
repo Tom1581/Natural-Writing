@@ -897,7 +897,7 @@ ${rules.map(r => `  • ${r}`).join('\n')}${tellsHint}`;
     const metrics = await this.analyze(text);
     const { detectedLanguage } = metrics;
 
-    const cacheHash = this.createHash({ action: 'rewrite_v7_ai', text, options, humanization });
+    const cacheHash = this.createHash({ action: 'rewrite_v12_ai', text, options, humanization });
     const cached = await this.getFromCache<any>(cacheHash);
 
     let bestVersion: string;
@@ -950,21 +950,11 @@ ${rules.map(r => `  • ${r}`).join('\n')}${tellsHint}`;
           if (restored.length === origParas.length) aiResult = restored.join('\n\n');
         }
 
-        // NLP vocab + structural pass on top of LLM output
-        bestVersion = this.humanizeFallback(aiResult, humanization, options.tone, options.strength, false, options.sectionType);
+        // Phrase-level cleanup on top of LLM output
+        bestVersion = this.humanizeFallback(aiResult, options.tone);
       } else {
-        // Pure NLP multi-cycle fallback (no API keys available)
-        const cycles =
-          humanization >= 0.9 ? 5 :
-          humanization >= 0.8 ? 4 :
-          humanization >= 0.7 ? 3 :
-          humanization >= 0.6 ? 2 : 1;
-
-        let result = this.humanizeFallback(text, humanization, options.tone, options.strength, false, options.sectionType);
-        for (let c = 1; c < cycles; c++) {
-          result = this.humanizeFallback(result, humanization, options.tone, options.strength, true, options.sectionType);
-        }
-        bestVersion = result;
+        // Pure phrase-replacement fallback (no API keys available)
+        bestVersion = this.humanizeFallback(text, options.tone);
       }
       alternatives = [];
 
@@ -1360,27 +1350,17 @@ QUERY: ${query}`,
    * Used when OpenAI is unavailable. Quality is lower than GPT-4o but measurably
    * reduces AI-detection risk by targeting the highest-weight signals.
    */
-  private humanizeFallback(
-    text: string,
-    humanization: number,
-    tone: string,
-    strength: string,
-    vocabOnly = false,
-    sectionType?: string,
-  ): string {
+  private humanizeFallback(text: string, tone: string): string {
     // Split into paragraphs, process each one independently, then rejoin.
-    // This preserves the original paragraph structure in the output.
     const rawParagraphs = text.replace(/<[^>]+>/g, ' ').split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 0);
     if (rawParagraphs.length > 1) {
       return rawParagraphs
-        .map(para => this.humanizeFallback(para, humanization, tone, strength, vocabOnly, sectionType))
+        .map(para => this.humanizeFallback(para, tone))
         .join('\n\n');
     }
 
     let result = text.replace(/<[^>]+>/g, ' ').trim();
     const isFormal = tone === 'formal' || tone === 'academic';
-    const moderate = (humanization > 0.35 || strength === 'medium' || strength === 'strong') && strength !== 'light';
-    const aggressive = (humanization > 0.65 || strength === 'strong') && strength !== 'light';
 
     // ── 1. Phrase-level + word-level AI-tell replacements ─────────────────────
     // Ordered longest-first so sub-phrases don't partially match.
@@ -1844,6 +1824,103 @@ QUERY: ${query}`,
       [/\bnamely,?\s*/gi, 'specifically: '],
       [/\bthat is to say,?\s*/gi, 'in other words, '],
       [/\bin other words,?\s*/gi, 'Put simply, '],
+      // ── New high-signal AI tells ──────────────────────────────────────────
+      // Filler openers AI always uses
+      [/\bit is clear that\b/gi, ''],
+      [/\bit goes without saying(?: that)?\b/gi, ''],
+      [/\bneedless to say,?\s*/gi, ''],
+      [/\bit is undeniable that\b/gi, 'clearly, '],
+      [/\bwithout (?:a )?doubt,?\s*/gi, 'clearly, '],
+      [/\bthere is no denying(?: that)?\b/gi, 'clearly, '],
+      [/\bwith this in mind,?\s*/gi, 'so '],
+      [/\bin light of (?:this|these|the above),?\s*/gi, 'given that, '],
+      [/\btaking this into account,?\s*/gi, 'with that in mind, '],
+      [/\bbuilding (?:upon|on) this,?\s*/gi, 'and '],
+      [/\bthroughout history,?\s*/gi, 'historically, '],
+      [/\bin contemporary society\b/gi, 'today'],
+      [/\bin the modern era\b/gi, 'these days'],
+      [/\bacross the globe\b/gi, 'around the world'],
+      [/\bon a global scale\b/gi, 'worldwide'],
+      [/\bat an unprecedented rate\b/gi, 'faster than ever'],
+      [/\bat a rapid pace\b/gi, 'quickly'],
+      [/\bone must consider\b/gi, 'consider'],
+      [/\bwe must consider\b/gi, 'consider'],
+      [/\bit is (?:imperative|crucial|vital)(?: that| to)?\b/gi, "it's essential to"],
+      // High-signal adjectives
+      [/\bsalient\b/gi, 'key'],
+      [/\bseminal\b/gi, 'landmark'],
+      [/\bnascent\b/gi, 'emerging'],
+      [/\bburgeoning\b/gi, 'growing'],
+      [/\bveritable\b/gi, 'true'],
+      [/\bintricate(?:ly)?\b/gi, 'complex'],
+      [/\bexponential(?:ly)?\b/gi, 'rapid'],
+      [/\bmonumental\b/gi, 'huge'],
+      [/\bremarkable(?:ly)?\b/gi, 'notable'],
+      [/\bexceptional(?:ly)?\b/gi, 'strong'],
+      [/\bunparalleled\b/gi, 'unmatched'],
+      // High-signal verbs
+      [/\belucidated\b/gi, 'explained'],
+      [/\belucidate(?:s)?\b/gi, 'explain'],
+      [/\belucidating\b/gi, 'explaining'],
+      [/\billuminated\b/gi, 'clarified'],
+      [/\billuminate(?:s)?\b/gi, 'clarify'],
+      [/\billuminating\b/gi, 'clarifying'],
+      [/\barticulated\b/gi, 'expressed'],
+      [/\barticulate(?:s)?\b/gi, 'express'],
+      [/\barticulating\b/gi, 'expressing'],
+      [/\bposited\b/gi, 'argued'],
+      [/\bposit(?:s)?\b/gi, 'argue'],
+      [/\bengendered\b/gi, 'created'],
+      [/\bingender(?:s)?\b/gi, 'create'],
+      [/\bengender(?:s|ing)?\b/gi, 'create'],
+      [/\bcatalyzed\b/gi, 'sparked'],
+      [/\bcatalyze(?:s)?\b/gi, 'spark'],
+      [/\bcatalyzing\b/gi, 'sparking'],
+      [/\bharnessed\b/gi, 'used'],
+      [/\bharness(?:es|ing)?\b/gi, 'use'],
+      [/\bbolstered\b/gi, 'strengthened'],
+      [/\bbolster(?:s|ing)?\b/gi, 'strengthen'],
+      [/\baugmented\b/gi, 'boosted'],
+      [/\baugment(?:s|ing)?\b/gi, 'boost'],
+      [/\bameliorated\b/gi, 'improved'],
+      [/\bameliorat(?:e|es|ing)\b/gi, 'improve'],
+      [/\balleviated\b/gi, 'eased'],
+      [/\balleviat(?:e|es|ing)\b/gi, 'ease'],
+      [/\brectified\b/gi, 'fixed'],
+      [/\brectif(?:y|ies|ying)\b/gi, 'fix'],
+      [/\btranscended\b/gi, 'went beyond'],
+      [/\btranscend(?:s|ing)?\b/gi, 'go beyond'],
+      [/\bepitomized\b/gi, 'represented'],
+      [/\bepitomize(?:s|ing|d)?\b/gi, 'represent'],
+      [/\bencapsulated\b/gi, 'captured'],
+      [/\bencapsulat(?:e|es|ing)\b/gi, 'capture'],
+      [/\bexemplified\b/gi, 'showed'],
+      [/\bexemplif(?:y|ies|ying)\b/gi, 'show'],
+      [/\bresonated\b/gi, 'connected'],
+      [/\bresonate(?:s|ing)?\b/gi, 'connect'],
+      [/\bcoalesced\b/gi, 'came together'],
+      [/\bcoalesce(?:s|ing)?\b/gi, 'come together'],
+      [/\bmanifested\b/gi, 'appeared'],
+      [/\bmanifest(?:s|ing)?\b/gi, 'show'],
+      // High-signal nouns
+      [/\btrajectory\b/gi, 'path'],
+      [/\bstakeholders?\b/gi, 'people involved'],
+      [/\bimplications?\b/gi, 'effects'],
+      [/\bramifications?\b/gi, 'consequences'],
+      [/\bdichotomy\b/gi, 'divide'],
+      [/\bjuxtaposition\b/gi, 'contrast'],
+      [/\bconfluence\b/gi, 'combination'],
+      [/\bunderpinning(?:s)?\b/gi, 'foundation'],
+      [/\bmechanism(?:s)?\b/gi, 'process'],
+      [/\bethos\b/gi, 'values'],
+      [/\befficacy\b/gi, 'effectiveness'],
+      [/\bresilience\b/gi, 'ability to recover'],
+      [/\badaptability\b/gi, 'flexibility'],
+      [/\bversatility\b/gi, 'flexibility'],
+      [/\baccountability\b/gi, 'responsibility'],
+      [/\bauthenticity\b/gi, 'realness'],
+      [/\ba (?:multitude|wealth|plethora|host|array) of\b/gi, 'many'],
+      [/\bin (?:a multitude|an array|a host) of ways\b/gi, 'in many ways'],
     ];
 
     for (const [pattern, replacement] of REPLACEMENTS) {
@@ -1890,170 +1967,9 @@ QUERY: ${query}`,
       }
     }
 
-    // ── 3. Sentence-level structural rewriting (skipped on vocab-only cycles) ──
-    if (vocabOnly) return result.trim();
+    // ── 3. Final cleanup ──────────────────────────────────────────────────────
 
-    // Split on sentence endings, preserving the punctuation
-    const rawSentences = result
-      .replace(/([.!?])\s+([A-Z"'])/g, '$1\n$2')
-      .split('\n')
-      .map(s => s.trim())
-      .filter(s => s.length > 2);
-
-
-    // Varied human-sounding openers to break the AI subject-first pattern
-    const OPENERS_FORMAL   = ['Beyond that,', 'Worth noting:', 'In practice,', 'Building on that,', "Here's what that means:", 'Step back.', 'Look closer:', 'The data tells a story:', 'Consider this:', 'And yet,', 'That said,', 'To be clear:', 'On top of that,', 'What this means:', 'The reality is,'];
-    const OPENERS_INFORMAL = ["Here's the thing:", 'Think about it:', 'Basically,', 'In practice,', 'Truth is,', 'The tricky part?', 'Step back for a second.', 'Look at it this way:', 'And that matters.', 'Fair enough.', 'The honest answer?', 'Real talk:', 'And here is the thing:', 'Not obvious, but true:', 'Worth saying plainly:'];
-    const BASE_OPENERS = isFormal ? OPENERS_FORMAL : OPENERS_INFORMAL;
-
-    // Section-aware opener overrides
-    const OPENERS: string[] =
-      sectionType === 'conclusion' || sectionType === 'cta'
-        ? ['All told,', 'The takeaway:', 'Bottom line:', 'In the end,', 'Looking back,', 'To put it plainly,', 'When all is said and done,']
-        : sectionType === 'introduction'
-        ? ["Here's the deal:", 'To start:', 'Before anything else,', 'From the outset,', 'Worth understanding:', 'Let me set the stage:', 'Start here:']
-        : sectionType === 'narrative'
-        ? ['Picture this:', 'At that point,', 'Looking back,', 'That changed things.', "Here's what happened:", 'A bit further on,', 'And then,']
-        : sectionType === 'data_disclosure'
-        ? ['The numbers show', 'Worth noting:', 'In practice,', 'The data says:', 'Statistically speaking,', 'By the numbers,', 'The evidence points to']
-        : BASE_OPENERS;
-
-    // Context-aware short punch sentences — create burstiness (cycle through pool)
-    let punchIdx = 0;
-    const GENERIC_PUNCHES = [
-      "That's the shift.", "And it's real.", "Worth sitting with.", "That matters.",
-      "People notice.", "The gap is real.", "That's the tension.", "Simple as that.",
-      "It adds up.", "No question.", "That's worth remembering.", "Hard to ignore.",
-    ];
-    const getPunch = (s: string): string => {
-      const lower = s.toLowerCase();
-      if (lower.includes('english') && lower.includes('learn')) return "That skill-building takes time.";
-      if (lower.includes('teach') || lower.includes('teacher'))  return "Every teacher knows it.";
-      if (lower.includes('student'))                              return "Students feel the difference.";
-      if (lower.includes('speak') || lower.includes('oral'))      return "Spoken language counts.";
-      if (lower.includes('lab') || lower.includes('chem'))        return "Hands-on beats lecture every time.";
-      if (lower.includes('read') || lower.includes('write'))      return "Literacy compounds over time.";
-      if (lower.includes('understand') || lower.includes('grasp')) return "That clarity sticks.";
-      if (lower.includes('vocabular') || lower.includes('words')) return "Words are the building blocks.";
-      if (lower.includes('academ'))                               return "Academic growth is slow but real.";
-      if (lower.includes('dat') && (lower.includes('app') || lower.includes('swipe'))) return "Dating's changed.";
-      if (lower.includes('tech') || lower.includes('digital') || lower.includes('online')) return "Tech moves fast.";
-      if (lower.includes('relat') || lower.includes('connect') || lower.includes('partner')) return "Connection is tricky.";
-      if (lower.includes('social') || lower.includes('media') || lower.includes('platform')) return "That's the new normal.";
-      if (lower.includes('mental') || lower.includes('health') || lower.includes('stress')) return "That takes a toll.";
-      if (lower.includes('work') || lower.includes('career') || lower.includes('job')) return "That's the trade-off.";
-      if (lower.includes('money') || lower.includes('financ') || lower.includes('econom')) return "Numbers don't lie.";
-      if (lower.includes('climat') || lower.includes('emission') || lower.includes('warming')) return "The science is clear.";
-      if (lower.includes('environment') || lower.includes('sustainab') || lower.includes('ecosystem')) return "The stakes are high.";
-      if (lower.includes('govern') || lower.includes('policy') || lower.includes('legislat')) return "Policy lags behind reality.";
-      if (lower.includes('research') || lower.includes('study') || lower.includes('data')) return "The evidence is building.";
-      if (lower.includes('ai') || lower.includes('artificial') || lower.includes('machine')) return "That's a fast-moving field.";
-      if (lower.includes('ethic') || lower.includes('moral') || lower.includes('value')) return "That line isn't always clear.";
-      if (lower.includes('histor') || lower.includes('ancient') || lower.includes('century')) return "History repeats patterns.";
-      if (lower.includes('cultur') || lower.includes('societ') || lower.includes('community')) return "Culture shapes everything.";
-      if (lower.includes('psycholog') || lower.includes('behavio') || lower.includes('cognit')) return "Behavior is complex.";
-      if (lower.includes('biolog') || lower.includes('genetic') || lower.includes('evolut')) return "The biology is fascinating.";
-      if (lower.includes('global') || lower.includes('nation') || lower.includes('international')) return "Scale matters here.";
-      return GENERIC_PUNCHES[punchIdx++ % GENERIC_PUNCHES.length];
-    };
-
-    // Section-aware punch override — wraps getPunch with a section-specific pool
-    const SECTION_PUNCHES: Record<string, string[]> = {
-      conclusion:     ["That's the point.", "It matters.", "Keep that in mind.", "That's what it comes down to.", "The answer is there."],
-      cta:            ["Take that step.", "Now's the time.", "It starts here.", "Don't wait on it.", "That's the move."],
-      introduction:   ["That's the gap.", "Worth understanding.", "This is where it starts.", "That's the question.", "It shapes everything after."],
-      narrative:      ["Telling, isn't it.", "That's the shift.", "Hard to forget.", "Everything changed from there.", "It stuck."],
-      data_disclosure:["The data confirms it.", "Numbers don't lie.", "The trend is clear.", "That's significant.", "Hard to argue with that."],
-    };
-    const getSectionPunch = (s: string): string => {
-      if (sectionType && SECTION_PUNCHES[sectionType]) {
-        const pool = SECTION_PUNCHES[sectionType];
-        return pool[punchIdx++ % pool.length];
-      }
-      return getPunch(s);
-    };
-
-    const CONJ_BREAKS: Record<string, string> = {
-      and:      '. And',
-      but:      '. But',
-      while:    '. Meanwhile,',
-      although: '. Even so,',
-      whereas:  '. By contrast,',
-      however:  '. Even still,',
-      yet:      '. And yet,',
-      since:    '. Because of this,',
-      because:  ". That's because",
-      though:   '. That said,',
-    };
-
-    const rewritten: string[] = [];
-
-    for (let i = 0; i < rawSentences.length; i++) {
-      let s = rawSentences[i].trim();
-      const wc = (s.match(/\b\w+\b/g) || []).length;
-
-      // a. Split long compound sentences (>16 words) at conjunctions/semicolons
-      if (wc > 16) {
-        const split1 = s.replace(
-          /,\s+(and|but|while|although|whereas|yet|since|because|though)\s+/gi,
-          (full: string, conj: string, offset: number, str: string) => {
-            const afterConj = str.slice(offset + full.length);
-            const startsNewClause = /^(?:the |a |an |this |these |that |those |it |they |he |she |we |you |I |[A-Z][a-z]+s?\s+(?:can|will|should|must|have|had|were|was|are|is))/i.test(afterConj);
-            // Require a finite verb — prevents splitting list items like ", and the growing role of technology"
-            const hasVerb = /\b(?:is|are|was|were|has|have|had|will|would|can|could|should|do|does|did|make|makes|made|get|gets|got|keep|keeps|help|helps|allow|allows|give|gives|create|creates|show|shows|find|finds|use|uses|lead|leads|work|works|mean|means|need|needs|provide|provides|offer|offers|continue|continues)\b/i.test(afterConj);
-            // Don't split if the text before the conjunction is too short (list items like "Tinder, Bumble, and Hinge")
-            const beforeConj = str.slice(0, offset);
-            const beforeWords = (beforeConj.match(/\b\w+\b/g) || []).length;
-            if (conj.toLowerCase() === 'and' && (!startsNewClause || !hasVerb || beforeWords < 8)) return full;
-            const br = CONJ_BREAKS[conj.toLowerCase()];
-            return br ? `${br} ` : `. ${conj.charAt(0).toUpperCase() + conj.slice(1)} `;
-          },
-        );
-        if (split1 !== s) {
-          s = split1;
-        } else {
-          s = s.replace(/;\s+/g, '. ');
-        }
-      }
-
-      // b. Inject varied opener at every 3rd sentence (not the first)
-      if (moderate && i > 0 && i % 3 === 0 && wc >= 5) {
-        const opener = OPENERS[Math.floor(i / 3) % OPENERS.length];
-        if (!/^(also|but|so|and|yet|still|even|here|put|think|basic|truth|in prac|beyond|worth|building|that's|however|although|though|while|meanwhile|furthermore|moreover|additionally|nevertheless|nonetheless|therefore|thus|hence|ultimately|consequently|when|if|since|because|despite|although|on top|on the|take |for inst|step back|look clos|look at|consider|the sci|the evid|the data)/i.test(s)) {
-          s = opener + ' ' + s.charAt(0).toLowerCase() + s.slice(1);
-        }
-      }
-
-      // c. (em-dash parenthetical injection removed — produced unwanted dashes)
-
-      // d. Adverbial fronting: move prepositional phrases to front of some sentences
-      if (aggressive && i % 6 === 2 && !s.startsWith('In ') && !s.startsWith('When ') && !s.startsWith('For ')) {
-        s = s.replace(
-          /^((?:Teachers|Students|Learners|Researchers|Schools)\s+(?:can|should|must|will|use|rely)[\w\s]+?)\s+(in|during|when|throughout|within)\s+([^,.]+?(?:classroom|lesson|session|school|setting)[^,.]*)([,.])/i,
-          (_, _subj, prep, place, punc) => {
-            const front = `${prep.charAt(0).toUpperCase() + prep.slice(1)} ${place}${punc}`;
-            return front + ' ' + _.charAt(0).toLowerCase() + _.slice(1).replace(/\s+(in|during|when|throughout|within)\s+[^,.]+?(?:classroom|lesson|session|school|setting)[^,.]*([,.])/i, '$2');
-          },
-        );
-      }
-
-      // e. Cleanup duplicate connectors from phrase substitutions
-      s = s.replace(/^(Also,?\s*){2,}/i, 'Also, ');
-      s = s.replace(/^(So\s*){2,}/i, 'So ');
-      s = s.replace(/^(And\s*){2,}/i, 'And ');
-      s = s.replace(/^(Beyond that,?\s*){2,}/i, 'Beyond that, ');
-      s = s.replace(/^\s*[,;]\s*/, '');
-
-      rewritten.push(s);
-
-      // f. After every 3rd long sentence, drop a short punchy follow-up for burstiness
-      if (moderate && wc >= 10 && i % 3 === 2 && i < rawSentences.length - 1) {
-        rewritten.push(getSectionPunch(s));
-      }
-    }
-
-    // ── 4. Final cleanup ──────────────────────────────────────────────────────
-    result = rewritten.join(' ')
+    result = result
       .replace(/\s{2,}/g, ' ')
       .replace(/,\s*,/g, ',')
       .replace(/\.\s*\./g, '.')
@@ -2061,28 +1977,14 @@ QUERY: ${query}`,
       .replace(/\s+([.,!?])/g, '$1')
       .replace(/([.,])\s*([.,])/g, '$1')
       .replace(/^\s*[,;]\s*/gm, '')
-      // Fix doubled prepositions from phrase substitutions
       .replace(/\b(in|on|at|to|of|for|with|by)\s+\1\b/gi, '$1')
       .replace(/\btake part in in\b/gi, 'take part in')
       .replace(/\bjoin in in\b/gi, 'join in')
-      // Fix word-order issues from multi-word replacement insertions
-      .replace(/\bintroduc(?:e|ing) first ([\w\s]+?) (?:such as|like)\b/gi, 'introducing $1 first—like')
-      .replace(/\bcover(?:ing)? first ([\w\s]+?) (?:such as|like)\b/gi, 'covering $1 first, like')
-      // Fix subject-verb agreement when singular "teaching/method" follows plural verb
-      .replace(/\bEnglish-support teaching are\b/gi, 'English-support teaching is')
-      .replace(/\bEnglish-language support are\b/gi, 'English-language support is')
-      // Fix repeated connectors
       .replace(/(Also,?\s*){2,}/gi, 'Also, ')
       .replace(/(So\s*){2,}/gi, 'So ')
       .replace(/(And\s*){2,}/gi, 'And ')
-      .replace(/\bAnd\b(?=\s+And\b)/gi, 'Also')
-      // Fix "And" at start of sentence that has a capital — make lowercase "and"
-      .replace(/\. And ([a-z])/g, '. And $1')
-      // Fix irregular past participle from "showed" replacements
       .replace(/\b(have|has|had)\s+showed\b/gi, '$1 shown')
-      // Fix "a [vowel]" → "an [vowel]" created by word replacements
       .replace(/\ba ([aeiouAEIOU])/g, 'an $1')
-      // Re-capitalise the first letter of every sentence (replacements can drop capitals)
       .replace(/(?:^|(?<=[.!?]\s+))([a-z])/g, (_, c) => c.toUpperCase())
       .trim();
 
@@ -2135,33 +2037,43 @@ QUERY: ${query}`,
       ? 'Maintain a formal academic register throughout, but write as a knowledgeable human expert — not an AI assistant.'
       : 'Write in a direct, conversational voice. Use contractions freely.';
 
-    return `You are an expert ghostwriter who specialises in making AI-generated text completely undetectable by Scribbr, GPTZero, Turnitin, and Copyleaks. You understand exactly what these tools measure.
+    return `You are a skilled human ghostwriter. Your task is to rewrite AI-generated text so it (1) reads as clearly and naturally as a real person wrote it, AND (2) passes AI detection tools like GPTZero, Turnitin, and Scribbr. Both goals are equally required. Output that is undetectable but confusing has failed. Output that is readable but still flagged as AI has also failed.
 
-HOW AI DETECTORS WORK (and how to beat them):
-• They measure BURSTINESS — AI sentences are all similar lengths (15-20 words each). Beat it by mixing ultra-short sentences (3-6 words) with long complex ones (28-40 words) in EVERY paragraph.
-• They measure PERPLEXITY — AI picks the most predictable next word. Beat it by choosing unexpected but natural phrasing. Never write the obvious sentence.
-• They flag PARALLEL STRUCTURE — AI loves "First... Second... Third..." and matching grammar patterns. Break every parallel structure you find.
-• They flag UNIFORM TRANSITIONS — AI uses "Furthermore," "Additionally," "Moreover," constantly. Never use them.
-• They flag PASSIVE VOICE overuse — cut passive constructions by 80%.
-• They flag HEDGING CLUSTERS — AI groups hedges together. Spread them or cut them.
+The good news: these goals are not in conflict. Natural, specific human writing is exactly what detectors cannot flag. Formulaic AI patterns are what get caught.
 
-MANDATORY RULES — every single one must be followed:
-1. BURSTINESS: Every paragraph must contain at least one sentence under 6 words AND one sentence over 28 words. Count them.
-2. FRAGMENTS: Use at least one sentence fragment per paragraph. Real writers do this. It's natural.
-3. CONTRACTIONS: Use them throughout — it's, that's, don't, can't, they're, wouldn't, you'd. Even in formal writing.
-4. RHETORICAL QUESTIONS: At least one every three paragraphs.
-5. SENTENCE OPENERS: At least 30% of sentences must start with something other than the subject: a prepositional phrase, an adverb, a conjunction, or a participial phrase.
-6. START WITH "And" OR "But": Do this at least twice in the full text. Humans do it. AI avoids it.
-7. CONCRETE SPECIFICS: Replace any vague generalisation with a concrete detail, number, or example.
-8. BREAK LISTS: If the original has a list structure (A, B, and C), rewrite it as flowing prose.
-9. ${toneInstruction}
-10. NO DASHES: Do not use em-dashes (—) or hyphens as stylistic punctuation. Use commas, colons, or full stops instead.
-11. PARAGRAPHS: Preserve the exact same number of paragraphs as the original text. Separate paragraphs with a blank line. Do not merge or split paragraphs.
+━━━ MEANING — NEVER COMPROMISE THESE ━━━
+• Every argument, fact, statistic, and piece of evidence from the original must survive unchanged.
+• Every sentence must follow logically from the previous one. A reader must be able to follow the argument without re-reading.
+• Never add information, examples, or statistics that were not in the original.
+• Never remove a point the original was making.
 
-BANNED WORDS AND PHRASES — using any of these instantly triggers detection:
-furthermore, moreover, additionally, it is important to note, it is worth noting, in conclusion, to summarize, in essence, plays a crucial role, it is essential to, delve into, navigate, paradigm, utilize, facilitate, leverage, it has been shown, studies have demonstrated, in today's world, game-changing, groundbreaking, holistic, multifaceted, robust, seamlessly, fundamentally transformed, it is noteworthy, a myriad of, it cannot be overstated, tapestry, landscape, realm, fostering, spearheading, underscores, demonstrates, encompasses, comprehensive, rigorous, systematic, substantial, unprecedented, synergy, pivotal, transformative, cutting-edge, state-of-the-art, ever-evolving, nuanced, multidimensional, overarching, put differently, in other words, to put it another way, to put it simply, simply put, that is to say, put simply, in simpler terms, to rephrase
+━━━ DETECTION — THESE PATTERNS MUST ALL BE APPLIED ━━━
+AI detectors score on measurable signals. Hit every one:
 
-PRESERVE: Every fact, statistic, argument, and piece of evidence from the original. Do not invent new information.
+1. SENTENCE LENGTH VARIATION (critical — this is the top detection signal):
+   Every paragraph must contain at least one short sentence (under 7 words) AND at least one long sentence (over 25 words). Do not let three sentences in a row be similar lengths. Count the words if needed.
+
+2. BANNED TRANSITIONS — never use these, they are the strongest AI flag:
+   furthermore, moreover, additionally, it is important to note, it is worth noting, in conclusion, to summarize, in essence, put differently, in other words, to put it another way, simply put, that is to say, to rephrase, put simply
+
+3. ACTIVE VOICE: Rewrite passive constructions in active voice unless the passive is essential to the meaning.
+
+4. SPECIFIC LANGUAGE: Replace generic phrases with concrete ones. "Many studies" → name the field or a number. "Significant impact" → describe the actual impact.
+
+5. VARIED SENTENCE OPENERS: No two consecutive sentences should start with the same word. At least 30% of sentences should start with something other than the grammatical subject — use a prepositional phrase, a short adverb, a dependent clause, or a conjunction like "And" or "But."
+
+6. CONTRACTIONS: ${tone === 'formal' || tone === 'academic' ? "Use contractions selectively — it's, that's, doesn't, can't are acceptable even in academic writing and raise perplexity scores. Avoid informal contractions like gonna, wanna." : "Use contractions freely — it's, that's, don't, can't, they're, wouldn't, you'd."}
+
+7. SHORT PUNCHY SENTENCES: After a long, complex sentence, follow it with a short direct one. This mimics natural human rhythm and dramatically raises burstiness scores.
+
+━━━ STYLE ━━━
+• ${toneInstruction}
+• Never use em-dashes (—) as stylistic punctuation. Use a comma, colon, or full stop instead.
+• Preserve the exact number of paragraphs. Separate paragraphs with a blank line. Do not merge or split them.
+
+━━━ FULL BANNED WORD LIST ━━━
+furthermore, moreover, additionally, it is important to note, it is worth noting, in conclusion, to summarize, in essence, plays a crucial role, it is essential to, delve into, navigate, paradigm, utilize, facilitate, leverage, it has been shown, studies have demonstrated, in today's world, game-changing, groundbreaking, holistic, multifaceted, robust, seamlessly, fundamentally transformed, it is noteworthy, a myriad of, it cannot be overstated, tapestry, landscape, realm, fostering, spearheading, underscores, encompasses, comprehensive, rigorous, systematic, substantial, unprecedented, synergy, pivotal, transformative, cutting-edge, state-of-the-art, ever-evolving, nuanced, multidimensional, overarching, put differently, in other words, to put it another way, to put it simply, simply put, that is to say, put simply, in simpler terms, to rephrase, it is clear that, it goes without saying, needless to say, it is undeniable that, without a doubt, there is no denying, with this in mind, in light of this, taking this into account, building upon this, throughout history, in contemporary society, in the modern era, across the globe, on a global scale, it is imperative, it is crucial, one must consider, salient, seminal, nascent, burgeoning, veritable, elucidate, illuminate, articulate, posit, engender, catalyze, harness, bolster, augment, ameliorate, alleviate, rectify, transcend, epitomize, encapsulate, exemplify, resonate, coalesce, trajectory, stakeholders, implications, ramifications, dichotomy, juxtaposition, confluence, underpinning, mechanism, ethos, efficacy, resilience, adaptability, versatility, accountability, authenticity, multitude of, wealth of, array of, plethora, myriad, at an unprecedented rate, at a rapid pace, at an exponential rate
+
 OUTPUT: Rewritten text only. No preamble, no "Here is the rewritten text:", no commentary.`;
   }
 
