@@ -897,7 +897,7 @@ ${rules.map(r => `  • ${r}`).join('\n')}${tellsHint}`;
     const metrics = await this.analyze(text);
     const { detectedLanguage } = metrics;
 
-    const cacheHash = this.createHash({ action: 'rewrite_v5_ai', text, options, humanization });
+    const cacheHash = this.createHash({ action: 'rewrite_v6_ai', text, options, humanization });
     const cached = await this.getFromCache<any>(cacheHash);
 
     let bestVersion: string;
@@ -1902,8 +1902,8 @@ QUERY: ${query}`,
 
 
     // Varied human-sounding openers to break the AI subject-first pattern
-    const OPENERS_FORMAL   = ['Beyond that,', 'Worth noting:', 'In practice,', 'Building on that,', "Here's what that means:", 'Step back.', 'Look closer:', 'The data tells a story:', 'Consider this:', 'And yet,'];
-    const OPENERS_INFORMAL = ["Here's the thing:", 'Put differently,', 'Think about it:', 'Basically,', 'In practice,', 'Truth is,', 'The tricky part?', 'Step back for a second.', 'Look at it this way:', 'And that matters.'];
+    const OPENERS_FORMAL   = ['Beyond that,', 'Worth noting:', 'In practice,', 'Building on that,', "Here's what that means:", 'Step back.', 'Look closer:', 'The data tells a story:', 'Consider this:', 'And yet,', 'That said,', 'To be clear:', 'On top of that,', 'What this means:', 'The reality is,'];
+    const OPENERS_INFORMAL = ["Here's the thing:", 'Think about it:', 'Basically,', 'In practice,', 'Truth is,', 'The tricky part?', 'Step back for a second.', 'Look at it this way:', 'And that matters.', 'Fair enough.', 'The honest answer?', 'Real talk:', 'And here is the thing:', 'Not obvious, but true:', 'Worth saying plainly:'];
     const BASE_OPENERS = isFormal ? OPENERS_FORMAL : OPENERS_INFORMAL;
 
     // Section-aware opener overrides
