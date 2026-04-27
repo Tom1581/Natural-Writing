@@ -25,6 +25,7 @@ import { ConfigService } from '@nestjs/config';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const rawDatabaseUrl = configService.get<string>('DATABASE_URL')?.trim();
+        const isProduction = configService.get<string>('VERCEL_ENV') === 'production' || process.env.NODE_ENV === 'production';
         const entities = [StyleProfileEntity, ManuscriptEntity, CacheEntity, VersionEntity, ProjectEntity, UserEntity, CommentEntity, UsageLogEntity, FreeUsageEntity, BillingAccountEntity];
         let databaseUrl: string | null = null;
 
@@ -53,6 +54,12 @@ import { ConfigService } from '@nestjs/config';
             logging: ['error', 'warn'],
             ssl: { rejectUnauthorized: false },
           };
+        }
+
+        if (isProduction) {
+          throw new Error(
+            'Production requires a valid Supabase/Postgres DATABASE_URL. Refusing to use SQLite in production.',
+          );
         }
 
         return {
