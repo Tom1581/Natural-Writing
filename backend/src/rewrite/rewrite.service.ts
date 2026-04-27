@@ -975,7 +975,7 @@ ${rules.map(r => `  • ${r}`).join('\n')}${tellsHint}`;
     }
 
     // ── Increment word usage counter (non-admin only) ────────────────────────
-    if (!isAdmin && billingAccount && paidTier !== 'unlimited') {
+    if (!isAdmin && billingAccount && paidTier && paidTier !== 'unlimited') {
       billingAccount.wordBalance = Math.max(0, billingAccount.wordBalance - incomingWords);
       await this.billingAccountRepo.save(billingAccount);
     } else if (!isAdmin && usageRow) {
