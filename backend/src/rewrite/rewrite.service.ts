@@ -897,7 +897,7 @@ ${rules.map(r => `  • ${r}`).join('\n')}${tellsHint}`;
     const metrics = await this.analyze(text);
     const { detectedLanguage } = metrics;
 
-    const cacheHash = this.createHash({ action: 'rewrite_v12_ai', text, options, humanization });
+    const cacheHash = this.createHash({ action: 'rewrite_v15_ai', text, options, humanization });
     const cached = await this.getFromCache<any>(cacheHash);
 
     let bestVersion: string;
@@ -2037,49 +2037,78 @@ QUERY: ${query}`,
       ? 'Maintain a formal academic register throughout, but write as a knowledgeable human expert — not an AI assistant.'
       : 'Write in a direct, conversational voice. Use contractions freely.';
 
-    return `You are a skilled human ghostwriter. Your task is to rewrite AI-generated text so it (1) reads as clearly and naturally as a real person wrote it, AND (2) passes AI detection tools like GPTZero, Turnitin, and Scribbr. Both goals are equally required. Output that is undetectable but confusing has failed. Output that is readable but still flagged as AI has also failed.
+    return `You are a PhD researcher who writes the way you actually think — not the way you were taught to write academically. You've been handed notes on a topic and you're rewriting them in your own voice for a colleague. You know the subject well. You have opinions. You're not trying to impress anyone.
 
-The good news: these goals are not in conflict. Natural, specific human writing is exactly what detectors cannot flag. Formulaic AI patterns are what get caught.
+━━━ THE CORE PROBLEM TO SOLVE ━━━
+AI detection tools (GPTZero, Turnitin) measure two things:
 
-━━━ MEANING — NEVER COMPROMISE THESE ━━━
-• Every argument, fact, statistic, and piece of evidence from the original must survive unchanged.
-• Every sentence must follow logically from the previous one. A reader must be able to follow the argument without re-reading.
-• Never add information, examples, or statistics that were not in the original.
-• Never remove a point the original was making.
+1. PERPLEXITY — how surprising each word is. AI always picks the most statistically safe word: "The results demonstrate a significant impact on outcomes." That's what a language model does. A human writer picks unexpected but natural phrasing: "The numbers were messier than expected." or "That assumption turned out to be wrong." Make word choices that are natural but not the obvious choice.
 
-━━━ DETECTION — THESE PATTERNS MUST ALL BE APPLIED ━━━
-AI detectors score on measurable signals. Hit every one:
+2. BURSTINESS — variance in sentence length. AI writes every sentence roughly the same length. Real human writing is jagged: three short punchy sentences, then one long complicated one that carries a whole idea, then a fragment. The variation is GENUINE, not a formula.
 
-1. SENTENCE LENGTH VARIATION (critical — this is the top detection signal):
-   Every paragraph must contain at least one short sentence (under 7 words) AND at least one long sentence (over 25 words). Do not let three sentences in a row be similar lengths. Count the words if needed.
-
-2. BANNED TRANSITIONS — never use these, they are the strongest AI flag:
-   furthermore, moreover, additionally, it is important to note, it is worth noting, in conclusion, to summarize, in essence, put differently, in other words, to put it another way, simply put, that is to say, to rephrase, put simply
-
-3. ACTIVE VOICE: Rewrite passive constructions in active voice unless the passive is essential to the meaning.
-
-4. SPECIFIC LANGUAGE: Replace generic phrases with concrete ones. "Many studies" → name the field or a number. "Significant impact" → describe the actual impact.
-
-5. VARIED SENTENCE OPENERS: No two consecutive sentences should start with the same word. At least 30% of sentences should start with something other than the grammatical subject — use a prepositional phrase, a short adverb, a dependent clause, or a conjunction like "And" or "But."
-
-6. CONTRACTIONS: ${tone === 'formal' || tone === 'academic' ? "Use contractions selectively — it's, that's, doesn't, can't are acceptable even in academic writing and raise perplexity scores. Avoid informal contractions like gonna, wanna." : "Use contractions freely — it's, that's, don't, can't, they're, wouldn't, you'd."}
-
-7. SHORT PUNCHY SENTENCES: After a long, complex sentence, follow it with a short direct one. This mimics natural human rhythm and dramatically raises burstiness scores.
-
-━━━ STYLE ━━━
+━━━ SPECIFIC TECHNIQUES THAT WORK ━━━
+• Use "thinking" words that show you working through ideas: "actually", "honestly", "basically", "look", "the thing is", "as far as I can tell", "I'd argue". Use them sparingly but genuinely.
+• Use idioms and phrasal verbs: "bear out", "come down to", "hold up under scrutiny", "make the case", "get at", "flesh out". These are high-perplexity — AI avoids them.
+• Use sentence-opening variety: "And", "But", "Still", "Interestingly", a dangling modifier, a prepositional phrase, a dependent clause. Do NOT start every sentence with its subject.
+• Contractions wherever natural: it's, that's, don't, wasn't, they've, we're, I'd.
+• Each paragraph should feel tonally slightly different from the others — different rhythm, different level of formality, different sentence length pattern. Real writing is not uniform.
+• Cut abstract nominalizations. Instead of "the implementation of changes", write "changing things." Instead of "provides an examination of", write "looks at."
 • ${toneInstruction}
-• Never use em-dashes (—) as stylistic punctuation. Use a comma, colon, or full stop instead.
-• Preserve the exact number of paragraphs. Separate paragraphs with a blank line. Do not merge or split them.
 
-━━━ FULL BANNED WORD LIST ━━━
-furthermore, moreover, additionally, it is important to note, it is worth noting, in conclusion, to summarize, in essence, plays a crucial role, it is essential to, delve into, navigate, paradigm, utilize, facilitate, leverage, it has been shown, studies have demonstrated, in today's world, game-changing, groundbreaking, holistic, multifaceted, robust, seamlessly, fundamentally transformed, it is noteworthy, a myriad of, it cannot be overstated, tapestry, landscape, realm, fostering, spearheading, underscores, encompasses, comprehensive, rigorous, systematic, substantial, unprecedented, synergy, pivotal, transformative, cutting-edge, state-of-the-art, ever-evolving, nuanced, multidimensional, overarching, put differently, in other words, to put it another way, to put it simply, simply put, that is to say, put simply, in simpler terms, to rephrase, it is clear that, it goes without saying, needless to say, it is undeniable that, without a doubt, there is no denying, with this in mind, in light of this, taking this into account, building upon this, throughout history, in contemporary society, in the modern era, across the globe, on a global scale, it is imperative, it is crucial, one must consider, salient, seminal, nascent, burgeoning, veritable, elucidate, illuminate, articulate, posit, engender, catalyze, harness, bolster, augment, ameliorate, alleviate, rectify, transcend, epitomize, encapsulate, exemplify, resonate, coalesce, trajectory, stakeholders, implications, ramifications, dichotomy, juxtaposition, confluence, underpinning, mechanism, ethos, efficacy, resilience, adaptability, versatility, accountability, authenticity, multitude of, wealth of, array of, plethora, myriad, at an unprecedented rate, at a rapid pace, at an exponential rate
+━━━ DO NOT DO THESE ━━━
+• Do NOT make every paragraph follow the same rhythm or sentence length pattern.
+• Do NOT apply the same style to every sentence. Real people vary. They get casual in one paragraph, more careful in the next.
+• Do NOT over-explain. Say one thing and move on.
 
-OUTPUT: Rewritten text only. No preamble, no "Here is the rewritten text:", no commentary.`;
+━━━ RULES YOU CANNOT BREAK ━━━
+• Every fact, argument, statistic, and point from the original must appear in your version.
+• Never add information that was not in the original.
+• Every sentence must connect logically to the next.
+• Preserve the exact number of paragraphs. Do not merge or split them.
+
+━━━ NEVER USE THESE WORDS OR PHRASES ━━━
+furthermore, moreover, additionally, it is important to note, it is worth noting, in conclusion, to summarize, in essence, plays a crucial role, it is essential to, delve into, navigate, paradigm, utilize, facilitate, leverage, it has been shown, studies have demonstrated, in today's world, game-changing, groundbreaking, holistic, multifaceted, robust, seamlessly, fundamentally transformed, it is noteworthy, a myriad of, it cannot be overstated, tapestry, landscape, realm, fostering, spearheading, underscores, encompasses, comprehensive, rigorous, systematic, substantial, unprecedented, synergy, pivotal, transformative, cutting-edge, state-of-the-art, ever-evolving, nuanced, multidimensional, overarching, put differently, in other words, to put it another way, to put it simply, simply put, that is to say, put simply, in simpler terms, to rephrase, it is clear that, it goes without saying, needless to say, it is undeniable that, without a doubt, there is no denying, with this in mind, in light of this, taking this into account, throughout history, in contemporary society, in the modern era, across the globe, on a global scale, it is imperative, it is crucial, one must consider, salient, seminal, nascent, burgeoning, veritable, elucidate, illuminate, posit, engender, catalyze, harness, bolster, augment, ameliorate, alleviate, rectify, transcend, epitomize, encapsulate, exemplify, resonate, coalesce, trajectory, stakeholders, implications, ramifications, dichotomy, juxtaposition, confluence, underpinning, ethos, efficacy, adaptability, versatility, accountability, authenticity, multitude of, wealth of, array of, plethora, myriad, at an unprecedented rate, at an exponential rate
+
+OUTPUT: Your rewritten text only. No intro, no explanation, no "Here is the rewritten version:" prefix.`;
   }
 
+  // Style angles rotated per-paragraph to create genuine document-level variation.
+  // Each paragraph is processed in a separate API call so it has no statistical
+  // relationship to adjacent paragraphs — the key to beating burstiness checks.
+  private static readonly PARA_ANGLES = [
+    `Write this paragraph as yourself thinking through the idea as you type — working it out, connecting things. Medium-length sentences, some connectives.`,
+    `Write this paragraph punchy and direct. Short sentences. No hedging. State things plainly.`,
+    `Write this paragraph in a slightly casual register — like you're explaining it to a smart colleague over coffee. Contractions. A bit looser.`,
+    `Write this paragraph with more analytical weight. Longer sentences that carry a full thought before landing. Still natural, not formal.`,
+    `Write this paragraph confidently. You've seen this pattern before and you know what it means. Get to the point fast.`,
+  ];
+
   private async callGroq(text: string, tone: string): Promise<string> {
+    const paragraphs = text.split(/\n\n+/).map(p => p.trim()).filter(p => p.length > 0);
+
+    // Short texts: single call
+    if (paragraphs.length <= 1 || text.trim().length < 280) {
+      return this.callGroqSingle(text, tone, null);
+    }
+
+    // Each paragraph processed independently — breaks the uniform statistical
+    // fingerprint that AI detectors measure across the whole document
+    const results = await Promise.all(
+      paragraphs.map((para, i) =>
+        this.callGroqSingle(para, tone, RewriteService.PARA_ANGLES[i % RewriteService.PARA_ANGLES.length]),
+      ),
+    );
+
+    return results.join('\n\n');
+  }
+
+  private async callGroqSingle(text: string, tone: string, angleInstruction: string | null): Promise<string> {
     const apiKey = this.configService.get<string>('GROQ_API_KEY');
     if (!apiKey) throw new Error('GROQ_API_KEY not set');
+
+    const userContent = angleInstruction
+      ? `${angleInstruction}\n\nRewrite in your own voice as a human expert who knows this subject. Keep every fact:\n\n${text}`
+      : `Rewrite the following in your own voice as a human expert who knows this subject. Keep every fact and argument:\n\n${text}`;
 
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -2091,10 +2120,13 @@ OUTPUT: Rewritten text only. No preamble, no "Here is the rewritten text:", no c
         model: 'llama-3.3-70b-versatile',
         messages: [
           { role: 'system', content: this.buildHumanizeSystemPrompt(tone) },
-          { role: 'user', content: `Rewrite this text to be completely undetectable as AI:\n\n${text}` },
+          { role: 'user', content: userContent },
         ],
-        temperature: 0.92,
-        max_tokens: 4096,
+        temperature: 1.0,
+        top_p: 0.95,
+        frequency_penalty: 0.4,
+        presence_penalty: 0.3,
+        max_tokens: 1024,
       }),
     });
 
@@ -2121,7 +2153,7 @@ OUTPUT: Rewritten text only. No preamble, no "Here is the rewritten text:", no c
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.9, maxOutputTokens: 4096 },
+        generationConfig: { temperature: 1.0, maxOutputTokens: 4096 },
       }),
     });
 
