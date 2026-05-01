@@ -453,7 +453,7 @@ export default function Home() {
                   { title: 'Writing Quality', body: 'Every rewrite goes through multi-pass processing — adjusting sentence rhythm, burstiness, word choice, and flow so the output reads like a person actually sat down and wrote it.' },
                   { title: 'Deadline-Ready', body: 'Fast turnaround with no upload limits on paid plans. Paste, adjust, convert — your paper is ready in seconds, not hours.' },
                   { title: 'Academic Integrity', body: 'Natural Quill improves the naturalness and clarity of your writing. Your ideas stay yours — we only change how they sound, never what they say.' },
-                  { title: 'Passes AI Detection', body: 'Engineered specifically to reduce detection signals measured by Turnitin, Scribbr, GPTZero, and similar tools — targeting burstiness, perplexity, and parallel structure patterns that detectors rely on.' },
+                  { title: 'Reduces AI-Style Patterns', body: 'Engineered to reduce repetitive signals often evaluated by tools like Turnitin, Scribbr, GPTZero, and similar platforms — improving burstiness, rhythm, and sentence variety for real readers.' },
                   { title: 'Lowest Price, No Subscriptions Traps', body: 'One-time word packs from $19.99. No auto-renew surprises. Pay once, use when you need it. Unlimited plan available for heavy users at $39.99/month.' },
                 ].map(({ title, body }) => (
                   <div key={title} style={{ padding: '1rem 1.25rem', background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.12)', borderRadius: '0.75rem' }}>

@@ -36,7 +36,7 @@ const PLANS: Plan[] = [
     features: [
       '10,000 prepaid words',
       'All 5 humanization styles',
-      'AI detector bypass mode',
+      'AI-style pattern reduction',
       'Strength & tone controls',
       'Use anytime until balance runs out',
       'Manuscript history (7 days)',

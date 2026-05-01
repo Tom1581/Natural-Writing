@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'How to Humanize ChatGPT Text for Free (2025)',
   description: 'ChatGPT text gets flagged because of specific writing patterns. Learn exactly which patterns AI detectors catch and how to fix them for free.',
   alternates: { canonical: 'https://naturalquill.one/blog/how-to-humanize-chatgpt-text' },
-  keywords: ['humanize chatgpt text', 'chatgpt humanizer', 'humanize chatgpt', 'make chatgpt text human', 'chatgpt text undetectable', 'free chatgpt humanizer'],
+  keywords: ['humanize chatgpt text', 'chatgpt humanizer', 'humanize chatgpt', 'make chatgpt text human', 'natural chatgpt writing', 'free chatgpt humanizer'],
   openGraph: {
     title: 'How to Humanize ChatGPT Text for Free (2025)',
     description: 'The exact writing patterns that get ChatGPT flagged — and how to fix them.',
@@ -88,7 +88,7 @@ export default function Post() {
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '2rem' }}>
           <p style={{ color: '#888899', fontSize: '0.85rem', marginBottom: '1rem' }}>More guides:</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <Link href="/blog/how-to-bypass-gptzero" style={{ color: '#2563eb', fontSize: '0.9rem' }}>How to Bypass GPTZero AI Detection →</Link>
+            <Link href="/blog/how-to-bypass-gptzero" style={{ color: '#2563eb', fontSize: '0.9rem' }}>How GPTZero Reads AI Writing Patterns →</Link>
             <Link href="/blog/best-ai-humanizer-2025" style={{ color: '#2563eb', fontSize: '0.9rem' }}>Best AI Humanizer Tools in 2025 →</Link>
           </div>
         </div>

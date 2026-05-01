@@ -19,24 +19,11 @@ export const metadata: Metadata = {
     apple: '/icon',
   },
   title: {
-    default: 'Natural Quill — Humanize AI Text, Bypass AI Detection | Undetectable AI Writing',
+    default: 'Natural Quill — Humanize AI Text Into Natural Writing',
     template: '%s | Natural Quill',
   },
-  description: 'Humanize AI text instantly with Natural Quill. Bypass AI detection from Turnitin, GPTZero, and Scribbr. Rewrite ChatGPT, Claude, and Gemini output into natural, undetectable human writing. Free to try — no signup needed.',
+  description: 'Natural Quill helps writers revise AI-generated drafts into clearer, more natural, human-sounding writing. Improve sentence rhythm, word choice, flow, and readability while reducing common AI-style patterns. Free to try — no signup needed.',
   keywords: [
-    // High-volume undetectable terms
-    'undetectable ai writing',
-    'undetectable ai text',
-    'ai undetectable',
-    'make ai text undetectable',
-    'bypass ai detection',
-    'pass ai detection',
-    'ai detection bypass',
-    'bypass gptzero',
-    'bypass turnitin ai detection',
-    'bypass scribbr',
-    'undetectable ai essay',
-    'ai writing undetectable',
     // Humanizer core terms
     'ai humanizer',
     'humanize ai text',
@@ -63,7 +50,11 @@ export const metadata: Metadata = {
     'humanize claude ai',
     'humanize gemini text',
     'remove ai writing patterns',
-    'remove ai detection',
+    'reduce ai writing patterns',
+    'ai detection writing signals',
+    'gptzero writing patterns',
+    'turnitin ai writing patterns',
+    'scribbr ai writing patterns',
     // Feature keywords
     'human sounding writing',
     'natural writing',
@@ -92,16 +83,16 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: SITE_URL,
     siteName: 'Natural Quill',
-    title: 'Natural Quill — Humanize AI Text & Bypass AI Detection',
-    description: 'Humanize AI text instantly. Bypass Turnitin, GPTZero, and Scribbr AI detection. Rewrite ChatGPT output into natural, undetectable human writing. Free to try.',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Natural Quill — AI humanizer and undetectable AI writing tool' }],
+    title: 'Natural Quill — Humanize AI Text Into Natural Writing',
+    description: 'Revise AI-generated drafts into natural, polished writing with better rhythm, word choice, flow, and readability. Free to try.',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Natural Quill — AI writing humanizer and natural writing editor' }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@naturalquill',
     creator: '@naturalquill',
-    title: 'Natural Quill — Humanize AI Text & Bypass AI Detection',
-    description: 'Humanize AI text instantly. Bypass Turnitin, GPTZero, and Scribbr AI detection. Rewrite ChatGPT output into natural, undetectable human writing. Free to try.',
+    title: 'Natural Quill — Humanize AI Text Into Natural Writing',
+    description: 'Revise AI-generated drafts into natural, polished writing with better rhythm, word choice, flow, and readability. Free to try.',
     images: ['/og-image.png'],
   },
 };
@@ -224,10 +215,10 @@ const jsonLd = [
       },
       {
         '@type': 'Question',
-        name: 'Can Natural Quill bypass AI detection?',
+        name: 'Can Natural Quill reduce AI-style writing patterns?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Natural Quill is specifically engineered to reduce the signals that AI detectors like GPTZero, Scribbr, and Turnitin measure — including low perplexity, low burstiness, parallel sentence structure, and repeated AI phrasing patterns. By rewriting these characteristics, the output reads as natural human writing to both readers and detection tools.',
+          text: 'Natural Quill helps reduce common AI-style patterns that tools like GPTZero, Scribbr, and Turnitin often evaluate, including low sentence variety, repetitive transitions, predictable phrasing, and flat rhythm. The goal is clearer, more natural writing for real readers.',
         },
       },
       {
@@ -240,10 +231,10 @@ const jsonLd = [
       },
       {
         '@type': 'Question',
-        name: 'How do I make AI text undetectable?',
+        name: 'How do I make AI text sound more human?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Paste your AI-generated text into Natural Quill, set the humanization slider to around 80%, choose your tone, and click Convert. The tool rewrites the text to increase burstiness, reduce repetitive patterns, add natural contractions, and vary sentence structure — the key factors AI detectors measure.',
+          text: 'Paste your AI-generated text into Natural Quill, choose a tone and strength setting, then click Convert. The tool rewrites the text to improve sentence variety, reduce repetitive patterns, add natural phrasing, and make the draft read more like a person wrote it.',
         },
       },
     ],

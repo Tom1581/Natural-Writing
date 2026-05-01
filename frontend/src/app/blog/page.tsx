@@ -3,11 +3,11 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Blog — AI Writing & Humanization Guides',
-  description: 'Learn how to humanize AI text, bypass AI detection from GPTZero and Turnitin, and make ChatGPT writing sound natural. Free guides from Natural Quill.',
+  description: 'Learn how to humanize AI text, improve ChatGPT drafts, and reduce common AI-style writing patterns. Free writing guides from Natural Quill.',
   alternates: { canonical: 'https://naturalquill.one/blog' },
   openGraph: {
     title: 'Blog — AI Writing & Humanization Guides | Natural Quill',
-    description: 'Free guides on humanizing AI text, bypassing AI detection, and making ChatGPT writing sound natural.',
+    description: 'Free guides on humanizing AI text, improving AI-generated drafts, and making ChatGPT writing sound natural.',
     url: 'https://naturalquill.one/blog',
   },
 };
@@ -15,22 +15,22 @@ export const metadata: Metadata = {
 const posts = [
   {
     slug: 'how-to-make-ai-writing-undetectable',
-    title: 'How to Make AI Writing Undetectable in 2025',
-    description: 'A step-by-step guide to rewriting AI-generated text so it passes GPTZero, Scribbr, and Turnitin AI detection.',
+    title: 'How to Make AI Writing Sound Natural in 2025',
+    description: 'A step-by-step guide to rewriting AI-generated text with better rhythm, word choice, and human-sounding flow.',
     date: 'April 20, 2025',
     readTime: '5 min read',
   },
   {
     slug: 'how-to-bypass-gptzero',
-    title: 'How to Bypass GPTZero AI Detection',
-    description: 'What GPTZero actually measures and how to rewrite AI text so it consistently scores below the detection threshold.',
+    title: 'How GPTZero Reads AI Writing Patterns',
+    description: 'What GPTZero measures and how to revise AI text so it sounds clearer, less repetitive, and more natural.',
     date: 'April 18, 2025',
     readTime: '4 min read',
   },
   {
     slug: 'best-ai-humanizer-2025',
     title: 'Best AI Humanizer Tools in 2025 (Honest Comparison)',
-    description: 'We compared the top AI humanizer tools on detection bypass rate, output quality, and price. Here is what we found.',
+    description: 'We compared the top AI humanizer tools on writing quality, editing control, naturalness, and price. Here is what we found.',
     date: 'April 15, 2025',
     readTime: '6 min read',
   },
@@ -55,7 +55,7 @@ export default function BlogIndex() {
           AI Writing Guides
         </h1>
         <p style={{ color: '#888899', fontSize: '1rem', marginBottom: '3rem', lineHeight: 1.6 }}>
-          Practical guides on humanizing AI text, bypassing AI detection, and making your writing sound natural.
+          Practical guides on humanizing AI text, improving AI-generated drafts, and making your writing sound natural.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
