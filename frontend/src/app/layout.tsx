@@ -1,12 +1,15 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { Suspense } from 'react';
+import GoogleTagEvents from '@/components/GoogleTagEvents';
 import './globals.css';
 
 const SITE_URL = 'https://naturalquill.one';
-const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-4K5EKP75ZX';
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || '';
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-WBDCV3WN';
+const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '';
 // Update this date whenever you ship a significant homepage change
-const LAST_UPDATED = '2025-04-25';
+const LAST_UPDATED = '2026-05-01';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -75,9 +78,7 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, 'max-snippet': -1, 'max-image-preview': 'large', 'max-video-preview': -1 },
   },
   alternates: { canonical: SITE_URL },
-  verification: {
-    google: 'PASTE_YOUR_GSC_VERIFICATION_CODE_HERE',
-  },
+  ...(GOOGLE_SITE_VERIFICATION ? { verification: { google: GOOGLE_SITE_VERIFICATION } } : {}),
   openGraph: {
     type: 'website',
     locale: 'en_US',
@@ -98,6 +99,16 @@ export const metadata: Metadata = {
 };
 
 const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Natural Quill',
+    alternateName: ['NaturalQuill', 'Natural Writing'],
+    url: SITE_URL,
+    inLanguage: 'en',
+    description: 'Natural Quill helps writers revise AI-generated drafts into clearer, more natural, human-sounding writing.',
+    publisher: { '@type': 'Organization', name: 'Natural Quill', url: SITE_URL },
+  },
   {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
@@ -244,7 +255,7 @@ const jsonLd = [
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
+  <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Inter:wght@100..900&display=swap" rel="stylesheet" />
@@ -263,7 +274,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }}
           />
         )}
-        {GA_MEASUREMENT_ID && (
+        {!GTM_ID && GA_MEASUREMENT_ID && (
           <>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
@@ -296,6 +307,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             />
           </noscript>
         )}
+        <Suspense fallback={null}>
+          <GoogleTagEvents gtmId={GTM_ID} gaMeasurementId={GA_MEASUREMENT_ID} />
+        </Suspense>
         {children}
       </body>
     </html>

@@ -20,6 +20,7 @@ import AIGeneratorPanel from '@/components/AIGeneratorPanel';
 import PricingModal from '@/components/PricingModal';
 import { supabase } from '@/lib/supabase';
 import BrandMark from '@/components/BrandMark';
+import { trackEvent } from '@/lib/analytics';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -263,11 +264,22 @@ export default function Home() {
       return;
     }
 
+    const wordCount = inputText.trim().split(/\s+/).filter(Boolean).length;
+
     // Increment seed on each call when there's already output (regeneration)
     const nextSeed = outputText ? variationSeed + 1 : 0;
     setVariationSeed(nextSeed);
     setIsRewriting(true);
     setShowDiagnostics(false);
+    trackEvent('natural_quill_rewrite_started', {
+      word_count: wordCount,
+      tone,
+      strength,
+      section_type: sectionType,
+      humanization,
+      logged_in: Boolean(activeUser?.email),
+      regeneration: Boolean(outputText),
+    });
     try {
       const res = await fetch(`${API}/rewrite/process`, {
         method: 'POST',
@@ -291,6 +303,10 @@ export default function Home() {
       if (res.status === 402) {
         const body = await res.json().catch(() => ({}));
         setIsRewriting(false);
+        trackEvent('natural_quill_quota_limit_reached', {
+          word_count: wordCount,
+          logged_in: Boolean(activeUser?.email),
+        });
         setIsPricingOpen(true);
         toast.error(body?.message || 'Free trial limit reached. Upgrade to continue.');
         return;
@@ -312,6 +328,14 @@ export default function Home() {
       setOutputMetrics(data.outputMetrics || null);
       setCurrentManuscriptId(data.id);
       setShowDiagnostics(true);
+      trackEvent('natural_quill_rewrite_completed', {
+        word_count: wordCount,
+        tone,
+        strength,
+        section_type: sectionType,
+        humanization,
+        logged_in: Boolean(activeUser?.email),
+      });
       fetchHistory();
       if (!ADMIN_EMAILS.includes(activeUser?.email ?? '')) {
         setUseCount(prev => prev + 1);
@@ -326,6 +350,10 @@ export default function Home() {
         toast.success('Text improved successfully.');
       }
     } catch (err: any) {
+      trackEvent('natural_quill_rewrite_failed', {
+        word_count: wordCount,
+        logged_in: Boolean(activeUser?.email),
+      });
       toast.error(err.message || 'Rewrite failed. Check your API connection.');
     } finally {
       setIsRewriting(false);
@@ -571,7 +599,10 @@ export default function Home() {
             Subscribe for 10,000–unlimited words.
           </span>
           <button
-            onClick={() => setIsPricingOpen(true)}
+            onClick={() => {
+              trackEvent('natural_quill_pricing_opened', { source: 'trial_banner' });
+              setIsPricingOpen(true);
+            }}
             style={{
               padding: '0.35rem 0.85rem',
               background: 'linear-gradient(135deg, #7c3aed, #2563eb)',
