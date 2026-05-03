@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'How to Make AI Writing Sound Natural in 2025',
   description: 'Step-by-step guide to making AI writing sound natural while reducing common AI-detection patterns used by GPTZero, Scribbr, and Turnitin.',
   alternates: { canonical: 'https://naturalquill.one/blog/how-to-make-ai-writing-undetectable' },
-  keywords: ['make ai writing sound natural', 'make ai writing undetectable', 'undetectable ai writing', 'humanize ai text', 'ai writing humanizer', 'reduce ai writing patterns', 'gptzero ai detection', 'turnitin ai detection', 'scribbr ai detection'],
+  keywords: ['make ai writing sound natural', 'make ai writing undetectable', 'undetectable ai writing', 'undetectable ai text', 'undetectable aiwriter', 'undetectable aiwriting', 'undetectable aiwiring', 'aiwriting undetectable', 'ai detectable writing', 'ai dedectable ai writing', 'humanize ai text', 'ai writing humanizer', 'reduce ai writing patterns', 'gptzero ai detection', 'turnitin ai detection', 'scribbr ai detection'],
   openGraph: {
     title: 'How to Make AI Writing Sound Natural in 2025',
     description: 'What AI detectors often measure, and how to revise AI text for clearer, more natural writing.',

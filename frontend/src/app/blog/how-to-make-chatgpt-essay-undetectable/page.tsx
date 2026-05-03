@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'How to Make a ChatGPT Essay Sound Natural (2025)',
   description: 'Step-by-step guide to making a ChatGPT essay sound natural while reducing common AI-detection patterns in academic writing.',
   alternates: { canonical: 'https://naturalquill.one/blog/how-to-make-chatgpt-essay-undetectable' },
-  keywords: ['make chatgpt essay sound natural', 'make chatgpt essay undetectable', 'humanize chatgpt essay', 'chatgpt essay editor', 'natural academic writing', 'revise ai essay', 'chatgpt essay ai detection', 'turnitin ai detection', 'gptzero ai detection'],
+  keywords: ['make chatgpt essay sound natural', 'make chatgpt essay undetectable', 'make chatgpt undetectable', 'undetectable chatgpt essay', 'undetectable chatgpt', 'undetectable gpt', 'undetectablegpt', 'humanize chatgpt essay', 'chatgpt essay editor', 'natural academic writing', 'revise ai essay', 'chatgpt essay ai detection', 'turnitin ai detection', 'gptzero ai detection'],
   openGraph: {
     title: 'How to Make a ChatGPT Essay Sound Natural (2025)',
     description: 'Step-by-step guide to revising ChatGPT essays for clearer, more natural academic writing.',
