@@ -16,14 +16,14 @@ const posts = [
   {
     slug: 'how-to-make-ai-writing-undetectable',
     title: 'How to Make AI Writing Sound Natural in 2025',
-    description: 'A step-by-step guide to rewriting AI-generated text with better rhythm, word choice, and human-sounding flow.',
+    description: 'A step-by-step guide to making AI writing sound natural while reducing common AI-detection patterns in GPTZero, Scribbr, and Turnitin.',
     date: 'April 20, 2025',
     readTime: '5 min read',
   },
   {
     slug: 'how-to-bypass-gptzero',
     title: 'How GPTZero Reads AI Writing Patterns',
-    description: 'What GPTZero measures and how to revise AI text so it sounds clearer, less repetitive, and more natural.',
+    description: 'What GPTZero AI detection measures and how to revise AI text so it sounds clearer, less repetitive, and more natural.',
     date: 'April 18, 2025',
     readTime: '4 min read',
   },

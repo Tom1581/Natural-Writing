@@ -35,7 +35,7 @@ export default function GoogleTagEvents({ gtmId, gaMeasurementId }: GoogleTagEve
       gtm_container_id: gtmId || undefined,
     });
 
-    if (!gtmId && gaMeasurementId && typeof window.gtag === 'function') {
+    if (gaMeasurementId && typeof window.gtag === 'function') {
       window.gtag('config', gaMeasurementId, {
         page_path: pathname,
         page_location: pageLocation,

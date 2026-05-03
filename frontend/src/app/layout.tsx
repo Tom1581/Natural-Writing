@@ -5,7 +5,7 @@ import GoogleTagEvents from '@/components/GoogleTagEvents';
 import './globals.css';
 
 const SITE_URL = 'https://naturalquill.one';
-const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || '';
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-4K5EKP75ZX';
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-WBDCV3WN';
 const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '';
 // Update this date whenever you ship a significant homepage change
@@ -48,16 +48,24 @@ export const metadata: Metadata = {
     'ai to human text',
     'ai text converter',
     'fix ai writing',
+    'make ai writing undetectable',
+    'ai writing undetectable',
+    'undetectable ai writing',
     // Tool-specific
     'humanize chatgpt',
     'humanize claude ai',
     'humanize gemini text',
+    'chatgpt essay ai detection',
     'remove ai writing patterns',
     'reduce ai writing patterns',
+    'ai detector writing patterns',
     'ai detection writing signals',
     'gptzero writing patterns',
+    'gptzero ai detection',
     'turnitin ai writing patterns',
+    'turnitin ai detection',
     'scribbr ai writing patterns',
+    'scribbr ai detection',
     // Feature keywords
     'human sounding writing',
     'natural writing',
@@ -274,7 +282,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }}
           />
         )}
-        {!GTM_ID && GA_MEASUREMENT_ID && (
+        {GA_MEASUREMENT_ID && (
           <>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}

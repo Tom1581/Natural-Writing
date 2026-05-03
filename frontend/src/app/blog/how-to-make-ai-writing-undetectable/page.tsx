@@ -3,9 +3,9 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'How to Make AI Writing Sound Natural in 2025',
-  description: 'Step-by-step guide to revising AI-generated text into clearer, more natural writing. Learn what GPTZero, Scribbr, and Turnitin often measure and how to improve rhythm, flow, and readability.',
+  description: 'Step-by-step guide to making AI writing sound natural while reducing common AI-detection patterns used by GPTZero, Scribbr, and Turnitin.',
   alternates: { canonical: 'https://naturalquill.one/blog/how-to-make-ai-writing-undetectable' },
-  keywords: ['make ai writing sound natural', 'humanize ai text', 'ai writing humanizer', 'reduce ai writing patterns', 'natural ai writing', 'ai text editor'],
+  keywords: ['make ai writing sound natural', 'make ai writing undetectable', 'undetectable ai writing', 'humanize ai text', 'ai writing humanizer', 'reduce ai writing patterns', 'gptzero ai detection', 'turnitin ai detection', 'scribbr ai detection'],
   openGraph: {
     title: 'How to Make AI Writing Sound Natural in 2025',
     description: 'What AI detectors often measure, and how to revise AI text for clearer, more natural writing.',
@@ -28,7 +28,7 @@ export default function Post() {
         </h1>
 
         <p style={{ fontSize: '1.05rem', lineHeight: 1.8, color: '#c8d0e0', marginBottom: '2rem' }}>
-          AI detectors like GPTZero, Scribbr, and Turnitin do not actually read meaning — they measure statistical patterns in your writing. Once you understand which patterns they often flag, revising AI text into a more natural draft becomes a clear, repeatable editing process.
+          AI detectors like GPTZero, Scribbr, and Turnitin do not actually read meaning — they measure statistical patterns in your writing. Once you understand which patterns they often flag, making AI writing sound more natural becomes a clear, repeatable editing process.
         </p>
 
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#ffffff' }}>What AI Detectors Actually Measure</h2>
