@@ -2025,11 +2025,22 @@ QUERY: ${query}`,
       return text.trim();
     };
 
-    try {
-      return { text: await callGemini('gemini-2.5-flash') };
-    } catch {
-      return { text: await callGemini('gemini-2.5-flash-lite') };
+    const models = [
+      this.configService.get<string>('GEMINI_DRAFT_MODEL') || 'gemini-3.1-flash-lite',
+      this.configService.get<string>('GEMINI_DRAFT_FALLBACK_MODEL') || 'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+    ];
+
+    let lastError: unknown;
+    for (const model of models) {
+      try {
+        return { text: await callGemini(model) };
+      } catch (error) {
+        lastError = error;
+      }
     }
+
+    throw lastError instanceof Error ? lastError : new Error('Gemini draft generation failed');
   }
 
   private buildHumanizeSystemPrompt(tone: string): string {
@@ -2147,25 +2158,38 @@ OUTPUT: Your rewritten text only. No intro, no explanation, no "Here is the rewr
 
     const prompt = `${this.buildHumanizeSystemPrompt(tone)}\n\nText to rewrite:\n${text}`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 1.0, maxOutputTokens: 4096 },
-      }),
-    });
+    const model = this.configService.get<string>('GEMINI_HUMANIZE_MODEL') || 'gemini-3.1-flash-lite';
+    const fallbackModel = this.configService.get<string>('GEMINI_HUMANIZE_FALLBACK_MODEL') || 'gemini-2.5-flash-lite';
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({})) as any;
-      throw new Error(`Gemini API error ${res.status}: ${err?.error?.message || 'unknown'}`);
+    const requestGemini = async (modelName: string): Promise<string> => {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 1.0, maxOutputTokens: 4096 },
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as any;
+        throw new Error(`Gemini API error (${modelName}) ${res.status}: ${err?.error?.message || 'unknown'}`);
+      }
+
+      const data = await res.json() as any;
+      const result = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!result) throw new Error(`No content returned from Gemini (${modelName})`);
+      return result.trim();
+    };
+
+    try {
+      return await requestGemini(model);
+    } catch (error) {
+      if (fallbackModel === model) throw error;
+      console.warn(`[humanize] Gemini model ${model} failed, trying ${fallbackModel}:`, error instanceof Error ? error.message : error);
+      return requestGemini(fallbackModel);
     }
-
-    const data = await res.json() as any;
-    const result = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!result) throw new Error('No content returned from Gemini');
-    return result.trim();
   }
 
   private async callOpenAI(messages: any[], json = false, retries = 3): Promise<string> {
