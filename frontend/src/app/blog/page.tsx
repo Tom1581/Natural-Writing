@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import AdSenseAd from '@/components/AdSenseAd';
 
 export const metadata: Metadata = {
   title: 'Blog — AI Writing & Humanization Guides',
@@ -57,6 +58,8 @@ export default function BlogIndex() {
         <p style={{ color: '#888899', fontSize: '1rem', marginBottom: '3rem', lineHeight: 1.6 }}>
           Practical guides on humanizing AI text, improving AI-generated drafts, and making your writing sound natural.
         </p>
+
+        <AdSenseAd minHeight={96} />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {posts.map((post) => (

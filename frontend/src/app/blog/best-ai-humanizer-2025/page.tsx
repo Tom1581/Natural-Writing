@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import AdSenseAd from '@/components/AdSenseAd';
 
 export const metadata: Metadata = {
   title: 'Best AI Humanizer Tools in 2025 (Honest Comparison)',
@@ -37,6 +38,8 @@ export default function Post() {
         <p style={{ fontSize: '1.05rem', lineHeight: 1.8, color: '#c8d0e0', marginBottom: '2rem' }}>
           There are dozens of AI humanizer tools now. Most of them do the same thing: swap synonyms and add contractions. Only a few actually improve rhythm, sentence variety, transitions, and voice. Here is an honest comparison based on naturalness, output quality, editing control, and value.
         </p>
+
+        <AdSenseAd />
 
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#ffffff' }}>What Makes a Good AI Humanizer?</h2>
         <p style={{ lineHeight: 1.8, color: '#c8d0e0', marginBottom: '1rem' }}>

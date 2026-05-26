@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import AdSenseAd from '@/components/AdSenseAd';
 
 export const metadata: Metadata = {
   title: 'How to Make AI Writing Sound Natural in 2025',
@@ -34,6 +35,8 @@ export default function Post() {
         <p style={{ fontSize: '0.98rem', lineHeight: 1.8, color: '#aeb7cc', marginBottom: '2rem' }}>
           People search for this problem in a lot of messy ways: "make AI writing undetectable," "undetectable AI writing," "undetectable aiwriting," "undetectable aiwiring," "AI detectable writing," or even typo-heavy phrases like "AI dedectable AI writing." They are usually asking the same thing: how do you turn an AI draft into writing that feels natural, varied, and genuinely edited?
         </p>
+
+        <AdSenseAd />
 
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#ffffff' }}>What AI Detectors Actually Measure</h2>
         <p style={{ lineHeight: 1.8, color: '#c8d0e0', marginBottom: '1rem' }}>

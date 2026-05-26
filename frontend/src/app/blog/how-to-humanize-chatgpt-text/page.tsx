@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import AdSenseAd from '@/components/AdSenseAd';
 
 export const metadata: Metadata = {
   title: 'How to Humanize ChatGPT Text for Free (2025)',
@@ -30,6 +31,8 @@ export default function Post() {
         <p style={{ fontSize: '1.05rem', lineHeight: 1.8, color: '#c8d0e0', marginBottom: '2rem' }}>
           ChatGPT produces clean, readable text — but it gets flagged almost every time. Not because detectors are magic, but because ChatGPT has deeply consistent writing habits that are easy to identify statistically. Here is exactly what those habits are and how to fix them.
         </p>
+
+        <AdSenseAd />
 
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#ffffff' }}>Why ChatGPT Text Gets Detected</h2>
 

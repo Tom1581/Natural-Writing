@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import AdSenseAd from '@/components/AdSenseAd';
 
 export const metadata: Metadata = {
   title: 'How to Make a ChatGPT Essay Sound Natural (2025)',
@@ -29,6 +30,8 @@ export default function Post() {
         <p style={{ fontSize: '0.98rem', lineHeight: 1.8, color: '#aeb7cc', marginBottom: '2rem' }}>
           If you search "make ChatGPT undetectable," "undetectable ChatGPT," "undetectable GPT," or "undetectablegpt," you are really looking for a stronger editing workflow. The final essay needs your own argument, checked sources, natural pacing, and paragraph-level revision.
         </p>
+
+        <AdSenseAd />
 
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#ffffff' }}>Why ChatGPT Essays Get Detected</h2>
         <p style={{ lineHeight: 1.8, color: '#c8d0e0', marginBottom: '1rem' }}>ChatGPT produces essays with the same structural habits every time:</p>

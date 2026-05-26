@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import AdSenseAd from '@/components/AdSenseAd';
 
 export const metadata: Metadata = {
   title: 'Best AI Humanizer for Students in 2025',
@@ -25,6 +26,8 @@ export default function Post() {
         <p style={{ fontSize: '1.05rem', lineHeight: 1.8, color: '#c8d0e0', marginBottom: '2rem' }}>
           Students using AI tools to draft essays face a real problem: detectors like Turnitin and GPTZero flag the output even when the ideas are entirely original. A good AI humanizer rewrites the phrasing without changing your argument. Here is what to look for — and which tools actually deliver.
         </p>
+
+        <AdSenseAd />
 
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#ffffff' }}>What Students Need From an AI Humanizer</h2>
         <ul style={{ lineHeight: 2, color: '#c8d0e0', paddingLeft: '1.5rem', marginBottom: '2rem' }}>

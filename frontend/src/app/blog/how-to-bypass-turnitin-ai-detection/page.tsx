@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import AdSenseAd from '@/components/AdSenseAd';
 
 export const metadata: Metadata = {
   title: 'How Turnitin Reads AI Writing Patterns (2025 Guide)',
@@ -29,6 +30,8 @@ export default function Post() {
         <p style={{ fontSize: '0.98rem', lineHeight: 1.8, color: '#aeb7cc', marginBottom: '2rem' }}>
           Searches like "bypass Turnitin AI detection," "Turnitin undetectable," "Turnitin AI undetectable," and "undetectable Turnitin" usually point to the same concern: AI-assisted writing can sound too uniform. The better approach is to revise the draft until it reads like a real human argument, not a template.
         </p>
+
+        <AdSenseAd />
 
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#ffffff' }}>How Turnitin AI Detection Works</h2>
         <p style={{ lineHeight: 1.8, color: '#c8d0e0', marginBottom: '1rem' }}>
