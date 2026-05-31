@@ -7,7 +7,17 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
+        allow: ['/', '/ads.txt'],
+        disallow: ['/auth/', '/payment-success'],
+      },
+      {
+        userAgent: 'Googlebot',
+        allow: ['/', '/ads.txt'],
+        disallow: ['/auth/', '/payment-success'],
+      },
+      {
+        userAgent: 'Mediapartners-Google',
+        allow: ['/', '/ads.txt'],
         disallow: ['/auth/', '/payment-success'],
       },
     ],
