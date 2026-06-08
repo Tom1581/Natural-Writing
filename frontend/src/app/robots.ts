@@ -20,6 +20,11 @@ export default function robots(): MetadataRoute.Robots {
         allow: ['/', '/ads.txt'],
         disallow: ['/auth/', '/payment-success'],
       },
+      {
+        userAgent: 'Google-adstxt',
+        allow: ['/', '/ads.txt'],
+        disallow: ['/auth/', '/payment-success'],
+      },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,
