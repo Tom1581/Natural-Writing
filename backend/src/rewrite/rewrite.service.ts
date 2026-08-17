@@ -2116,6 +2116,7 @@ OUTPUT: Your rewritten text only. No intro, no explanation, no "Here is the rewr
   private async callGroqSingle(text: string, tone: string, angleInstruction: string | null): Promise<string> {
     const apiKey = this.configService.get<string>('GROQ_API_KEY');
     if (!apiKey) throw new Error('GROQ_API_KEY not set');
+    const model = this.configService.get<string>('GROQ_HUMANIZE_MODEL') || 'openai/gpt-oss-120b';
 
     const userContent = angleInstruction
       ? `${angleInstruction}\n\nRewrite in your own voice as a human expert who knows this subject. Keep every fact:\n\n${text}`
@@ -2128,7 +2129,7 @@ OUTPUT: Your rewritten text only. No intro, no explanation, no "Here is the rewr
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model,
         messages: [
           { role: 'system', content: this.buildHumanizeSystemPrompt(tone) },
           { role: 'user', content: userContent },
@@ -2143,7 +2144,7 @@ OUTPUT: Your rewritten text only. No intro, no explanation, no "Here is the rewr
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({})) as any;
-      throw new Error(`Groq API error ${res.status}: ${err?.error?.message || 'unknown'}`);
+      throw new Error(`Groq API error ${res.status} (${model}): ${err?.error?.message || 'unknown'}`);
     }
 
     const data = await res.json() as any;
