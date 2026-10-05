@@ -1,39 +1,38 @@
 import type { Metadata } from 'next';
+import { OG_IMAGE } from '@/lib/posts';
 import Link from 'next/link';
 import AdSenseAd from '@/components/AdSenseAd';
+import PostMeta from '@/components/PostMeta';
 
 export const metadata: Metadata = {
-  title: 'How GPTZero Reads AI Writing Patterns (2025 Guide)',
+  title: 'How GPTZero Reads AI Writing Patterns',
   description: 'Learn what GPTZero AI detection measures and how to revise AI-generated text for clearer, more natural, less repetitive writing.',
   alternates: { canonical: 'https://naturalquill.one/blog/how-to-bypass-gptzero' },
-  keywords: ['gptzero ai detection', 'bypass gptzero', 'undetectable gptzero', 'undetectablegptzero', 'gptzero undetectable', 'gpt zero undetectable', 'gptzero writing patterns', 'humanize ai text', 'reduce ai writing patterns', 'chatgpt humanizer'],
+  keywords: ['gptzero ai detection', 'bypass gptzero', 'undetectable gptzero', 'gptzero undetectable', 'gpt zero undetectable', 'gptzero writing patterns', 'humanize ai text', 'reduce ai writing patterns', 'chatgpt humanizer'],
   openGraph: {
-    title: 'How GPTZero Reads AI Writing Patterns (2025 Guide)',
+    title: 'How GPTZero Reads AI Writing Patterns | Natural Quill',
     description: 'What GPTZero measures and how to revise AI text so it sounds clearer and more natural.',
     url: 'https://naturalquill.one/blog/how-to-bypass-gptzero',
+    images: [OG_IMAGE],
   },
 };
 
 export default function Post() {
   return (
-    <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'Inter, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'var(--font-body)' }}>
       <div style={{ maxWidth: '720px', margin: '0 auto', padding: '4rem 1.5rem' }}>
         <Link href="/blog" style={{ color: '#2563eb', fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block', marginBottom: '2.5rem' }}>
           ← All guides
         </Link>
 
-        <div style={{ fontSize: '0.8rem', color: '#888899', marginBottom: '1rem' }}>April 18, 2025 · 4 min read</div>
+        <PostMeta slug="how-to-bypass-gptzero" />
 
         <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.25, marginBottom: '1.5rem' }}>
-          How GPTZero Reads AI Writing Patterns and Undetectable GPT Text
+          How GPTZero Reads AI Writing Patterns
         </h1>
 
         <p style={{ fontSize: '1.05rem', lineHeight: 1.8, color: '#c8d0e0', marginBottom: '2rem' }}>
           GPTZero is one of the most widely used AI detectors in academic settings. It looks for statistical patterns that often appear in AI-generated writing. This guide explains what it scores and how to revise AI text so the final draft reads more clearly and naturally.
-        </p>
-
-        <p style={{ fontSize: '0.98rem', lineHeight: 1.8, color: '#aeb7cc', marginBottom: '2rem' }}>
-          Some people search for "bypass GPTZero," "undetectable GPTZero," "undetectablegptzero," "GPTZero undetectable," or "gpt zero undetectable." The useful takeaway is not a magic switch. GPTZero-style systems look for predictable rhythm, low burstiness, and repeated AI phrasing, so the practical fix is careful rewriting.
         </p>
 
         <AdSenseAd />
@@ -72,7 +71,7 @@ export default function Post() {
           <strong style={{ color: '#fff' }}>Introduce rhetorical questions or direct address.</strong> "Why does this matter?" or "Here is what that means in practice:" are patterns that rarely appear in AI output and significantly confuse classifiers.
         </p>
 
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#ffffff' }}>Undetectable GPTZero Writing Signals to Improve</h2>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#ffffff' }}>Signals GPTZero-Style Tools Respond To</h2>
         <p style={{ lineHeight: 1.8, color: '#c8d0e0', marginBottom: '2rem' }}>
           If a draft feels too clean, too symmetrical, or too predictable, GPTZero may treat it as AI-like. Natural Quill focuses on making the text less uniform: varied sentence openings, more human pacing, fewer template phrases, and a stronger sense of voice.
         </p>

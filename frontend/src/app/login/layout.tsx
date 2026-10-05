@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { OG_IMAGE } from '@/lib/posts';
 
 export const metadata: Metadata = {
   title: 'Sign In or Create Account',
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
     title: 'Sign In to Natural Quill',
     description: 'Create a free account or sign in to start rewriting AI text into natural, human-sounding writing.',
     url: 'https://naturalquill.one/login',
+    images: [OG_IMAGE],
   },
 };
 

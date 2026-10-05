@@ -1,27 +1,31 @@
 import type { Metadata } from 'next';
+import { OG_IMAGE } from '@/lib/posts';
 import Link from 'next/link';
 import AdSenseAd from '@/components/AdSenseAd';
+import PostMeta from '@/components/PostMeta';
 
 export const metadata: Metadata = {
-  title: 'Best AI Humanizer for Students in 2025',
+  title: 'Best AI Humanizer for Students in 2026',
   description: 'Students need an AI humanizer that improves AI-assisted drafts without destroying meaning, citations, or academic tone. Here are the best options ranked by naturalness, quality, and price.',
   alternates: { canonical: 'https://naturalquill.one/blog/best-ai-humanizer-for-students' },
   keywords: ['best ai humanizer for students', 'ai humanizer for students', 'student ai humanizer', 'ai humanizer essay', 'humanize ai essay', 'ai humanizer academic writing'],
   openGraph: {
-    title: 'Best AI Humanizer for Students in 2025',
+    title: 'Best AI Humanizer for Students in 2026 | Natural Quill',
     description: 'The best AI humanizers for students ranked by naturalness, writing quality, and price.',
     url: 'https://naturalquill.one/blog/best-ai-humanizer-for-students',
+    images: [OG_IMAGE],
   },
 };
 
 export default function Post() {
   return (
-    <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'Inter, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'var(--font-body)' }}>
       <div style={{ maxWidth: '720px', margin: '0 auto', padding: '4rem 1.5rem' }}>
         <Link href="/blog" style={{ color: '#2563eb', fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block', marginBottom: '2.5rem' }}>← All guides</Link>
-        <div style={{ fontSize: '0.8rem', color: '#888899', marginBottom: '1rem' }}>April 22, 2025 · 5 min read</div>
+
+        <PostMeta slug="best-ai-humanizer-for-students" />
         <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.25, marginBottom: '1.5rem' }}>
-          Best AI Humanizer for Students in 2025
+          Best AI Humanizer for Students in 2026
         </h1>
         <p style={{ fontSize: '1.05rem', lineHeight: 1.8, color: '#c8d0e0', marginBottom: '2rem' }}>
           Students using AI tools to draft essays face a real problem: detectors like Turnitin and GPTZero flag the output even when the ideas are entirely original. A good AI humanizer rewrites the phrasing without changing your argument. Here is what to look for — and which tools actually deliver.

@@ -1,28 +1,31 @@
 import type { Metadata } from 'next';
+import { OG_IMAGE } from '@/lib/posts';
 import Link from 'next/link';
 import AdSenseAd from '@/components/AdSenseAd';
+import PostMeta from '@/components/PostMeta';
 
 export const metadata: Metadata = {
-  title: 'How to Humanize ChatGPT Text for Free (2025)',
+  title: 'How to Humanize ChatGPT Text for Free',
   description: 'ChatGPT text gets flagged because of specific writing patterns. Learn exactly which patterns AI detectors catch and how to fix them for free.',
   alternates: { canonical: 'https://naturalquill.one/blog/how-to-humanize-chatgpt-text' },
   keywords: ['humanize chatgpt text', 'chatgpt humanizer', 'humanize chatgpt', 'make chatgpt text human', 'natural chatgpt writing', 'free chatgpt humanizer'],
   openGraph: {
-    title: 'How to Humanize ChatGPT Text for Free (2025)',
+    title: 'How to Humanize ChatGPT Text for Free | Natural Quill',
     description: 'The exact writing patterns that get ChatGPT flagged — and how to fix them.',
     url: 'https://naturalquill.one/blog/how-to-humanize-chatgpt-text',
+    images: [OG_IMAGE],
   },
 };
 
 export default function Post() {
   return (
-    <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'Inter, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'var(--font-body)' }}>
       <div style={{ maxWidth: '720px', margin: '0 auto', padding: '4rem 1.5rem' }}>
         <Link href="/blog" style={{ color: '#2563eb', fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block', marginBottom: '2.5rem' }}>
           ← All guides
         </Link>
 
-        <div style={{ fontSize: '0.8rem', color: '#888899', marginBottom: '1rem' }}>April 12, 2025 · 5 min read</div>
+        <PostMeta slug="how-to-humanize-chatgpt-text" />
 
         <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.25, marginBottom: '1.5rem' }}>
           How to Humanize ChatGPT Text for Free
@@ -92,7 +95,7 @@ export default function Post() {
           <p style={{ color: '#888899', fontSize: '0.85rem', marginBottom: '1rem' }}>More guides:</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <Link href="/blog/how-to-bypass-gptzero" style={{ color: '#2563eb', fontSize: '0.9rem' }}>How GPTZero Reads AI Writing Patterns →</Link>
-            <Link href="/blog/best-ai-humanizer-2025" style={{ color: '#2563eb', fontSize: '0.9rem' }}>Best AI Humanizer Tools in 2025 →</Link>
+            <Link href="/blog/best-ai-humanizer-2025" style={{ color: '#2563eb', fontSize: '0.9rem' }}>Best AI Humanizer Tools in 2026 →</Link>
           </div>
         </div>
       </div>

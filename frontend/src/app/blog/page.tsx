@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import AdSenseAd from '@/components/AdSenseAd';
+import { OG_IMAGE, POSTS, formatDate } from '@/lib/posts';
 
 export const metadata: Metadata = {
   title: 'Blog — AI Writing & Humanization Guides',
@@ -10,43 +11,13 @@ export const metadata: Metadata = {
     title: 'Blog — AI Writing & Humanization Guides | Natural Quill',
     description: 'Free guides on humanizing AI text, improving AI-generated drafts, and making ChatGPT writing sound natural.',
     url: 'https://naturalquill.one/blog',
+    images: [OG_IMAGE],
   },
 };
 
-const posts = [
-  {
-    slug: 'how-to-make-ai-writing-undetectable',
-    title: 'How to Make AI Writing Sound Natural in 2025',
-    description: 'A step-by-step guide to making AI writing sound natural while reducing common AI-detection patterns in GPTZero, Scribbr, and Turnitin.',
-    date: 'April 20, 2025',
-    readTime: '5 min read',
-  },
-  {
-    slug: 'how-to-bypass-gptzero',
-    title: 'How GPTZero Reads AI Writing Patterns',
-    description: 'What GPTZero AI detection measures and how to revise AI text so it sounds clearer, less repetitive, and more natural.',
-    date: 'April 18, 2025',
-    readTime: '4 min read',
-  },
-  {
-    slug: 'best-ai-humanizer-2025',
-    title: 'Best AI Humanizer Tools in 2025 (Honest Comparison)',
-    description: 'We compared the top AI humanizer tools on writing quality, editing control, naturalness, and price. Here is what we found.',
-    date: 'April 15, 2025',
-    readTime: '6 min read',
-  },
-  {
-    slug: 'how-to-humanize-chatgpt-text',
-    title: 'How to Humanize ChatGPT Text for Free',
-    description: 'ChatGPT text gets flagged because of specific writing patterns. Here is how to fix them and make your output sound genuinely human.',
-    date: 'April 12, 2025',
-    readTime: '5 min read',
-  },
-];
-
 export default function BlogIndex() {
   return (
-    <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'Inter, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'var(--font-body)' }}>
       <div style={{ maxWidth: '760px', margin: '0 auto', padding: '4rem 1.5rem' }}>
         <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#2563eb', fontSize: '0.875rem', textDecoration: 'none', marginBottom: '2.5rem' }}>
           ← Back to Natural Quill
@@ -62,7 +33,7 @@ export default function BlogIndex() {
         <AdSenseAd minHeight={96} />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {posts.map((post) => (
+          {POSTS.map((post) => (
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
@@ -76,7 +47,7 @@ export default function BlogIndex() {
                 transition: 'border-color 0.2s',
               }}>
                 <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.6rem', fontSize: '0.75rem', color: '#888899' }}>
-                  <span>{post.date}</span>
+                  <time dateTime={post.updated}>Updated {formatDate(post.updated)}</time>
                   <span>·</span>
                   <span>{post.readTime}</span>
                 </div>

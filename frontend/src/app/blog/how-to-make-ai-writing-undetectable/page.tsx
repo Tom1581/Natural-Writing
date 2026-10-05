@@ -1,39 +1,38 @@
 import type { Metadata } from 'next';
+import { OG_IMAGE } from '@/lib/posts';
 import Link from 'next/link';
 import AdSenseAd from '@/components/AdSenseAd';
+import PostMeta from '@/components/PostMeta';
 
 export const metadata: Metadata = {
-  title: 'How to Make AI Writing Sound Natural in 2025',
+  title: 'How to Make AI Writing Sound Natural',
   description: 'Step-by-step guide to making AI writing sound natural while reducing common AI-detection patterns used by GPTZero, Scribbr, and Turnitin.',
   alternates: { canonical: 'https://naturalquill.one/blog/how-to-make-ai-writing-undetectable' },
-  keywords: ['make ai writing sound natural', 'make ai writing undetectable', 'undetectable ai writing', 'undetectable ai text', 'undetectable aiwriter', 'undetectable aiwriting', 'undetectable aiwiring', 'aiwriting undetectable', 'ai detectable writing', 'ai dedectable ai writing', 'humanize ai text', 'ai writing humanizer', 'reduce ai writing patterns', 'gptzero ai detection', 'turnitin ai detection', 'scribbr ai detection'],
+  keywords: ['make ai writing sound natural', 'make ai writing undetectable', 'undetectable ai writing', 'undetectable ai text', 'humanize ai text', 'ai writing humanizer', 'reduce ai writing patterns', 'gptzero ai detection', 'turnitin ai detection', 'scribbr ai detection'],
   openGraph: {
-    title: 'How to Make AI Writing Sound Natural in 2025',
+    title: 'How to Make AI Writing Sound Natural | Natural Quill',
     description: 'What AI detectors often measure, and how to revise AI text for clearer, more natural writing.',
     url: 'https://naturalquill.one/blog/how-to-make-ai-writing-undetectable',
+    images: [OG_IMAGE],
   },
 };
 
 export default function Post() {
   return (
-    <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'Inter, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'var(--font-body)' }}>
       <div style={{ maxWidth: '720px', margin: '0 auto', padding: '4rem 1.5rem' }}>
         <Link href="/blog" style={{ color: '#2563eb', fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block', marginBottom: '2.5rem' }}>
           ← All guides
         </Link>
 
-        <div style={{ fontSize: '0.8rem', color: '#888899', marginBottom: '1rem' }}>April 20, 2025 · 5 min read</div>
+        <PostMeta slug="how-to-make-ai-writing-undetectable" />
 
         <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.25, marginBottom: '1.5rem' }}>
-          How to Make AI Writing Sound Natural and Undetectable in 2025
+          How to Make AI Writing Sound Natural
         </h1>
 
         <p style={{ fontSize: '1.05rem', lineHeight: 1.8, color: '#c8d0e0', marginBottom: '2rem' }}>
           AI detectors like GPTZero, Scribbr, and Turnitin do not actually read meaning — they measure statistical patterns in your writing. Once you understand which patterns they often flag, making AI writing sound more natural becomes a clear, repeatable editing process.
-        </p>
-
-        <p style={{ fontSize: '0.98rem', lineHeight: 1.8, color: '#aeb7cc', marginBottom: '2rem' }}>
-          People search for this problem in a lot of messy ways: "make AI writing undetectable," "undetectable AI writing," "undetectable aiwriting," "undetectable aiwiring," "AI detectable writing," or even typo-heavy phrases like "AI dedectable AI writing." They are usually asking the same thing: how do you turn an AI draft into writing that feels natural, varied, and genuinely edited?
         </p>
 
         <AdSenseAd />
@@ -61,9 +60,9 @@ export default function Post() {
 
         <p style={{ lineHeight: 1.8, color: '#c8d0e0', marginBottom: '2rem' }}><strong style={{ color: '#fff' }}>Step 5 — Run it through a humanizer.</strong> Doing all of this manually takes 30-60 minutes per page. A purpose-built AI humanizer handles it automatically in seconds.</p>
 
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#ffffff' }}>Undetectable AI Writing Checklist</h2>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#ffffff' }}>A Quick Revision Checklist</h2>
         <p style={{ lineHeight: 1.8, color: '#c8d0e0', marginBottom: '1rem' }}>
-          If your goal is undetectable AI text, do not rely on one trick. The strongest edits combine sentence variety, less predictable word choice, fewer formulaic transitions, and a more personal rhythm. A draft that still reads like "AI writing" after paraphrasing is usually too smooth, too balanced, and too repetitive.
+          Do not rely on one trick. The strongest edits combine sentence variety, less predictable word choice, fewer formulaic transitions, and a more personal rhythm. A draft that still reads like "AI writing" after paraphrasing is usually too smooth, too balanced, and too repetitive.
         </p>
         <ul style={{ lineHeight: 2, color: '#c8d0e0', paddingLeft: '1.5rem', marginBottom: '2rem' }}>
           <li>Use a mix of short, medium, and long sentences</li>

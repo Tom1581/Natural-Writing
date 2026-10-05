@@ -1,19 +1,22 @@
 import type { MetadataRoute } from 'next';
+import { POSTS, SITE_URL } from '@/lib/posts';
 
-const SITE_URL = 'https://naturalquill.one';
-const LAST_MODIFIED = new Date('2026-05-12');
+const HOME_UPDATED = new Date('2026-10-05');
+const TOOLS_UPDATED = new Date('2026-10-05');
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const latestPost = POSTS.reduce((latest, p) => (p.updated > latest ? p.updated : latest), POSTS[0].published);
   return [
-    { url: SITE_URL, lastModified: LAST_MODIFIED, changeFrequency: 'weekly', priority: 1.0 },
-    { url: `${SITE_URL}/pricing`, lastModified: LAST_MODIFIED, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE_URL}/blog`, lastModified: LAST_MODIFIED, changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${SITE_URL}/blog/how-to-make-ai-writing-undetectable`, lastModified: LAST_MODIFIED, changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${SITE_URL}/blog/how-to-bypass-gptzero`, lastModified: LAST_MODIFIED, changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${SITE_URL}/blog/how-to-bypass-turnitin-ai-detection`, lastModified: LAST_MODIFIED, changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${SITE_URL}/blog/how-to-make-chatgpt-essay-undetectable`, lastModified: LAST_MODIFIED, changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${SITE_URL}/blog/best-ai-humanizer-for-students`, lastModified: LAST_MODIFIED, changeFrequency: 'weekly', priority: 0.85 },
-    { url: `${SITE_URL}/blog/best-ai-humanizer-2025`, lastModified: LAST_MODIFIED, changeFrequency: 'weekly', priority: 0.85 },
-    { url: `${SITE_URL}/blog/how-to-humanize-chatgpt-text`, lastModified: LAST_MODIFIED, changeFrequency: 'weekly', priority: 0.85 },
+    { url: SITE_URL, lastModified: HOME_UPDATED, changeFrequency: 'weekly', priority: 1.0 },
+    { url: `${SITE_URL}/research-paper-humanizer`, lastModified: TOOLS_UPDATED, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/ai-phrase-checker`, lastModified: TOOLS_UPDATED, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/pricing`, lastModified: HOME_UPDATED, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE_URL}/blog`, lastModified: new Date(latestPost), changeFrequency: 'weekly', priority: 0.8 },
+    ...POSTS.map(post => ({
+      url: `${SITE_URL}/blog/${post.slug}`,
+      lastModified: new Date(post.updated),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
   ];
 }

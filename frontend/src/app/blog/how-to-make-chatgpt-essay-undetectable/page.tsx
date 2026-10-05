@@ -1,34 +1,34 @@
 import type { Metadata } from 'next';
+import { OG_IMAGE } from '@/lib/posts';
 import Link from 'next/link';
 import AdSenseAd from '@/components/AdSenseAd';
+import PostMeta from '@/components/PostMeta';
 
 export const metadata: Metadata = {
-  title: 'How to Make a ChatGPT Essay Sound Natural (2025)',
+  title: 'How to Make a ChatGPT Essay Sound Natural',
   description: 'Step-by-step guide to making a ChatGPT essay sound natural while reducing common AI-detection patterns in academic writing.',
   alternates: { canonical: 'https://naturalquill.one/blog/how-to-make-chatgpt-essay-undetectable' },
-  keywords: ['make chatgpt essay sound natural', 'make chatgpt essay undetectable', 'make chatgpt undetectable', 'undetectable chatgpt essay', 'undetectable chatgpt', 'undetectable gpt', 'undetectablegpt', 'humanize chatgpt essay', 'chatgpt essay editor', 'natural academic writing', 'revise ai essay', 'chatgpt essay ai detection', 'turnitin ai detection', 'gptzero ai detection'],
+  keywords: ['make chatgpt essay sound natural', 'make chatgpt essay undetectable', 'make chatgpt undetectable', 'undetectable chatgpt essay', 'undetectable chatgpt', 'undetectable gpt', 'humanize chatgpt essay', 'chatgpt essay editor', 'natural academic writing', 'revise ai essay', 'chatgpt essay ai detection', 'turnitin ai detection', 'gptzero ai detection'],
   openGraph: {
-    title: 'How to Make a ChatGPT Essay Sound Natural (2025)',
+    title: 'How to Make a ChatGPT Essay Sound Natural | Natural Quill',
     description: 'Step-by-step guide to revising ChatGPT essays for clearer, more natural academic writing.',
     url: 'https://naturalquill.one/blog/how-to-make-chatgpt-essay-undetectable',
+    images: [OG_IMAGE],
   },
 };
 
 export default function Post() {
   return (
-    <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'Inter, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'var(--font-body)' }}>
       <div style={{ maxWidth: '720px', margin: '0 auto', padding: '4rem 1.5rem' }}>
         <Link href="/blog" style={{ color: '#2563eb', fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block', marginBottom: '2.5rem' }}>← All guides</Link>
-        <div style={{ fontSize: '0.8rem', color: '#888899', marginBottom: '1rem' }}>April 21, 2025 · 6 min read</div>
+
+        <PostMeta slug="how-to-make-chatgpt-essay-undetectable" />
         <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.25, marginBottom: '1.5rem' }}>
-          How to Make a ChatGPT Essay Sound Natural and Undetectable
+          How to Make a ChatGPT Essay Sound Natural
         </h1>
         <p style={{ fontSize: '1.05rem', lineHeight: 1.8, color: '#c8d0e0', marginBottom: '2rem' }}>
           ChatGPT writes clean, well-structured essays, but the results can feel too uniform. The reason is not that every argument is weak. It is usually the sentence rhythm, transition habits, and paragraph structure. Here is a complete step-by-step guide to revising ChatGPT essay output into more natural academic writing.
-        </p>
-
-        <p style={{ fontSize: '0.98rem', lineHeight: 1.8, color: '#aeb7cc', marginBottom: '2rem' }}>
-          If you search "make ChatGPT undetectable," "undetectable ChatGPT," "undetectable GPT," or "undetectablegpt," you are really looking for a stronger editing workflow. The final essay needs your own argument, checked sources, natural pacing, and paragraph-level revision.
         </p>
 
         <AdSenseAd />
@@ -62,9 +62,9 @@ export default function Post() {
           </div>
         ))}
 
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '1rem 0 1rem', color: '#ffffff' }}>Undetectable ChatGPT Essay Editing Checklist</h2>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '1rem 0 1rem', color: '#ffffff' }}>ChatGPT Essay Editing Checklist</h2>
         <p style={{ lineHeight: 1.8, color: '#c8d0e0', marginBottom: '1rem' }}>
-          An undetectable ChatGPT essay is not just a paraphrased essay. It should include your own wording, uneven but readable rhythm, specific examples, and a final review for citations and meaning.
+          A well-edited ChatGPT-assisted essay is not just a paraphrased essay. It should include your own wording, uneven but readable rhythm, specific examples, and a final review for citations and meaning.
         </p>
         <ul style={{ lineHeight: 2, color: '#c8d0e0', paddingLeft: '1.5rem', marginBottom: '2rem' }}>
           <li>Replace generic claims with specific evidence</li>

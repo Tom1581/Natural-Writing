@@ -11,6 +11,57 @@ interface TextInputPanelProps {
 }
 
 /**
+ * Rebuild lines and paragraphs from pdf.js text items. Without this every page
+ * collapses into one block, and the rewrite loses the document's structure.
+ */
+function pdfItemsToParagraphs(items: { str?: string; hasEOL?: boolean; transform?: number[] }[]): string {
+  const lines: { text: string; y: number }[] = [];
+  let current = '';
+  let currentY: number | null = null;
+  const flush = () => {
+    if (current.trim() && currentY !== null) lines.push({ text: current.replace(/\s+/g, ' ').trim(), y: currentY });
+    current = '';
+    currentY = null;
+  };
+  for (const item of items) {
+    if (typeof item.str !== 'string') continue;
+    const y = item.transform?.[5] ?? 0;
+    if (currentY !== null && Math.abs(y - currentY) > 2) flush();
+    current += item.str;
+    if (currentY === null) currentY = y;
+    if (item.hasEOL) flush();
+  }
+  flush();
+  if (lines.length === 0) return '';
+
+  const gaps = lines.slice(1).map((l, i) => Math.abs(lines[i].y - l.y)).filter(g => g > 0).sort((a, b) => a - b);
+  const typicalGap = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 0;
+  // A full line's length (90th percentile, so a wide title does not skew two-column layouts).
+  const lengths = lines.map(l => l.text.length).sort((a, b) => a - b);
+  const fullLine = lengths[Math.floor((lengths.length - 1) * 0.9)];
+
+  const paragraphs: string[] = [];
+  let para = lines[0].text;
+  for (let i = 1; i < lines.length; i++) {
+    const prev = lines[i - 1];
+    const line = lines[i];
+    const gap = Math.abs(prev.y - line.y);
+    const endsSentence = /[.!?:]["')\]]?$/.test(prev.text);
+    const shortLine = prev.text.length < fullLine * 0.7;
+    if ((typicalGap && gap > typicalGap * 1.4) || (endsSentence && shortLine) || (shortLine && !/[,;]$/.test(prev.text) && /^[A-Z0-9]/.test(line.text) && prev.text.split(' ').length <= 12)) {
+      paragraphs.push(para);
+      para = line.text;
+    } else if (/[a-z]-$/.test(para) && /^[a-z]/.test(line.text)) {
+      para = para.slice(0, -1) + line.text; // re-join a hyphenated line break
+    } else {
+      para += ' ' + line.text;
+    }
+  }
+  paragraphs.push(para);
+  return paragraphs.join('\n\n');
+}
+
+/**
  * Primary text-input panel for the editor. Plain textarea (guaranteed to work)
  * plus file upload for .pdf, .docx, .txt, .md and drag-and-drop support.
  */
@@ -49,10 +100,9 @@ export default function TextInputPanel({
       for (let i = 1; i <= doc.numPages; i++) {
         const page = await doc.getPage(i);
         const content = await page.getTextContent();
-        const items = (content.items as any[]).map(it => (it.str || '')).join(' ');
-        pages.push(items);
+        pages.push(pdfItemsToParagraphs(content.items as any[]));
       }
-      return pages.join('\n\n').trim();
+      return pages.filter(Boolean).join('\n\n').trim();
     }
 
     throw new Error(`Unsupported file type: .${ext}`);
@@ -114,7 +164,7 @@ export default function TextInputPanel({
           {isReading ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
           {isReading ? 'Reading…' : 'Upload document'}
         </button>
-        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', minWidth: 0 }}>
           .pdf · .docx · .txt · .md · or drag-and-drop
         </span>
         <div style={{ marginLeft: 'auto', fontSize: '0.65rem', color: 'var(--text-muted)' }}>

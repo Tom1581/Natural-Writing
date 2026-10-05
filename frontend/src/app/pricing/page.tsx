@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
+import { OG_IMAGE } from '@/lib/posts';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Pricing — Natural Quill AI Humanizer',
+  title: 'AI Humanizer Pricing: Free Trial and Word Packs',
   description: 'Natural Quill pricing: free 400 words with no signup. Starter 10,000 words for $19.99 one-time. Pro 50,000 words for $29.99. Unlimited monthly for $39.99. No subscriptions traps.',
   alternates: { canonical: 'https://naturalquill.one/pricing' },
   keywords: ['ai humanizer pricing', 'natural quill pricing', 'ai humanizer cost', 'humanize ai text price', 'cheap ai humanizer', 'affordable ai humanizer'],
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
     title: 'Pricing — Natural Quill AI Humanizer',
     description: 'Free to try. One-time word packs from $19.99. No subscription traps.',
     url: 'https://naturalquill.one/pricing',
+    images: [OG_IMAGE],
   },
 };
 
@@ -67,7 +69,7 @@ const faqs = [
 
 export default function PricingPage() {
   return (
-    <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'Inter, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'var(--font-body)' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '4rem 1.5rem' }}>
 
         {/* Header */}

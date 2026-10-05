@@ -25,7 +25,8 @@ export default function AdSenseAd({ slot = DEFAULT_SLOT, minHeight = 120 }: AdSe
     }
   }, [slot]);
 
-  if (!ADSENSE_CLIENT_ID) return null;
+  // Without a configured slot there is nothing to show; an empty "Advertisement" box only hurts the page.
+  if (!ADSENSE_CLIENT_ID || !slot) return null;
 
   return (
     <aside
@@ -52,25 +53,14 @@ export default function AdSenseAd({ slot = DEFAULT_SLOT, minHeight = 120 }: AdSe
         Advertisement
       </div>
 
-      {slot ? (
-        <ins
-          className="adsbygoogle"
-          style={{ display: 'block', minHeight }}
-          data-ad-client={ADSENSE_CLIENT_ID}
-          data-ad-slot={slot}
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-        />
-      ) : (
-        <div
-          style={{
-            minHeight,
-            borderRadius: '0.625rem',
-            border: '1px dashed rgba(255,255,255,0.12)',
-            background: 'linear-gradient(135deg, rgba(37,99,235,0.08), rgba(255,255,255,0.018))',
-          }}
-        />
-      )}
+      <ins
+        className="adsbygoogle"
+        style={{ display: 'block', minHeight }}
+        data-ad-client={ADSENSE_CLIENT_ID}
+        data-ad-slot={slot}
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
     </aside>
   );
 }

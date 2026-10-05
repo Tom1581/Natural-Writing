@@ -1,6 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        // One canonical host: www.naturalquill.one served a duplicate copy of every page.
+        source: "/:path*",
+        has: [{ type: "host", value: "www.naturalquill.one" }],
+        destination: "https://naturalquill.one/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
