@@ -32,8 +32,8 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 const PLAN_INFO: Record<string, { label: string; color: string; icon: React.ReactNode; desc: string }> = {
   starter: { label: 'Starter', color: '#60a5fa', icon: <Zap size={14} />, desc: '10,000 prepaid words · All styles · Email support' },
-  pro:     { label: 'Pro',     color: '#a78bfa', icon: <Star size={14} />, desc: '50,000 prepaid words · Priority processing · Style cloning' },
-  unlimited: { label: 'Unlimited', color: '#34d399', icon: <InfinityIcon size={14} />, desc: 'Unlimited monthly plan · Fastest processing · Priority support' },
+  pro:     { label: 'Pro',     color: '#a78bfa', icon: <Star size={14} />, desc: '50,000 prepaid words · Style cloning' },
+  unlimited: { label: 'Unlimited', color: '#34d399', icon: <InfinityIcon size={14} />, desc: 'Unlimited monthly plan · All tone settings' },
 };
 
 interface AccessState {

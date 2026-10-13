@@ -21,7 +21,7 @@ export default function TermsPage() {
             These are the main terms for using Natural Quill. A fuller billing agreement is displayed for review
             before you confirm a purchase.
           </p>
-          <p>Last updated: October 11, 2026</p>
+          <p>Last updated: October 13, 2026</p>
         </header>
 
         <section>

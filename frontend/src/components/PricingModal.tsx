@@ -39,7 +39,6 @@ const PLANS: Plan[] = [
       'AI-style pattern reduction',
       'Strength & tone controls',
       'Use anytime until balance runs out',
-      'Manuscript history (7 days)',
       'Email support',
     ],
   },
@@ -57,13 +56,10 @@ const PLANS: Plan[] = [
     features: [
       '50,000 prepaid words',
       'Everything in Starter',
-      'Priority Groq LLM processing',
       'Style cloning & profiles',
       'AI Draft Generator (Gemini)',
       'Use anytime until balance runs out',
-      'Manuscript history (30 days)',
       'Sidecar AI chat',
-      'Priority support',
     ],
   },
   {
@@ -79,11 +75,8 @@ const PLANS: Plan[] = [
     features: [
       'Unlimited words',
       'Everything in Pro',
-      'Fastest processing priority',
-      'Manuscript history (90 days)',
       'Renews every month',
       'Early access to new features',
-      'Dedicated support channel',
     ],
   },
 ];
@@ -130,7 +123,7 @@ export default function PricingModal({ isOpen, onClose, user, onLoginRequired }:
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        const msg: string = (err as any)?.message || 'Failed to start checkout.';
+        const msg: string = (err as { message?: string })?.message || 'Failed to start checkout.';
         if (res.status === 503 || msg.includes('not configured') || msg.includes('REPLACE')) {
           throw new Error('Stripe payments are not set up yet. Add your STRIPE_SECRET_KEY and price IDs to backend/.env.');
         }
@@ -139,8 +132,8 @@ export default function PricingModal({ isOpen, onClose, user, onLoginRequired }:
 
       const { url } = await res.json();
       window.location.href = url;
-    } catch (err: any) {
-      toast.error(err.message || 'Checkout failed. Please try again.', { duration: 6000 });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Checkout failed. Please try again.', { duration: 6000 });
       setLoadingPlan(null);
       setTermsOpen(false);
     }

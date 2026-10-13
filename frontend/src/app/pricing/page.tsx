@@ -4,12 +4,12 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'AI Humanizer Pricing: Free Trial and Word Packs',
-  description: 'Natural Quill pricing: free 400 words with no signup. Starter 10,000 words for $19.99 one-time. Pro 50,000 words for $29.99. Unlimited monthly for $39.99. No subscriptions traps.',
+  description: 'Natural Quill pricing: free 400 words with no signup. Starter 10,000 words for $19.99 one-time. Pro 50,000 words for $29.99. Unlimited monthly for $39.99.',
   alternates: { canonical: 'https://naturalquill.one/pricing' },
   keywords: ['ai humanizer pricing', 'natural quill pricing', 'ai humanizer cost', 'humanize ai text price', 'cheap ai humanizer', 'affordable ai humanizer'],
   openGraph: {
     title: 'Pricing — Natural Quill AI Humanizer',
-    description: 'Free to try. One-time word packs from $19.99. No subscription traps.',
+    description: 'Free to try. One-time word packs from $19.99, or an optional monthly plan.',
     url: 'https://naturalquill.one/pricing',
     images: [OG_IMAGE],
   },
@@ -31,7 +31,7 @@ const plans = [
     price: '$19.99',
     billing: 'one-time payment',
     words: '10,000 words',
-    features: ['10,000 word balance', 'All tone settings', 'PDF & DOCX upload', 'Manuscript history', 'No expiry'],
+    features: ['10,000 word balance', 'All tone settings', 'PDF & DOCX upload', 'No expiry'],
     cta: 'Get Starter',
     href: '/#pricing',
     highlight: false,
@@ -41,7 +41,7 @@ const plans = [
     price: '$29.99',
     billing: 'one-time payment',
     words: '50,000 words',
-    features: ['50,000 word balance', 'All tone settings', 'PDF & DOCX upload', 'Manuscript history', 'No expiry', 'Priority processing'],
+    features: ['50,000 word balance', 'All tone settings', 'PDF & DOCX upload', 'No expiry'],
     cta: 'Get Pro',
     href: '/#pricing',
     highlight: true,
@@ -51,7 +51,7 @@ const plans = [
     price: '$39.99',
     billing: 'per month',
     words: 'Unlimited words',
-    features: ['Unlimited words', 'All tone settings', 'PDF & DOCX upload', 'Manuscript history', 'Priority processing', 'Cancel anytime'],
+    features: ['Unlimited words', 'All tone settings', 'PDF & DOCX upload', 'Cancel anytime'],
     cta: 'Get Unlimited',
     href: '/#pricing',
     highlight: false,
@@ -64,7 +64,7 @@ const faqs = [
   { q: 'What counts as a word?', a: 'Words are counted on the input text you submit for rewriting, not the output.' },
   { q: 'Can I cancel the Unlimited plan?', a: 'Yes, cancel anytime from your account settings. You keep access until the end of your billing period.' },
   { q: 'Do you offer refunds?', a: 'All purchases are final due to the nature of digital word credits. Please use the free tier to verify the tool works for your needs before purchasing.' },
-  { q: 'Which plan is best for students?', a: 'Most students find the Starter pack ($19.99 for 10,000 words) covers a full semester of essay humanization. That is roughly 10 full essays at 1,000 words each.' },
+  { q: 'Which plan is best for students?', a: 'Compare the word balance with the amount you expect to submit. For example, 10,000 input words could cover ten 1,000-word rewrites; your usage may differ.' },
 ];
 
 export default function PricingPage() {
@@ -77,7 +77,7 @@ export default function PricingPage() {
           <Link href="/" style={{ color: '#2563eb', fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block', marginBottom: '2rem' }}>← Back to Natural Quill</Link>
           <h1 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '1rem' }}>Simple, honest pricing</h1>
           <p style={{ fontSize: '1.1rem', color: '#888899', maxWidth: '500px', margin: '0 auto', lineHeight: 1.6 }}>
-            Pay once, use when you need it. No subscriptions traps. 400 words free — no signup.
+            Choose a one-time word pack or an optional monthly plan. 400 words free — no signup.
           </p>
         </div>
 

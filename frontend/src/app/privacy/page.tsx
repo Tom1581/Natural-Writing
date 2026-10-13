@@ -18,7 +18,7 @@ export default function PrivacyPage() {
         <header className="page-hero">
           <h1>Privacy Policy</h1>
           <p className="article-lede">This page explains what information Natural Quill handles when you use the site and writing tools.</p>
-          <p>Last updated: October 11, 2026</p>
+          <p>Last updated: October 13, 2026</p>
         </header>
 
         <section>
@@ -27,7 +27,8 @@ export default function PrivacyPage() {
             <li>
               <strong>Writing and results:</strong> when you submit text for a rewrite, the service processes the
               source text, your chosen settings, and the generated output. The service saves source and output text
-              in manuscript history and may cache generated output.
+              in the service database and may cache generated output. The saved-history interface is currently
+              unavailable while we add account-scoped access.
             </li>
             <li>
               <strong>Accounts and purchases:</strong> if you create an account or buy a plan, we use your email,
