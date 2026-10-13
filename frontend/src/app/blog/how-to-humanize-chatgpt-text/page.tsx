@@ -1,104 +1,94 @@
 import type { Metadata } from 'next';
-import { OG_IMAGE } from '@/lib/posts';
 import Link from 'next/link';
 import AdSenseAd from '@/components/AdSenseAd';
 import PostMeta from '@/components/PostMeta';
+import SiteNav from '@/components/SiteNav';
+import { OG_IMAGE, SITE_URL } from '@/lib/posts';
+
+const SLUG = 'how-to-humanize-chatgpt-text';
+const URL = `${SITE_URL}/blog/${SLUG}`;
 
 export const metadata: Metadata = {
   title: 'How to Humanize ChatGPT Text for Free',
-  description: 'ChatGPT text gets flagged because of specific writing patterns. Learn exactly which patterns AI detectors catch and how to fix them for free.',
-  alternates: { canonical: 'https://naturalquill.one/blog/how-to-humanize-chatgpt-text' },
-  keywords: ['humanize chatgpt text', 'chatgpt humanizer', 'humanize chatgpt', 'make chatgpt text human', 'natural chatgpt writing', 'free chatgpt humanizer'],
+  description: 'Edit a generic ChatGPT draft into clear, specific writing with a free paragraph-by-paragraph method and a worked example.',
+  alternates: { canonical: URL },
   openGraph: {
     title: 'How to Humanize ChatGPT Text for Free | Natural Quill',
-    description: 'The exact writing patterns that get ChatGPT flagged — and how to fix them.',
-    url: 'https://naturalquill.one/blog/how-to-humanize-chatgpt-text',
+    description: 'A practical editing method that checks meaning and facts instead of chasing an AI detector score.',
+    url: URL,
+    type: 'article',
     images: [OG_IMAGE],
   },
 };
 
+const BEFORE =
+  'In today\'s fast-paced world, remote work has revolutionized the way teams collaborate. It offers numerous benefits, fostering productivity and flexibility. However, it is crucial to acknowledge challenges, including communication and work-life balance.';
+const AFTER =
+  'Remote work gives people more control over where they work and can make schedules more flexible. It also makes quick conversations harder. When the workday happens at home, deciding when to stop can be difficult.';
+
 export default function Post() {
   return (
-    <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'var(--font-body)' }}>
-      <div style={{ maxWidth: '720px', margin: '0 auto', padding: '4rem 1.5rem' }}>
-        <Link href="/blog" style={{ color: '#2563eb', fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block', marginBottom: '2.5rem' }}>
-          ← All guides
-        </Link>
+    <div className="content-shell">
+      <SiteNav />
+      <main className="page-content">
+        <article className="article">
+          <Link href="/blog" className="article-back">← All guides</Link>
+          <PostMeta slug={SLUG} />
+          <h1>How to humanize ChatGPT text for free</h1>
+          <p className="article-lede">
+            A draft can be grammatical and still feel empty. The most useful edit is to make the point clearer, keep only claims you can support, and choose a voice that fits your reader. You can do that with a text editor and a careful reread; no detector score is required.
+          </p>
+          <p>
+            This guide uses an illustrative paragraph written for the example below. It is an editing demonstration, not a test of ChatGPT, Natural Quill, or an AI detector. Any AI-assisted draft still needs a human to check its facts and decide what it should say.
+          </p>
 
-        <PostMeta slug="how-to-humanize-chatgpt-text" />
-
-        <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.25, marginBottom: '1.5rem' }}>
-          How to Humanize ChatGPT Text for Free
-        </h1>
-
-        <p style={{ fontSize: '1.05rem', lineHeight: 1.8, color: '#c8d0e0', marginBottom: '2rem' }}>
-          ChatGPT produces clean, readable text — but it gets flagged almost every time. Not because detectors are magic, but because ChatGPT has deeply consistent writing habits that are easy to identify statistically. Here is exactly what those habits are and how to fix them.
-        </p>
-
-        <AdSenseAd />
-
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#ffffff' }}>Why ChatGPT Text Gets Detected</h2>
-
-        <p style={{ lineHeight: 1.8, color: '#c8d0e0', marginBottom: '1rem' }}>ChatGPT defaults to the same patterns every time it generates text:</p>
-
-        <ul style={{ lineHeight: 2, color: '#c8d0e0', paddingLeft: '1.5rem', marginBottom: '2rem' }}>
-          <li><strong style={{ color: '#fff' }}>Uniform sentence length</strong> — ChatGPT sentences cluster around 18–25 words. Human writing has much more variance.</li>
-          <li><strong style={{ color: '#fff' }}>Opening with the subject</strong> — almost every ChatGPT sentence starts with its subject. Humans front-load with time, place, or contrast.</li>
-          <li><strong style={{ color: '#fff' }}>Transition addiction</strong> — "Furthermore," "Moreover," "In addition to this," "It is important to note" appear constantly.</li>
-          <li><strong style={{ color: '#fff' }}>No contractions</strong> — ChatGPT writes formally by default: "it is," "does not," "they are."</li>
-          <li><strong style={{ color: '#fff' }}>Three-part lists everywhere</strong> — ChatGPT loves: "First... Second... Third..." and "X, Y, and Z" structures.</li>
-          <li><strong style={{ color: '#fff' }}>Hedging phrases</strong> — "It is worth noting," "It should be mentioned," "One could argue."</li>
-        </ul>
-
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#ffffff' }}>How to Humanize ChatGPT Text Manually</h2>
-
-        <p style={{ lineHeight: 1.8, color: '#c8d0e0', marginBottom: '1rem' }}>
-          <strong style={{ color: '#fff' }}>Fix sentence length.</strong> Pick three consecutive sentences and change one dramatically — cut it to 5 words, or expand it into two with a new clause. Do this every few paragraphs.
-        </p>
-
-        <p style={{ lineHeight: 1.8, color: '#c8d0e0', marginBottom: '1rem' }}>
-          <strong style={{ color: '#fff' }}>Vary sentence openers.</strong> Find every sentence that starts with "The", "This", or "It" and rewrite the opening. Start with "For most people," or "Back in 2020," or "Frankly," or just cut the opener entirely.
-        </p>
-
-        <p style={{ lineHeight: 1.8, color: '#c8d0e0', marginBottom: '1rem' }}>
-          <strong style={{ color: '#fff' }}>Delete every transition phrase.</strong> Go through the whole text and cut "Furthermore," "Moreover," "In addition," "It is worth noting." Replace with nothing, or with a direct short sentence that states the point plainly.
-        </p>
-
-        <p style={{ lineHeight: 1.8, color: '#c8d0e0', marginBottom: '1rem' }}>
-          <strong style={{ color: '#fff' }}>Add contractions throughout.</strong> Do a find-and-replace: "it is" → "it's", "do not" → "don't", "cannot" → "can't", "they are" → "they're". This is fast and has a big impact on detection scores.
-        </p>
-
-        <p style={{ lineHeight: 1.8, color: '#c8d0e0', marginBottom: '2rem' }}>
-          <strong style={{ color: '#fff' }}>Break the list habit.</strong> If you see three items listed in sequence, convert one of them into a standalone sentence or cut it entirely. Detectors flag clustered parallel structure heavily.
-        </p>
-
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: '#ffffff' }}>Humanize ChatGPT Text in Seconds</h2>
-        <p style={{ lineHeight: 1.8, color: '#c8d0e0', marginBottom: '2rem' }}>
-          Doing this by hand on a 1,000-word essay takes 45 minutes or more. Natural Quill handles all of it automatically — paste your ChatGPT output, set the strength to 80%, and convert. The tool is built specifically to target the patterns ChatGPT produces, and the first 400 words are completely free.
-        </p>
-
-        <Link href="/" style={{
-          display: 'inline-block',
-          background: '#2563eb',
-          color: '#ffffff',
-          padding: '0.85rem 2rem',
-          borderRadius: '0.5rem',
-          fontWeight: 700,
-          textDecoration: 'none',
-          fontSize: '0.95rem',
-          marginBottom: '3rem',
-        }}>
-          Humanize ChatGPT Text Free →
-        </Link>
-
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '2rem' }}>
-          <p style={{ color: '#888899', fontSize: '0.85rem', marginBottom: '1rem' }}>More guides:</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <Link href="/blog/how-to-bypass-gptzero" style={{ color: '#2563eb', fontSize: '0.9rem' }}>How GPTZero Reads AI Writing Patterns →</Link>
-            <Link href="/blog/best-ai-humanizer-2025" style={{ color: '#2563eb', fontSize: '0.9rem' }}>Best AI Humanizer Tools in 2026 →</Link>
+          <h2>Start with the idea, not the wording</h2>
+          <p>
+            Before rewriting a sentence, write its point in the margin. If you cannot name a concrete point, the sentence may be filler. In the sample below, the first sentence promises a transformation but says little about what changed. The next two identify a benefit and two problems. Those are the ideas worth keeping.
+          </p>
+          <div className="home-columns">
+            <figure className="home-sample">
+              <figcaption>Illustrative draft</figcaption>
+              <p>{BEFORE}</p>
+            </figure>
+            <figure className="home-sample home-sample-after">
+              <figcaption>Edited version</figcaption>
+              <p>{AFTER}</p>
+            </figure>
           </div>
-        </div>
-      </div>
-    </main>
+          <p>
+            The edit removes “fast-paced world”, “revolutionized”, and “it is crucial to acknowledge” because none adds a useful fact. It names the flexibility and communication problem directly. It also keeps the cautious “can”: remote work does not make every schedule flexible. The result is shorter without changing the paragraph&apos;s main claims.
+          </p>
+
+          <h2>A repeatable five-pass edit</h2>
+          <ol>
+            <li><strong>Mark the claims.</strong> Underline facts, dates, quantities, causal claims, and comparisons. Check each against a source you trust. Rewriting cannot repair a made-up fact.</li>
+            <li><strong>Replace vague language with the actual point.</strong> “Offers numerous benefits” invites a question: which benefits, for whom, and under what conditions? Answer that question if the draft has the information; otherwise narrow the claim.</li>
+            <li><strong>Cut a sentence that repeats its neighbor.</strong> Formulaic openings and conclusions often announce or summarize a point that the next sentence already makes. Keep the sentence with more information.</li>
+            <li><strong>Read for flow.</strong> A transition is useful when it explains a relationship, such as a contrast or a cause. “However” in the sample signals a real contrast. “Furthermore” added only for rhythm would not.</li>
+            <li><strong>Read aloud for voice.</strong> Change awkward sentence lengths where the reader loses the point, but do not add fragments, contractions, or unusual words merely to look “human.” A formal report and a personal email should sound different.</li>
+          </ol>
+          <p>
+            You can use the <Link href="/ai-phrase-checker">free phrase checker</Link> to find stock wording, or review the <Link href="/blog/ai-words-to-avoid">annotated list of AI-sounding phrases</Link>. A flagged phrase is a prompt to reconsider a sentence, not proof that AI wrote it.
+          </p>
+
+          <AdSenseAd />
+
+          <h2>Keep a short fact and meaning checklist</h2>
+          <p>
+            Compare the edited paragraph against the draft. Are the names, numbers, citations, and qualifications still accurate? Did “may help” quietly become “will solve”? Did you replace a technical term with a less precise synonym? If the answer is yes, restore the original meaning and edit again. A smoother sentence is not better when it says something false.
+          </p>
+          <p>
+            For coursework, your own argument and your school&apos;s AI-use rules matter more than sounding unlike a model. The <Link href="/blog/revise-ai-assisted-essay">essay revision guide</Link> covers thesis, evidence, citation checks, and disclosure in more detail. If a detector report worries you, read our <Link href="/blog/understanding-ai-writing-detectors">guide to interpreting those reports</Link>; no wording recipe can guarantee a particular result.
+          </p>
+
+          <h2>When an editor helps</h2>
+          <p>
+            A writing tool can provide a second version to compare against your draft. Natural Quill lets you try a short rewrite at no charge. Its output is a suggestion: review every sentence, verify sources yourself, and keep your own judgment about what belongs in the final piece. If you are choosing among tools, use the <Link href="/blog/choosing-ai-writing-editor-for-students">same sample and checklist</Link> to compare them fairly.
+          </p>
+          <Link href="/" className="page-cta">Try the writing editor</Link>
+        </article>
+      </main>
+    </div>
   );
 }

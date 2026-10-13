@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { POSTS, SITE_URL } from '@/lib/posts';
 
-const HOME_UPDATED = new Date('2026-10-05');
+const HOME_UPDATED = new Date('2026-10-13');
 const TOOLS_UPDATED = new Date('2026-10-05');
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -11,7 +11,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/research-paper-humanizer`, lastModified: TOOLS_UPDATED, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/ai-phrase-checker`, lastModified: TOOLS_UPDATED, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/pricing`, lastModified: HOME_UPDATED, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE_URL}/about`, lastModified: HOME_UPDATED, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${SITE_URL}/support`, lastModified: HOME_UPDATED, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${SITE_URL}/privacy`, lastModified: HOME_UPDATED, changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${SITE_URL}/terms`, lastModified: HOME_UPDATED, changeFrequency: 'monthly', priority: 0.4 },
     { url: `${SITE_URL}/blog`, lastModified: new Date(latestPost), changeFrequency: 'weekly', priority: 0.8 },
+    // POSTS contains only current canonical guides; older article URLs redirect to these.
     ...POSTS.map(post => ({
       url: `${SITE_URL}/blog/${post.slug}`,
       lastModified: new Date(post.updated),

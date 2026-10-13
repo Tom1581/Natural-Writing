@@ -4,6 +4,36 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/blog/how-to-make-chatgpt-essay-undetectable",
+        destination: "/blog/revise-ai-assisted-essay",
+        permanent: true,
+      },
+      {
+        source: "/blog/how-to-make-ai-writing-undetectable",
+        destination: "/blog/how-to-humanize-chatgpt-text",
+        permanent: true,
+      },
+      {
+        source: "/blog/how-to-bypass-turnitin-ai-detection",
+        destination: "/blog/understanding-ai-writing-detectors",
+        permanent: true,
+      },
+      {
+        source: "/blog/how-to-bypass-gptzero",
+        destination: "/blog/understanding-ai-writing-detectors",
+        permanent: true,
+      },
+      {
+        source: "/blog/best-ai-humanizer-for-students",
+        destination: "/blog/choosing-ai-writing-editor-for-students",
+        permanent: true,
+      },
+      {
+        source: "/blog/best-ai-humanizer-2025",
+        destination: "/blog/choosing-ai-writing-editor-for-students",
+        permanent: true,
+      },
+      {
         // One canonical host: www.naturalquill.one served a duplicate copy of every page.
         source: "/:path*",
         has: [{ type: "host", value: "www.naturalquill.one" }],

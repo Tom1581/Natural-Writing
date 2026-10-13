@@ -34,6 +34,15 @@ export default function SiteFooter() {
             ))}
           </ul>
         </div>
+        <div>
+          <p className="site-footer-title">About and policies</p>
+          <ul>
+            <li><Link href="/about">About Natural Quill</Link></li>
+            <li><Link href="/support">Contact and Support</Link></li>
+            <li><Link href="/privacy">Privacy Policy</Link></li>
+            <li><Link href="/terms">Terms of Use</Link></li>
+          </ul>
+        </div>
       </div>
       <p className="site-footer-legal">© {new Date().getFullYear()} Natural Quill</p>
     </footer>

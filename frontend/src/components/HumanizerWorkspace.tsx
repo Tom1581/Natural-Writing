@@ -3,15 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import {
   Sparkles, RotateCcw, Copy, Check, BookOpen,
-  History, AlertCircle, Loader2, TrendingDown,
-  Type, FolderOpen, RefreshCw, LifeBuoy,
+  AlertCircle, Loader2, TrendingDown,
+  Type, RefreshCw, LifeBuoy,
   Server, FileText, ChevronDown, X, BarChart2, User, Info,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
 import StyleCloner, { StyleProfile } from '@/components/StyleCloner';
 import ContactSupport from '@/components/ContactSupport';
-import ManuscriptLibrary, { ManuscriptHistory } from '@/components/ManuscriptLibrary';
 import TextInputPanel from '@/components/TextInputPanel';
 import FlightDeck from '@/components/FlightDeck';
 import LoginModal from '@/components/LoginModal';
@@ -119,12 +118,7 @@ export default function HumanizerWorkspace() {
   const [selectedProfile, setSelectedProfile] = useState<StyleProfile | null>(null);
   const [variationSeed, setVariationSeed] = useState(0); // increments each regeneration
 
-  // Library & history
-  const [history, setHistory] = useState<ManuscriptHistory[]>([]);
-  const [currentManuscriptId, setCurrentManuscriptId] = useState<string | null>(null);
-
   // Panel visibility
-  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isClonerOpen, setIsClonerOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -201,7 +195,6 @@ export default function HumanizerWorkspace() {
           setActiveUser(nextUser);
           setSubscriptionTier(null);
           try { window.localStorage.setItem('nw_active_user', JSON.stringify(nextUser)); } catch { /* ignore */ }
-          fetchHistory();
         }
       } catch { /* offline / supabase unreachable */ }
     };
@@ -259,17 +252,6 @@ export default function HumanizerWorkspace() {
       cancelled = true;
     };
   }, [activeUser?.email]);
-
-  const fetchHistory = async () => {
-    try {
-      const res = await fetch(`${API}/rewrite/history`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setHistory(await res.json());
-      setBackendStatus('online');
-    } catch {
-      setBackendStatus('offline');
-    }
-  };
 
   // ─── Actions ────────────────────────────────────────────────────────────────
 
@@ -341,7 +323,6 @@ export default function HumanizerWorkspace() {
       setAlternatives(data.alternatives || []);
       setMetrics(data.metrics || null);
       setOutputMetrics(data.outputMetrics || null);
-      setCurrentManuscriptId(data.id);
       setShowDiagnostics(true);
       trackEvent('natural_quill_rewrite_completed', {
         word_count: wordCount,
@@ -351,7 +332,6 @@ export default function HumanizerWorkspace() {
         humanization,
         logged_in: Boolean(activeUser?.email),
       });
-      fetchHistory();
       // Session cap and cooldown only apply to the free trial.
       if (!ADMIN_EMAILS.includes(activeUser?.email ?? '') && !subscriptionTier) {
         setUseCount(prev => prev + 1);
@@ -407,15 +387,6 @@ export default function HumanizerWorkspace() {
     setVariationSeed(0);
   };
 
-  const handleSelectHistory = (item: ManuscriptHistory) => {
-    setInputText(item.sourceText);
-    setOutputText(item.optimizedText);
-    setMetrics(item.metrics);
-    setCurrentManuscriptId(item.id);
-    if (item.metrics) setShowDiagnostics(true);
-    setIsLibraryOpen(false);
-  };
-
   const handleLogin = (user: ActiveUser) => {
     setActiveUser(user);
     setIsLoginOpen(false);
@@ -457,14 +428,6 @@ export default function HumanizerWorkspace() {
       <ContactSupport
         isOpen={isContactOpen}
         onClose={() => setIsContactOpen(false)}
-      />
-      <ManuscriptLibrary
-        isOpen={isLibraryOpen}
-        onClose={() => setIsLibraryOpen(false)}
-        history={history}
-        onSelect={handleSelectHistory}
-        onSearch={() => {}}
-        isSearching={false}
       />
       <FlightDeck isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} />
 
@@ -550,7 +513,6 @@ export default function HumanizerWorkspace() {
 
         {/* Center: workspace actions */}
         <nav style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-          <HeaderAction icon={<History size={14} />} label="History" onClick={() => setIsLibraryOpen(true)} />
           <HeaderAction icon={<LifeBuoy size={14} />} label="Support" onClick={() => setIsContactOpen(true)} />
           <HeaderAction icon={<Info size={14} />} label="About Us" onClick={() => setIsAboutOpen(true)} />
           <HeaderAction icon={<Server size={14} />} label="Stats" onClick={() => setIsStatsOpen(true)} />
@@ -612,7 +574,7 @@ export default function HumanizerWorkspace() {
           <span style={{ fontSize: '0.72rem', color: '#fecaca' }}>
             The rewriting service is not responding right now. Please retry in a moment.
           </span>
-          <button onClick={fetchHistory} className="btn btn-glass" style={{ marginLeft: 'auto', padding: '0.3rem 0.7rem', fontSize: '0.65rem' }}>
+          <button onClick={() => window.location.reload()} className="btn btn-glass" style={{ marginLeft: 'auto', padding: '0.3rem 0.7rem', fontSize: '0.65rem' }}>
             Retry
           </button>
         </div>
@@ -810,9 +772,6 @@ export default function HumanizerWorkspace() {
               <Type size={16} style={{ color: 'var(--text-muted)' }} />
               <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--text-muted)' }}>Your Text</span>
             </div>
-            <button onClick={() => setIsLibraryOpen(true)} className="btn btn-glass" style={{ padding: '0.4rem 0.9rem', fontSize: '0.65rem' }}>
-              <FolderOpen size={13} /> Open saved
-            </button>
           </div>
           <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             {/* Textarea */}
