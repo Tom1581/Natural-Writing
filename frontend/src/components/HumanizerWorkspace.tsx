@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Sparkles, RotateCcw, Copy, Check, BookOpen,
-  AlertCircle, Loader2, TrendingDown,
+  AlertCircle, Loader2,
   Type, RefreshCw, LifeBuoy,
   Server, FileText, ChevronDown, X, BarChart2, User, Info,
 } from 'lucide-react';
@@ -340,11 +340,7 @@ export default function HumanizerWorkspace() {
         setCooldownSecondsLeft(60);
       }
 
-      if (data.humanizationDelta > 0) {
-        toast.success(`AI-detection risk dropped by ${data.humanizationDelta} points.`);
-      } else {
-        toast.success('Text improved successfully.');
-      }
+      toast.success('Draft revised. Check facts, citations, and meaning before using it.');
       if (data.academicStyle) {
         toast(
           'This looks like an academic paper, so the rewrite keeps a formal academic style with no contractions. Choose Conversational or Blog if you want a casual voice.',
@@ -454,15 +450,15 @@ export default function HumanizerWorkspace() {
               </div>
 
               <p style={{ fontSize: '1rem', lineHeight: 1.75, color: 'var(--text-pure)', marginBottom: '1.5rem' }}>
-                Natural Quill rewrites AI-generated text into writing that genuinely sounds human. We built this tool for students, professionals, and researchers who need their work to read with real voice — not the flat, repetitive patterns that AI detectors flag instantly.
+                Natural Quill suggests revisions to wording, sentence rhythm, and flow. Use it to explore a clearer draft, then check the result against your original before submitting or sharing it.
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem', marginBottom: '1.75rem' }}>
                 {[
-                  { title: 'Writing Quality', body: 'Every rewrite goes through multi-pass processing — adjusting sentence rhythm, burstiness, word choice, and flow so the output reads like a person actually sat down and wrote it.' },
-                  { title: 'Deadline-Ready', body: 'Fast turnaround with no upload limits on paid plans. Paste, adjust, convert — your paper is ready in seconds, not hours.' },
-                  { title: 'Academic Integrity', body: 'Natural Quill improves the naturalness and clarity of your writing. Your ideas stay yours — we only change how they sound, never what they say.' },
-                  { title: 'Reduces AI-Style Patterns', body: 'Engineered to reduce repetitive signals often evaluated by tools like Turnitin, Scribbr, GPTZero, and similar platforms — improving burstiness, rhythm, and sentence variety for real readers.' },
+                  { title: 'Writing Quality', body: 'The editor can suggest different word choices, sentence lengths, and transitions. A fluent rewrite may still need specific examples and careful fact checking.' },
+                  { title: 'Fast Editing', body: 'Paste a draft, choose a tone and strength, and review the suggested changes before using them.' },
+                  { title: 'Academic Integrity', body: 'Compare the output with your source, verify every citation and claim, and follow your school or publisher’s rules for AI-assisted editing.' },
+                  { title: 'Style Patterns', body: 'The editor can reduce some repetitive wording. It does not measure authorship or predict how any AI detector will classify your writing.' },
                   { title: 'One-Time Packs or Monthly', body: 'One-time word packs start at $19.99. An optional Unlimited plan is available for heavy users at $39.99/month.' },
                 ].map(({ title, body }) => (
                   <div key={title} style={{ padding: '1rem 1.25rem', background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.12)', borderRadius: '0.75rem' }}>
@@ -556,7 +552,7 @@ export default function HumanizerWorkspace() {
           Free AI Humanizer: turn ChatGPT text into natural, human writing
         </h1>
         <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.45rem', maxWidth: '820px', lineHeight: 1.55 }}>
-          Paste an AI-written essay, paper, or article. Natural Quill rewrites it paragraph by paragraph in the tone you choose and keeps your citations, numbers, headings, and reference list exactly as they were.
+          Paste a draft to compare alternative wording in the tone you choose. The service checks some citations and numbers, but you must verify every important detail and claim before using its output.
         </p>
       </section>
 
@@ -674,7 +670,7 @@ export default function HumanizerWorkspace() {
                 <p style={{ fontSize: '0.82rem', fontWeight: 800, color: showDiagnostics ? '#93c5fd' : '#60a5fa', margin: 0, letterSpacing: '-0.01em' }}>Text Diagnostics</p>
                 <p style={{ fontSize: '0.65rem', color: 'rgba(96,165,250,0.6)', margin: 0, marginTop: '0.1rem' }}>
                   {metrics
-                    ? <>AI risk: {metrics.aiDetectionRisk}% → {outputMetrics ? `${outputMetrics.aiDetectionRisk}%` : '—'} · Burstiness: {metrics.burstiness.toFixed(2)} → {outputMetrics ? outputMetrics.burstiness.toFixed(2) : '—'}</>
+                    ? <>Sentence-length variation: {metrics.burstiness.toFixed(2)} → {outputMetrics ? outputMetrics.burstiness.toFixed(2) : '—'} · Descriptive writing signals, not an AI detector</>
                     : 'Click "Convert to Natural Writing" to analyse your text'}
                 </p>
               </div>
@@ -692,9 +688,10 @@ export default function HumanizerWorkspace() {
                     {metrics.detectedLanguage && metrics.detectedLanguage !== 'en' && (
                       <p style={{ fontSize: '0.65rem', color: 'var(--text-dark)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Language detected: {metrics.detectedLanguage}</p>
                     )}
-                    <AIRiskComparison inputRisk={metrics.aiDetectionRisk} outputRisk={outputMetrics?.aiDetectionRisk ?? null} />
+                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+                      These are automated style estimates. They cannot determine authorship, predict a detector result, or verify factual accuracy.
+                    </p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem', marginTop: '1rem' }}>
-                      <ScoreBar value={metrics.humanityScore} label="Naturalness" good="high" />
                       <ScoreBar value={Math.min(metrics.burstiness / 0.7, 1)} label="Sentence variety" good="high" />
                       <ScoreBar value={metrics.contractionRate} label="Contraction rate" good="high" />
                       <ScoreBar value={Math.min(metrics.readability.readingEase / 100, 1)} label="Reading ease" good="high" />
@@ -711,11 +708,11 @@ export default function HumanizerWorkspace() {
                       <DiagStat label="Sentences" value={`${metrics.sentenceCount} across ${metrics.paragraphCount} paragraphs`} />
                       <DiagStat label="Unique words" value={`${metrics.lexicalDiversity.uniqueWords} (TTR ${pct(metrics.lexicalDiversity.ttr)})`} />
                       {metrics.passiveVoice.count > 0 && <DiagStat label="Passive voice" value={`${metrics.passiveVoice.count} sentences`} warn />}
-                      {metrics.roboticMarkers.length > 0 && <DiagStat label="AI-like phrases" value={metrics.roboticMarkers.slice(0, 3).join(', ')} warn />}
+                      {metrics.roboticMarkers.length > 0 && <DiagStat label="Stock phrases" value={metrics.roboticMarkers.slice(0, 3).join(', ')} warn />}
                     </div>
                     {metrics.aiTells.length > 0 && (
                       <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-light)' }}>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>AI-tell phrases in input: </span>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>Phrases to review in input: </span>
                         {metrics.aiTells.slice(0, 8).map(t => (
                           <span key={t.phrase} style={{ fontSize: '0.7rem', color: '#ef4444', marginRight: '0.75rem', fontWeight: 500 }}>
                             &quot;{t.phrase}&quot;{t.count > 1 && ` ×${t.count}`}
@@ -1233,7 +1230,7 @@ function HumanizationSlider({ value, onChange }: { value: number; onChange: (v: 
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '260px', flex: 1, maxWidth: '360px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>
-          Humanization
+          Editing intensity
         </span>
         <span style={{ fontSize: '0.7rem', fontWeight: 800, color: levelColor, letterSpacing: '0.05em' }}>
           {value}% · {level}
@@ -1252,71 +1249,8 @@ function HumanizationSlider({ value, onChange }: { value: number; onChange: (v: 
         }}
       />
       <span style={{ fontSize: '0.72rem', color: 'var(--accent-blue)', fontWeight: 700 }}>
-        How strongly to vary sentence rhythm and remove AI-style phrasing. <span style={{ opacity: 0.75 }}>Around 80% suits most drafts.</span>
+        Higher settings ask for a stronger rewrite. Review the meaning at every setting.
       </span>
-    </div>
-  );
-}
-
-function AIRiskComparison({ inputRisk, outputRisk }: { inputRisk: number; outputRisk: number | null }) {
-  const riskColor = (r: number) => r >= 70 ? '#ef4444' : r >= 40 ? '#f59e0b' : '#10b981';
-  const delta = outputRisk !== null ? inputRisk - outputRisk : null;
-
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '1.25rem',
-      padding: '0.9rem 1.1rem',
-      background: 'rgba(37, 99, 235, 0.04)',
-      border: '1px solid rgba(37, 99, 235, 0.15)',
-      borderRadius: 'var(--radius-md)',
-    }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-        <span style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--text-muted)' }}>
-          AI Detection Risk
-        </span>
-        <span style={{ fontSize: '0.65rem', color: 'var(--text-dark)' }}>
-          Composite of AI-tells, burstiness, contractions, transitions, nominalizations
-        </span>
-      </div>
-
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-        <RiskBadge label="Input" value={inputRisk} color={riskColor(inputRisk)} />
-
-        {outputRisk !== null && (
-          <>
-            <TrendingDown size={18} style={{ color: delta !== null && delta > 0 ? '#10b981' : 'var(--text-dark)' }} />
-            <RiskBadge label="Improved" value={outputRisk} color={riskColor(outputRisk)} />
-            {delta !== null && delta !== 0 && (
-              <div style={{
-                padding: '0.35rem 0.75rem',
-                background: delta > 0 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                border: `1px solid ${delta > 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
-                borderRadius: '999px',
-              }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 800, color: delta > 0 ? '#10b981' : '#ef4444' }}>
-                  {delta > 0 ? '↓' : '↑'} {Math.abs(delta)} points
-                </span>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function RiskBadge({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', minWidth: '70px' }}>
-      <span style={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--text-muted)' }}>
-        {label}
-      </span>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.15rem' }}>
-        <span style={{ fontSize: '1.5rem', fontWeight: 900, color, fontFamily: 'var(--font-display)', lineHeight: 1 }}>
-          {value}
-        </span>
-        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>/100</span>
-      </div>
     </div>
   );
 }

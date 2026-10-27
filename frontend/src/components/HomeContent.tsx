@@ -4,19 +4,19 @@ import { POSTS } from '@/lib/posts';
 export const FAQS: { q: string; a: string }[] = [
   {
     q: 'What does Natural Quill do?',
-    a: 'Natural Quill rewrites AI-generated drafts from ChatGPT, Claude, Gemini, and similar tools so they read like a careful person wrote them. It varies sentence rhythm, removes stock AI phrasing and signposting, and replaces vague wording with plain, specific language, while keeping your meaning intact.',
+    a: 'Natural Quill suggests alternative wording for a draft in the tone and edit strength you choose. It can reduce repetition and stock phrasing, but it cannot add missing research or judge whether a claim is true. Compare the result with your source before using it.',
   },
   {
     q: 'Will it change my citations, numbers, or references?',
-    a: 'No. In-text citations such as (Smith et al., 2020) or [3], numbers, percentages, and dates are copied exactly, and every rewritten paragraph is checked for them automatically. Your title, section headings, and reference list are never sent for rewriting.',
+    a: 'The service checks for some citation and number patterns and can leave a paragraph unchanged if a check fails. No automated check covers every format or meaning change. Verify citations, numbers, headings, and references yourself before using the output.',
   },
   {
     q: 'Which tone should I use for an essay or research paper?',
-    a: 'Choose Academic. It keeps a formal register with no contractions, no slang, and the same level of certainty as your draft, so "is associated with" never turns into "causes". Use Formal for reports and emails, and Natural, Conversational, or Blog for less formal writing.',
+    a: 'Academic asks the editor for a formal register; Formal is useful for reports and emails. Natural, Conversational, and Blog are less formal. In every mode, check that a cautious claim has not become a stronger one.',
   },
   {
     q: 'What is the difference between Light, Medium, and Strong?',
-    a: 'Light keeps your sentence structure and only fixes phrasing that sounds machine-written. Medium rewrites every sentence in new words. Strong rebuilds each paragraph from its ideas, reordering and combining sentences where the logic allows.',
+    a: 'Light asks for smaller edits, while Medium and Strong allow more rewriting. The result still depends on the input and the AI service, so compare the output with your draft regardless of the setting.',
   },
   {
     q: 'Is Natural Quill free?',
@@ -24,7 +24,7 @@ export const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'Can Natural Quill guarantee my text passes an AI detector?',
-    a: 'No tool can honestly guarantee that, because detectors change and disagree with each other. Natural Quill targets the patterns they rely on, such as uniform sentence length and stock AI phrases, and shows a before-and-after AI-style score so you can see what changed.',
+    a: 'No. Natural Quill is a writing editor, not an AI detector. Its style indicators are simple heuristics, not a probability that a detector will flag your work. Focus on accuracy, clarity, and any disclosure rules that apply to your writing.',
   },
   {
     q: 'Can I upload Word or PDF files?',
@@ -32,15 +32,15 @@ export const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'How is this different from a paraphrasing tool?',
-    a: 'Paraphrasers swap synonyms, which often makes text worse and can break technical terms. Natural Quill edits the way a human editor does: it restructures sentences, cuts filler, and keeps terminology, citations, and claims exactly as they were.',
+    a: 'You can choose a tone and edit strength, then compare a suggested revision with your original. The tool may cut filler or restructure sentences, but it can also leave vague ideas vague or alter nuance. Review technical terms and claims yourself.',
   },
 ];
 
 const BEFORE =
-  'Furthermore, the constant exposure to curated and idealized images can lead to unrealistic comparisons. Adolescents often compare their own lives to the seemingly perfect lives of their peers and influencers, which can foster feelings of inadequacy. A 2019 study found that teens who spent more than 3 hours per day on social media faced double the risk of poor mental health outcomes, including symptoms of depression and anxiety (Riehm et al., 2019). Moreover, the phenomenon of cyberbullying further exacerbates these issues, as it allows harassment to extend beyond the school environment and into the home.';
+  'In a fictional class survey, 18 of 40 students said they revised after midnight. This result suggests late editing was common in this small group, but it cannot establish a pattern across the university (Sample, 2024, p. 12).';
 
 const AFTER =
-  'The constant exposure to curated, idealized images can generate unrealistic comparisons, prompting adolescents to measure their own lives against the seemingly perfect lives of peers and influencers and to feel inadequate. A 2019 study reported that teens who used social media for more than 3 hours each day faced twice the risk of poor mental-health outcomes, such as depressive and anxious symptoms (Riehm et al., 2019). In addition, cyberbullying intensifies these problems by allowing harassment to continue beyond school and enter the home.';
+  'In a fictional class survey, 18 of 40 students reported revising after midnight. Although this finding indicates that late editing was frequent within the group, it does not allow one to infer a university-wide pattern (Sample, 2024, p. 12).';
 
 export default function HomeContent() {
   return (
@@ -58,13 +58,13 @@ export default function HomeContent() {
           </li>
           <li>
             <h3>Get a faithful rewrite</h3>
-            <p>Each paragraph is rewritten on its own and checked. If a citation, number, or piece of content goes missing, that paragraph is redone or left as you wrote it.</p>
+            <p>The service checks some details after rewriting and may retry or keep a paragraph unchanged. Review the result for meaning and evidence yourself.</p>
           </li>
         </ol>
       </section>
 
       <section>
-        <h2>What changes, and what stays exactly the same</h2>
+        <h2>What the editor tries to change—and what you must check</h2>
         <div className="home-columns">
           <div>
             <h3>Rewritten</h3>
@@ -77,37 +77,37 @@ export default function HomeContent() {
             </ul>
           </div>
           <div>
-            <h3>Preserved</h3>
+            <h3>Check before you use the result</h3>
             <ul>
               <li>In-text citations such as (Smith et al., 2020) or [3]</li>
               <li>Numbers, percentages, dates, and units</li>
               <li>Your title, section headings, and reference list</li>
               <li>Technical terms and names</li>
-              <li>The strength of every claim: &ldquo;associated with&rdquo; never becomes &ldquo;causes&rdquo;</li>
+              <li>The strength of every claim: &ldquo;associated with&rdquo; must not become &ldquo;causes&rdquo;</li>
             </ul>
           </div>
         </div>
       </section>
 
       <section>
-        <h2>Example: a ChatGPT paragraph rewritten in Academic tone</h2>
+        <h2>A live edit, including its limits</h2>
         <div className="home-columns">
           <figure className="home-sample">
-            <figcaption>ChatGPT draft</figcaption>
+            <figcaption>Fictional input written for our test</figcaption>
             <p>{BEFORE}</p>
           </figure>
           <figure className="home-sample home-sample-after">
-            <figcaption>After Natural Quill (Academic, Medium)</figcaption>
+            <figcaption>Natural Quill output (Academic, Light; October 27, 2026)</figcaption>
             <p>{AFTER}</p>
           </figure>
         </div>
-        <p className="home-note">The citation and the &ldquo;3 hours&rdquo; figure are carried over exactly. Results vary a little between runs; use Generate New Version for another take.</p>
+        <p className="home-note">The number, fictional citation, and caution about a small sample remained in this one run. That does not guarantee every future edit. Read the <Link href="/blog/natural-quill-editing-test">complete two-sample test</Link>, including a rewrite that still sounded vague.</p>
       </section>
 
       <section>
         <h2>Built for essays, research papers, and everyday writing</h2>
         <p>
-          Students use Natural Quill to turn AI-assisted outlines and drafts into essays that sound like their own work. Researchers use the Academic tone to smooth AI-polished sections without losing citations or hedging; see how the{' '}
+          Writers can compare alternative phrasing for essays, reports, and articles. For academic writing, use the Academic tone cautiously and check citations, statistics, and hedging; see how the{' '}
           <Link href="/research-paper-humanizer">research paper humanizer</Link> handles citations and statistics. Marketers, bloggers, and non-native English writers use the Natural and Blog tones to make drafts read less generic.
         </p>
         <p>
@@ -118,8 +118,11 @@ export default function HomeContent() {
       <section>
         <h2>Free tools</h2>
         <p>
-          Not sure which parts of a draft sound generated? The free <Link href="/ai-phrase-checker">AI Phrase Checker</Link> highlights the words and phrases chatbots overuse and checks whether your sentence lengths vary. It runs in your browser, with no limit and no account. For the complete list with plain alternatives, read{' '}
+          Want to spot repetitive wording? The free <Link href="/ai-phrase-checker">Phrase Checker</Link> highlights stock phrases and checks whether your sentence lengths vary. It runs in your browser, with no limit and no account. For the complete list with plain alternatives, read{' '}
           <Link href="/blog/ai-words-to-avoid">AI words to avoid</Link>.
+        </p>
+        <p>
+          Comparing an original draft with a rewrite? The <Link href="/revision-audit">Revision Audit</Link> flags missing or new number tokens and common citation patterns. It works with any editor, runs in your browser, and helps you find details that deserve a closer read.
         </p>
       </section>
 

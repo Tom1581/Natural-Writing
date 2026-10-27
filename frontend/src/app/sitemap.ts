@@ -1,8 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { POSTS, SITE_URL } from '@/lib/posts';
 
-const HOME_UPDATED = new Date('2026-10-13');
-const TOOLS_UPDATED = new Date('2026-10-05');
+const HOME_UPDATED = new Date('2026-10-27');
+const TOOLS_UPDATED = new Date('2026-10-27');
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const latestPost = POSTS.reduce((latest, p) => (p.updated > latest ? p.updated : latest), POSTS[0].published);
@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: SITE_URL, lastModified: HOME_UPDATED, changeFrequency: 'weekly', priority: 1.0 },
     { url: `${SITE_URL}/research-paper-humanizer`, lastModified: TOOLS_UPDATED, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/ai-phrase-checker`, lastModified: TOOLS_UPDATED, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/revision-audit`, lastModified: TOOLS_UPDATED, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/pricing`, lastModified: HOME_UPDATED, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/about`, lastModified: HOME_UPDATED, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${SITE_URL}/support`, lastModified: HOME_UPDATED, changeFrequency: 'monthly', priority: 0.5 },

@@ -31,15 +31,15 @@ const FAQS = [
   },
   {
     q: 'Is this an AI detector?',
-    a: 'No. AI detectors such as GPTZero and Turnitin use statistical models trained on large amounts of text. This tool only looks for wording and rhythm patterns that language models overuse, so you can see what to edit. A clean result does not guarantee that a detector will agree.',
+    a: 'No. This tool applies a published list of wording patterns and counts sentence lengths in your browser. It does not estimate who wrote the text or predict a detector result. A flagged phrase is a prompt to edit, not evidence of AI use.',
   },
   {
     q: 'Does a flagged word mean my text was written by AI?',
-    a: 'No. People use every one of these words. What gives AI writing away is density: several stock phrases in one paragraph, signposts at the start of every sentence, and sentences of nearly identical length.',
+    a: 'No. People use these words too, and some are exactly right for a subject. The tool only points out wording that you might want to review. Judge each suggestion against your audience and intended meaning.',
   },
   {
     q: 'What should I do with the results?',
-    a: 'Fix strong flags first, because they rarely appear in natural writing. Then look at sentence variety: if most sentences are the same length, split a long one or combine two short ones. To rewrite a whole draft at once, send it to the Natural Quill humanizer.',
+    a: 'Read each flagged passage in context. Cut filler where it adds nothing, but keep necessary technical language. Sentence-length variety is descriptive, not a quality target. To compare an optional rewrite, you can send the draft to Natural Quill; that separate action uploads and stores text.',
   },
 ];
 
@@ -95,8 +95,8 @@ export default function AiPhraseCheckerPage() {
           <h1>Free AI Phrase Checker: find the ChatGPT words in your writing</h1>
           <p>
             Paste any text to highlight the {`${AI_PHRASES.length} words and phrases that chatbots lean on`}, from &ldquo;delve&rdquo; and &ldquo;tapestry&rdquo; to
-            &ldquo;it is important to note&rdquo;, with a plainer alternative for each. It also checks whether your sentences vary in length, which is one of the
-            clearest differences between human and machine prose. Free, unlimited, and private: nothing leaves your browser.
+            &ldquo;it is important to note&rdquo;, with a possible plainer alternative for each. It also counts sentence lengths and repeated openers.
+            This is a writing aid, not an authorship test. The check itself runs in your browser; nothing is uploaded unless you choose to use the separate rewrite service.
           </p>
         </header>
 
@@ -124,16 +124,16 @@ export default function AiPhraseCheckerPage() {
             </div>
           </div>
           <p className="home-note">
-            <strong>Strong</strong> flags (red) rarely show up in natural writing. <strong>Mild</strong>{' '}flags (amber) are normal words that only stand out when they
-            pile up, so judge them in context. The checker already ignores common technical uses such as &ldquo;robust standard errors&rdquo; and &ldquo;foster
-            care&rdquo;.
+            <strong>Strong</strong> flags (red) are editorial priorities, not evidence of AI authorship. <strong>Mild</strong>{' '}flags (amber) may be entirely appropriate.
+            Judge every suggestion in context. The checker has a few exclusions, including &ldquo;robust standard errors&rdquo; and &ldquo;foster care&rdquo;,
+            but its pattern matching cannot understand all technical uses.
           </p>
         </section>
 
         <section>
-          <h2>Why these words give AI writing away</h2>
+          <h2>Why these words may deserve a second look</h2>
           <p>
-            Language models pick the statistically safest word, and the same small set of formal-sounding words wins again and again. The effect shows up even in
+            Some stock words can make a paragraph less specific. A pattern of increased use of certain words appears in
             published science: a study of more than 15 million PubMed abstracts found that words such as &ldquo;delves&rdquo;, &ldquo;underscores&rdquo;, and
             &ldquo;showcasing&rdquo; became sharply more common after ChatGPT&apos;s release, and estimated that at least 13.5% of 2024 abstracts were processed with
             a language model (
@@ -143,8 +143,8 @@ export default function AiPhraseCheckerPage() {
             ).
           </p>
           <p>
-            None of these words is wrong on its own. Readers notice the pattern: three stock phrases in one paragraph, a signpost at the start of every sentence,
-            and sentences that are all about twenty words long.
+            That research describes aggregate patterns, not a way to identify the author of an individual paragraph. None of these words is wrong on its own.
+            The useful question is whether the sentence makes a concrete point for your reader.
           </p>
         </section>
 
@@ -162,7 +162,7 @@ export default function AiPhraseCheckerPage() {
           <p>
             Want the full list with alternatives? Read <Link href="/blog/ai-words-to-avoid">AI words to avoid</Link>. To rewrite a whole essay or paper at once,
             use the <Link href="/">Natural Quill humanizer</Link>. For academic work, the <Link href="/research-paper-humanizer">research paper humanizer</Link>{' '}
-            keeps your citations and numbers exactly as written.
+            asks the editor to preserve citations and numbers; check the output before using it.
           </p>
         </section>
 

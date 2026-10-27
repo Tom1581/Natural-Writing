@@ -4,12 +4,12 @@ import HomeContent, { FAQS } from '@/components/HomeContent';
 import { SITE_URL } from '@/lib/posts';
 
 // Update this date whenever you ship a significant homepage change
-const LAST_UPDATED = '2026-10-05';
+const LAST_UPDATED = '2026-10-27';
 
 export const metadata: Metadata = {
-  title: { absolute: 'Free AI Humanizer for Essays and Papers | Natural Quill' },
+  title: { absolute: 'Natural Quill Writing Editor: Compare and Review AI-Assisted Drafts' },
   description:
-    'Turn ChatGPT and other AI text into natural, human writing. Natural Quill rewrites paragraph by paragraph and keeps your citations, numbers, and headings intact. 400 words free, no signup.',
+    'Compare alternative wording for essays, reports, and articles. Natural Quill checks some details but asks you to review meaning and sources. Try 400 words free.',
   alternates: { canonical: SITE_URL },
 };
 
@@ -23,14 +23,14 @@ const jsonLd = [
     applicationCategory: 'WritingApp',
     inLanguage: 'en',
     description:
-      'Natural Quill rewrites AI-generated drafts into natural, human writing in academic, formal, or casual tones while preserving citations, numbers, and headings.',
+      'Natural Quill suggests alternative wording for drafts in academic, formal, and casual tones. Users should verify citations, numbers, and meaning.',
     featureList: [
       'Paragraph-by-paragraph AI text rewriting',
       'Academic, formal, natural, conversational, and blog tones',
       'Light, medium, and strong edit strength',
-      'Citation, number, heading, and reference list preservation',
+      'Automated checks for common citation and number patterns',
       'PDF and DOCX upload',
-      'Before-and-after AI-style diagnostics',
+      'Descriptive writing diagnostics',
     ],
     screenshot: `${SITE_URL}/opengraph-image`,
     dateModified: LAST_UPDATED,

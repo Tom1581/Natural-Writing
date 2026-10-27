@@ -12,7 +12,7 @@ function variationLabel(v: number, sentences: number) {
   if (sentences < 4) return 'add more text';
   if (v < 0.3) return 'low: sentences are similar lengths';
   if (v < 0.5) return 'moderate';
-  return 'high: good mix of short and long';
+  return 'high: sentence lengths vary';
 }
 
 export default function PhraseChecker() {
@@ -90,13 +90,13 @@ export default function PhraseChecker() {
 
       <div className="checker-results" aria-live="polite">
         {!deferred.trim() ? (
-          <p className="checker-empty">Results appear here as you type: flagged words and phrases, suggested replacements, and how varied your sentence lengths are.</p>
+          <p className="checker-empty">Results appear here as you type: wording to review, possible alternatives, and sentence-length counts. This is not an AI detector.</p>
         ) : (
           <>
             <div className="checker-stats">
               <div>
                 <strong>{matches.length}</strong>
-                <span>flagged ({strong} strong)</span>
+                <span>to review ({strong} priority)</span>
               </div>
               <div>
                 <strong>{per100.toFixed(1)}</strong>
@@ -115,7 +115,7 @@ export default function PhraseChecker() {
             {rhythm.repeatedOpeners.length > 0 && (
               <p className="checker-note">
                 Repeated sentence openers:{' '}
-                {rhythm.repeatedOpeners.map((o) => `"${o.word}" (${o.count}×)`).join(', ')}. Vary how sentences begin.
+                {rhythm.repeatedOpeners.map((o) => `"${o.word}" (${o.count}×)`).join(', ')}. Consider whether the repetition helps or distracts.
               </p>
             )}
 

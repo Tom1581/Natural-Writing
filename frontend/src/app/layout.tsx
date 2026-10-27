@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
-import { Inter, Outfit } from 'next/font/google';
+import localFont from 'next/font/local';
 import Script from 'next/script';
 import { Suspense } from 'react';
 import GoogleTagEvents from '@/components/GoogleTagEvents';
 import SiteFooter from '@/components/SiteFooter';
 import './globals.css';
 
-// Self-hosted by next/font: no render-blocking request to Google Fonts.
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
-const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit', display: 'swap' });
+// Bundled font files keep production builds independent of Google Fonts availability.
+const inter = localFont({ src: '../fonts/inter-latin.woff2', weight: '100 900', variable: '--font-inter', display: 'swap' });
+const outfit = localFont({ src: '../fonts/outfit-latin.woff2', weight: '100 900', variable: '--font-outfit', display: 'swap' });
 
 const SITE_URL = 'https://naturalquill.one';
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-4K5EKP75ZX';

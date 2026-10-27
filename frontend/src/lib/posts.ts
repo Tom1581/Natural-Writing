@@ -12,6 +12,14 @@ export interface Post {
 // Single source of truth for the blog index, sitemap, homepage links, and article metadata.
 export const POSTS: Post[] = [
   {
+    slug: 'natural-quill-editing-test',
+    title: 'We Tested Two Natural Quill Edits: What Improved and What Did Not',
+    description: 'Full inputs, live outputs, settings, and an honest assessment—including a rewrite that stayed too vague.',
+    published: '2026-10-27',
+    updated: '2026-10-27',
+    readTime: '6 min read',
+  },
+  {
     slug: 'ai-words-to-avoid',
     title: 'AI Words to Avoid: ChatGPT Words and Phrases, With Plain Alternatives',
     description: 'The words and phrases that make writing sound like ChatGPT, from "delve" to "it is important to note", with a plain alternative for each.',

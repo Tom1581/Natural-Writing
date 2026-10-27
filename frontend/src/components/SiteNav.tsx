@@ -5,6 +5,7 @@ const LINKS = [
   { href: '/', label: 'AI Humanizer' },
   { href: '/research-paper-humanizer', label: 'For Research Papers' },
   { href: '/ai-phrase-checker', label: 'Free Phrase Checker' },
+  { href: '/revision-audit', label: 'Revision Audit' },
   { href: '/blog', label: 'Guides' },
   { href: '/pricing', label: 'Pricing' },
 ];
