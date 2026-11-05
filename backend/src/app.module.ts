@@ -7,6 +7,7 @@ import { HealthModule } from './health/health.module';
 import { LearningModule } from './learning/learning.module';
 import { LEARNING_ENTITIES } from './learning/entities';
 import { LearningTables1793577600000 } from './database/migrations/1793577600000-LearningTables';
+import { ProtectLearningTables1794000000000 } from './database/migrations/1794000000000-ProtectLearningTables';
 import { StyleProfileEntity } from './rewrite/entities/style-profile.entity';
 import { ManuscriptEntity } from './rewrite/entities/manuscript.entity';
 import { CacheEntity } from './rewrite/entities/cache.entity';
@@ -60,7 +61,7 @@ import { ConfigService } from '@nestjs/config';
             entities,
             // Schema changes go through reviewed migrations; auto-sync can drop columns holding student work.
             synchronize: false,
-            migrations: [LearningTables1793577600000],
+            migrations: [LearningTables1793577600000, ProtectLearningTables1794000000000],
             migrationsRun: true,
             logging: ['error', 'warn'],
             ssl: caCert ? { ca: caCert, rejectUnauthorized: true } : { rejectUnauthorized: false },
