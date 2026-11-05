@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
-import { getAuthRedirectUrl } from '../lib/authRedirect';
+import { converterAuthRedirectUrl } from '../lib/authRedirect';
 import BrandMark from './BrandMark';
 
 interface LoginModalProps {
@@ -100,7 +100,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
           password,
           options: {
             data: { name: name || 'New Writer' },
-            emailRedirectTo: getAuthRedirectUrl(),
+            emailRedirectTo: converterAuthRedirectUrl(),
           }
         });
         if (error) throw error;
@@ -109,7 +109,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
         toast.success('Registration Complete • Neural Sync Initiated');
       } else if (authMode === 'forgot') {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: getAuthRedirectUrl(),
+          redirectTo: converterAuthRedirectUrl(),
         });
         if (error) throw error;
         setAuthMode('login');
@@ -169,7 +169,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: getAuthRedirectUrl(),
+          redirectTo: converterAuthRedirectUrl(),
         },
       });
       if (error) throw error;

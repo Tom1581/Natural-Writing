@@ -1,8 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Two root layouts ((site) and (learn)) need a global 404 page.
+  experimental: {
+    globalNotFound: true,
+  },
   async redirects() {
     return [
+      {
+        // Writing Studio's landing page moved to the site root; its other pages stay under /learn.
+        source: "/learn",
+        destination: "/",
+        permanent: true,
+      },
       {
         source: "/blog/how-to-make-chatgpt-essay-undetectable",
         destination: "/blog/revise-ai-assisted-essay",

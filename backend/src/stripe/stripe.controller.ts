@@ -1,15 +1,21 @@
 import {
   Controller, Post, Body, Headers, Req,
-  HttpCode, Get, Query, BadRequestException,
+  HttpCode, Get, Query, BadRequestException, UseGuards,
 } from '@nestjs/common';
+import { CurrentActor, SupabaseAuthGuard, verifiedAdultEmail, type Actor } from '../auth/supabase-auth.guard';
 import type { RawBodyRequest } from '@nestjs/common';
 import type { Request } from 'express';
 import { StripeService, PlanKey, PLANS } from './stripe.service';
 
 interface CheckoutDto {
   plan: PlanKey;
-  email: string;
-  userId: string;
+}
+
+/** Billing always acts on the signed-in user's own verified email, never one sent in the request. */
+function requireEmail(actor: Actor): string {
+  const email = verifiedAdultEmail(actor);
+  if (!email) throw new BadRequestException('Sign in with an email address to manage billing.');
+  return email;
 }
 
 @Controller('stripe')
@@ -29,15 +35,18 @@ export class StripeController {
   }
 
   @Get('customer-state')
-  async getCustomerState(@Query('email') email: string) {
-    if (!email) throw new BadRequestException('Missing email');
-    return this.stripeService.getCustomerState(email);
+  @UseGuards(SupabaseAuthGuard)
+  async getCustomerState(@CurrentActor() actor: Actor) {
+    return this.stripeService.getCustomerState(requireEmail(actor));
   }
 
   @Post('checkout')
   @HttpCode(200)
-  async checkout(@Body() body: CheckoutDto, @Req() req: RawBodyRequest<Request>) {
-    const { plan, email, userId } = body;
+  @UseGuards(SupabaseAuthGuard)
+  async checkout(@Body() body: CheckoutDto, @Req() req: RawBodyRequest<Request>, @CurrentActor() actor: Actor) {
+    const { plan } = body;
+    const email = requireEmail(actor);
+    const userId = actor.subject;
     if (!PLANS[plan]) throw new BadRequestException('Unknown plan');
     const origin =
       (req.headers['origin'] as string) ||
@@ -60,13 +69,14 @@ export class StripeController {
 
   @Post('billing-portal')
   @HttpCode(200)
-  async billingPortal(@Body() body: { email: string }, @Req() req: RawBodyRequest<Request>) {
-    if (!body.email) throw new BadRequestException('Missing email');
+  @UseGuards(SupabaseAuthGuard)
+  async billingPortal(@Req() req: RawBodyRequest<Request>, @CurrentActor() actor: Actor) {
+    const email = requireEmail(actor);
     const origin =
       (req.headers['origin'] as string) ||
       (req.headers['referer'] as string)?.replace(/\/$/, '') ||
       'http://localhost:3000';
-    const url = await this.stripeService.createBillingPortalSession(body.email, origin);
+    const url = await this.stripeService.createBillingPortalSession(email, origin);
     return { url };
   }
 

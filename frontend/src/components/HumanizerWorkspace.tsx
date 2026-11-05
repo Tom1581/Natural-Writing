@@ -18,6 +18,7 @@ import ProfileDrawer from '@/components/ProfileDrawer';
 import AIGeneratorPanel from '@/components/AIGeneratorPanel';
 import PricingModal from '@/components/PricingModal';
 import { supabase } from '@/lib/supabase';
+import { authHeaders } from '@/lib/authHeaders';
 import BrandMark from '@/components/BrandMark';
 import { PREFILL_KEY } from '@/lib/prefill';
 import { stripHtml } from '@/lib/text';
@@ -135,7 +136,7 @@ export default function HumanizerWorkspace() {
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [cooldownSecondsLeft, setCooldownSecondsLeft] = useState(0);
 
-  // Deep links: /?tone=academic&strength=light, and text handed over by the AI Phrase Checker.
+  // Deep links: /converter?tone=academic&strength=light, and text handed over by the AI Phrase Checker.
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -235,7 +236,8 @@ export default function HumanizerWorkspace() {
 
     let cancelled = false;
 
-    fetch(`${API}/rewrite/access-status?email=${encodeURIComponent(activeUser.email)}`)
+    authHeaders()
+      .then(headers => fetch(`${API}/rewrite/access-status`, { headers }))
       .then(r => r.ok ? r.json() : null)
       .then((data: AccessStatus | null) => {
         if (!cancelled) {
@@ -280,11 +282,10 @@ export default function HumanizerWorkspace() {
     try {
       const res = await fetch(`${API}/rewrite/process`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        // The signed-in user (and their plan) is identified from the session token.
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({
           text: inputText,
-          userEmail: activeUser?.email ?? null,
-          subscriptionTier: subscriptionTier ?? null,
           options: {
             tone,
             strength,

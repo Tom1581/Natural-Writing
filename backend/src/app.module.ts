@@ -4,6 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RewriteModule } from './rewrite/rewrite.module';
 import { StripeModule } from './stripe/stripe.module';
 import { HealthModule } from './health/health.module';
+import { LearningModule } from './learning/learning.module';
+import { LEARNING_ENTITIES } from './learning/entities';
+import { LearningTables1793577600000 } from './database/migrations/1793577600000-LearningTables';
 import { StyleProfileEntity } from './rewrite/entities/style-profile.entity';
 import { ManuscriptEntity } from './rewrite/entities/manuscript.entity';
 import { CacheEntity } from './rewrite/entities/cache.entity';
@@ -28,7 +31,7 @@ import { ConfigService } from '@nestjs/config';
       useFactory: (configService: ConfigService) => {
         const rawDatabaseUrl = configService.get<string>('DATABASE_URL')?.trim();
         const isProduction = configService.get<string>('VERCEL_ENV') === 'production' || process.env.NODE_ENV === 'production';
-        const entities = [StyleProfileEntity, ManuscriptEntity, CacheEntity, VersionEntity, ProjectEntity, UserEntity, CommentEntity, UsageLogEntity, FreeUsageEntity, BillingAccountEntity, OrganizationEntity, TeamEntity];
+        const entities = [StyleProfileEntity, ManuscriptEntity, CacheEntity, VersionEntity, ProjectEntity, UserEntity, CommentEntity, UsageLogEntity, FreeUsageEntity, BillingAccountEntity, OrganizationEntity, TeamEntity, ...LEARNING_ENTITIES];
         let databaseUrl: string | null = null;
 
         if (rawDatabaseUrl) {
@@ -48,13 +51,19 @@ import { ConfigService } from '@nestjs/config';
         }
 
         if (databaseUrl) {
+          // Supabase's CA certificate (Database settings → SSL) enables full TLS verification.
+          const caCert = configService.get<string>('DATABASE_CA_CERT')?.replace(/\\n/g, '\n');
+          if (!caCert) console.warn('DATABASE_CA_CERT not set: the database connection is encrypted but the server certificate is not verified.');
           return {
             type: 'postgres',
             url: databaseUrl,
             entities,
-            synchronize: true,
+            // Schema changes go through reviewed migrations; auto-sync can drop columns holding student work.
+            synchronize: false,
+            migrations: [LearningTables1793577600000],
+            migrationsRun: true,
             logging: ['error', 'warn'],
-            ssl: { rejectUnauthorized: false },
+            ssl: caCert ? { ca: caCert, rejectUnauthorized: true } : { rejectUnauthorized: false },
           };
         }
 
@@ -77,6 +86,7 @@ import { ConfigService } from '@nestjs/config';
     RewriteModule,
     StripeModule,
     HealthModule,
+    LearningModule,
   ],
 })
 export class AppModule {}

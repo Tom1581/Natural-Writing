@@ -218,7 +218,7 @@ export class StripeService {
       customer_email: userEmail,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/`,
+      cancel_url: `${origin}/converter`,
       metadata,
     };
 
@@ -275,7 +275,7 @@ export class StripeService {
           account.stripeSubscriptionId = null;
         }
         await this.billingAccountRepo.save(account);
-        this.logger.log(`Unlimited subscription cancelled — email=${account.email}`);
+        this.logger.log(`Unlimited subscription cancelled — customer=${customerId}`);
         break;
       }
     }
@@ -289,7 +289,7 @@ export class StripeService {
     }
     const session = await (this.stripe.billingPortal.sessions as any).create({
       customer: customers.data[0].id,
-      return_url: origin,
+      return_url: `${origin}/converter`,
     });
     return session.url;
   }

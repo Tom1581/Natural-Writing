@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { isAdminEmail } from '../auth/admin';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -753,7 +754,6 @@ ${rules.map(r => `  • ${r}`).join('\n')}${tellsHint}`;
 
   private readonly FREE_WORD_LIMIT = 400;
 
-  private static readonly ADMIN_EMAILS = ['a15817348@gmail.com'];
 
   private resolvePaidTier(account: BillingAccountEntity | null): string | null {
     if (!account) return null;
@@ -819,7 +819,7 @@ ${rules.map(r => `  • ${r}`).join('\n')}${tellsHint}`;
     incomingWords: number,
     subscriptionTier: string | null,
   ): Promise<FreeUsageEntity | null> {
-    if (email && RewriteService.ADMIN_EMAILS.includes(email.trim().toLowerCase())) return null; // admin — unlimited
+    if (isAdminEmail(email)) return null; // admin — unlimited
     if (subscriptionTier) return null; // paid access handled elsewhere
 
     const where = email ? { email } : { ipAddress };
@@ -870,10 +870,8 @@ ${rules.map(r => `  • ${r}`).join('\n')}${tellsHint}`;
     const startTime = Date.now();
     const humanization = Math.max(0, Math.min(1, options.humanization ?? 0.5));
 
-    const BACKEND_ADMIN_EMAILS = ['a15817348@gmail.com'];
-    const isAdmin =
-      subscriptionTier === 'admin' ||
-      (!!userEmail && BACKEND_ADMIN_EMAILS.includes(userEmail.trim().toLowerCase()));
+    // userEmail is always a verified sign-in email (see RewriteController.processText).
+    const isAdmin = subscriptionTier === 'admin' || isAdminEmail(userEmail);
 
     const plain = stripHtml(text);
     const incomingWords = plain.trim().split(/\s+/).filter(Boolean).length;

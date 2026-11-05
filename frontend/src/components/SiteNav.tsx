@@ -2,15 +2,16 @@ import Link from 'next/link';
 import BrandMark from '@/components/BrandMark';
 
 const LINKS = [
-  { href: '/', label: 'AI Humanizer' },
+  { href: '/converter', label: 'AI Humanizer' },
   { href: '/research-paper-humanizer', label: 'For Research Papers' },
   { href: '/ai-phrase-checker', label: 'Free Phrase Checker' },
   { href: '/revision-audit', label: 'Revision Audit' },
+  { href: '/', label: 'Writing Studio (K–12)' },
   { href: '/blog', label: 'Guides' },
   { href: '/pricing', label: 'Pricing' },
 ];
 
-/** Top navigation for content pages (the homepage tool has its own header). */
+/** Top navigation for converter content pages (the converter tool has its own header). */
 export default function SiteNav() {
   return (
     <nav className="site-nav" aria-label="Main">
@@ -24,7 +25,7 @@ export default function SiteNav() {
             {l.label}
           </Link>
         ))}
-        <Link href="/" className="site-nav-cta">
+        <Link href="/converter" className="site-nav-cta">
           Try the humanizer
         </Link>
       </div>

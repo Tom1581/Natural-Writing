@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Zap, Star, Infinity as InfinityIcon, Loader2, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import TermsOfUse from './TermsOfUse';
+import { authHeaders } from '@/lib/authHeaders';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -113,12 +114,9 @@ export default function PricingModal({ isOpen, onClose, user, onLoginRequired }:
     try {
       const res = await fetch(`${API}/stripe/checkout`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          plan: plan.key,
-          email: user.email,
-          userId: user.email,
-        }),
+        // The account being billed comes from the session token, not from the request body.
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ plan: plan.key }),
       });
 
       if (!res.ok) {

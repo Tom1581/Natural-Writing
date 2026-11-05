@@ -60,7 +60,7 @@ export default function PhraseChecker() {
       /* storage blocked: the user can paste manually */
     }
     trackEvent('natural_quill_checker_to_humanizer', { word_count: rhythm.words, flagged: matches.length });
-    window.location.href = '/';
+    window.location.href = '/converter';
   };
 
   return (

@@ -2,6 +2,7 @@ import express from 'express';
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { AppModule } from '../src/app.module';
+import { corsOptions } from '../src/cors';
 
 let cachedServer: express.Express | null = null;
 
@@ -13,10 +14,7 @@ async function createServer() {
     rawBody: true,
   });
 
-  app.enableCors({
-    origin: true,
-    credentials: true,
-  });
+  app.enableCors(corsOptions());
 
   await app.init();
   cachedServer = expressApp;

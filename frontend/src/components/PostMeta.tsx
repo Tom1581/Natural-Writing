@@ -13,7 +13,7 @@ export default function PostMeta({ slug }: { slug: string }) {
       datePublished: post.published,
       dateModified: post.updated,
       mainEntityOfPage: url,
-      image: `${SITE_URL}/opengraph-image`,
+      image: `${SITE_URL}/social/converter-card`,
       author: { '@type': 'Organization', name: 'Natural Quill', url: SITE_URL },
       publisher: { '@type': 'Organization', name: 'Natural Quill', url: SITE_URL, logo: { '@type': 'ImageObject', url: `${SITE_URL}/apple-icon` } },
     },

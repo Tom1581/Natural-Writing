@@ -10,7 +10,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
-import { getAuthRedirectUrl } from '../lib/authRedirect';
+import { authHeaders } from '@/lib/authHeaders';
+import { converterAuthRedirectUrl } from '../lib/authRedirect';
 
 interface ProfileUser {
   name: string;
@@ -73,10 +74,10 @@ export default function ProfileDrawer({
   useEffect(() => {
     if (!isOpen || !user) return;
 
-    Promise.all([
-      fetch(`${API}/rewrite/free-usage?email=${encodeURIComponent(user.email)}`).then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(`${API}/rewrite/access-status?email=${encodeURIComponent(user.email)}`).then(r => r.ok ? r.json() : null).catch(() => null),
-    ]).then(([usageData, accessData]) => {
+    authHeaders().then(headers => Promise.all([
+      fetch(`${API}/rewrite/free-usage`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${API}/rewrite/access-status`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+    ])).then(([usageData, accessData]) => {
       if (usageData) setUsage(usageData);
       if (accessData) setAccessState(accessData);
     });
@@ -149,7 +150,7 @@ export default function ProfileDrawer({
     setSendingReset(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-        redirectTo: getAuthRedirectUrl(),
+        redirectTo: converterAuthRedirectUrl(),
       });
       if (error) throw error;
       setResetSent(true);
@@ -177,8 +178,7 @@ export default function ProfileDrawer({
     try {
       const res = await fetch(`${API}/stripe/billing-portal`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user!.email }),
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       });
       if (!res.ok) throw new Error('Could not open billing portal.');
       const { url } = await res.json();

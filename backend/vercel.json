@@ -12,5 +12,11 @@
       "src": "/(.*)",
       "dest": "api/index.ts"
     }
+  ],
+  "crons": [
+    {
+      "path": "/v1/learning/maintenance/retention",
+      "schedule": "0 3 * * *"
+    }
   ]
 }
