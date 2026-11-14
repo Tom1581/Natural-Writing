@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import SkillBridge from '@/components/SkillBridge';
 import { POSTS } from '@/lib/posts';
 
 export const FAQS: { q: string; a: string }[] = [
@@ -86,6 +87,18 @@ export default function HomeContent() {
               <li>The strength of every claim: &ldquo;associated with&rdquo; must not become &ldquo;causes&rdquo;</li>
             </ul>
           </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>The writing skill behind each edit</h2>
+        <p>
+          Every change the humanizer makes is a revision skill you can learn. After a rewrite, the results panel names the skill behind each change
+          and links to a free lesson in <Link href="/">Writing Studio</Link>, Natural Quill&apos;s writing practice for kindergarten to grade 12. The
+          lessons below are written for grades 6 to 12 and work just as well for adult writers. No account is needed.
+        </p>
+        <div style={{ marginTop: '1.1rem' }}>
+          <SkillBridge />
         </div>
       </section>
 

@@ -3,7 +3,7 @@ import Breadcrumbs from '@/components/learning/Breadcrumbs';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'How Writing Studio Works: Check-in, Lessons, Feedback and Revision',
+  title: 'How Writing Studio Works: Lessons, Feedback and Revision',
   description:
     'How students practise writing in Writing Studio: a two-piece check-in, a two-week plan, short lessons, writing with a success checklist, rubric feedback with evidence, revision, and an independent checkpoint.',
   alternates: { canonical: '/learn/how-it-works' },

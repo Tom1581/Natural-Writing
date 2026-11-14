@@ -131,7 +131,7 @@ export default function SignInPage() {
       <h1>{mode === 'sign-in' ? 'Sign in' : 'Create an adult account'}</h1>
       <p className="lw-muted">
         For parents, guardians and teachers, and for students aged 13 or older. After you sign in, you’ll create a profile for each student (or
-        for yourself), and practice in that profile. Already use the Writing Converter? The same Natural Quill account works here; converter plans and student
+        for yourself), and practice in that profile. Already use the AI Humanizer? The same Natural Quill account works here; converter plans and student
         work stay separate.
       </p>
       <div className="lw-card">

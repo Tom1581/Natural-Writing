@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import PostMeta from '@/components/PostMeta';
 import SiteNav from '@/components/SiteNav';
+import SkillBridge from '@/components/SkillBridge';
 import { AI_PHRASES, CATEGORY_LABELS, type PhraseCategory } from '@/lib/aiPhrases';
 import { OG_IMAGE, SITE_URL } from '@/lib/posts';
 
@@ -11,8 +12,7 @@ const COUNT = AI_PHRASES.length;
 
 export const metadata: Metadata = {
   title: `AI Words to Avoid: ${COUNT} ChatGPT Words and Phrases`,
-  description:
-    'The words and phrases that make writing sound like ChatGPT, from "delve" and "tapestry" to "it is important to note", with a plain alternative for each and the patterns that matter more than any single word.',
+  description: `The ${COUNT} words and phrases that make writing sound like ChatGPT, from "delve" and "tapestry" to "it is important to note", with a plain alternative for each.`,
   alternates: { canonical: URL },
   keywords: ['ai words to avoid', 'chatgpt words', 'words that sound like ai', 'ai phrases list', 'chatgpt phrases to avoid', 'overused ai words'],
   openGraph: {
@@ -25,6 +25,54 @@ export const metadata: Metadata = {
 };
 
 const CATEGORY_ORDER: PhraseCategory[] = ['word', 'phrase', 'transition', 'chatbot'];
+
+/** The entries that rarely appear in natural writing, for the short list at the top of the page. */
+const strong = (category: PhraseCategory) =>
+  AI_PHRASES.filter((p) => p.category === category && p.level === 'strong').map((p) => p.label.replace(/,$/, ''));
+const TOP_WORDS = strong('word');
+const TOP_PHRASES = [...strong('phrase'), ...strong('transition')];
+
+const SECTIONS = [
+  { id: 'short-list', label: 'The short list' },
+  { id: 'why', label: 'Why chatbots overuse these words' },
+  { id: 'how-to-use', label: 'How to use this list' },
+  { id: 'list-word', label: 'The full list, with alternatives' },
+  { id: 'patterns', label: 'Patterns that matter more than single words' },
+  { id: 'before-after', label: 'Before and after' },
+  { id: 'prompt', label: 'A prompt for ChatGPT' },
+  { id: 'practice', label: 'Practice the skill' },
+  { id: 'faq', label: 'Common questions' },
+];
+
+/** Answers are plain text so the same words serve the page and its FAQ structured data. */
+const FAQS = [
+  {
+    q: 'What words does ChatGPT overuse the most?',
+    a: `Delve, tapestry, testament, realm, landscape, underscore, multifaceted, harness, navigate and embark are among the easiest to spot, along with phrases such as "plays a crucial role" and "it is important to note". The full list on this page has ${COUNT} entries, each with a plainer alternative.`,
+  },
+  {
+    q: 'Is there a banned-words list I can give ChatGPT?',
+    a: 'Yes. The prompt on this page names the words and patterns to avoid, and you can paste it into any chatbot. It cuts most of them but not all, especially in long answers, so read the result before you use it.',
+  },
+  {
+    q: 'Will removing these words stop an AI detector from flagging my writing?',
+    a: 'No. Most detectors measure how predictable the whole text is, not which words it contains, so swapping words for synonyms leaves the pattern in place. No word list can promise a detector result. If the writing is your own, keep your notes and drafts, which show how the work developed.',
+  },
+  {
+    q: 'Are these words wrong to use?',
+    a: 'No. People use them too, and some are exactly right for a subject: "robust" is the correct word for robust standard errors. What readers notice is several of them in one paragraph, or a sentence that would say nothing without them.',
+  },
+  {
+    q: 'How do I check my own draft for these words?',
+    a: 'Paste it into the free AI Phrase Checker on this site. It highlights every word and phrase from this list and shows whether your sentence lengths vary. It runs in your browser and needs no account.',
+  },
+];
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQS.map(({ q, a }) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
+};
 
 const PATTERNS = [
   {
@@ -84,6 +132,7 @@ export default function AiWordsToAvoid() {
             ← All guides
           </Link>
           <PostMeta slug={SLUG} />
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd).replace(/</g, '\\u003c') }} />
           <h1>AI words to avoid: {COUNT} ChatGPT words and phrases, and what to write instead</h1>
 
           <p className="article-lede">
@@ -97,7 +146,30 @@ export default function AiWordsToAvoid() {
             <Link href="/ai-phrase-checker">AI Phrase Checker</Link>, which highlights every item on this page.
           </p>
 
-          <h2>Why chatbots overuse these words</h2>
+          <nav className="article-toc" aria-label="On this page">
+            <p>On this page</p>
+            <ol>
+              {SECTIONS.map((sec) => (
+                <li key={sec.id}>
+                  <a href={`#${sec.id}`}>{sec.label}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+
+          <h2 id="short-list">The short list: {TOP_WORDS.length + TOP_PHRASES.length} AI words and phrases to cut first</h2>
+          <p>
+            If you only have a minute, search your draft for these. They are the entries marked <span className="tag tag-strong">strong</span> in the full
+            list: words and phrases that rarely turn up in writing by people.
+          </p>
+          <p className="short-list">
+            <strong>Words:</strong> {TOP_WORDS.join(', ')}.
+          </p>
+          <p className="short-list">
+            <strong>Phrases:</strong> {TOP_PHRASES.join('; ')}.
+          </p>
+
+          <h2 id="why">Why chatbots overuse these words</h2>
           <p>
             A language model writes by choosing a likely next word, over and over. Formal, positive, slightly grand words such as &ldquo;crucial&rdquo;,
             &ldquo;foster&rdquo;, and &ldquo;landscape&rdquo; fit almost any topic, so they win often. The habit is measurable. Researchers who tracked
@@ -109,7 +181,7 @@ export default function AiWordsToAvoid() {
             ).
           </p>
 
-          <h2>How to use this list</h2>
+          <h2 id="how-to-use">How to use this list</h2>
           <ul>
             <li>
               <strong>Question these words; don&apos;t ban them.</strong>{' '}&ldquo;Robust&rdquo; is the right word for robust standard errors, and
@@ -130,7 +202,7 @@ export default function AiWordsToAvoid() {
               (a, b) => Number(b.level === 'strong') - Number(a.level === 'strong') || a.label.localeCompare(b.label),
             );
             return (
-              <section key={cat}>
+              <section key={cat} id={`list-${cat}`}>
                 <h2>
                   {CATEGORY_LABELS[cat]} ({rows.length})
                 </h2>
@@ -160,7 +232,7 @@ export default function AiWordsToAvoid() {
             );
           })}
 
-          <h2>Patterns that matter more than single words</h2>
+          <h2 id="patterns">Patterns that matter more than single words</h2>
           <p>
             You can remove every word above and still sound like a chatbot. These habits are what readers and detectors pick up on most, and most of them are
             about structure rather than vocabulary.
@@ -173,7 +245,7 @@ export default function AiWordsToAvoid() {
             ))}
           </ol>
 
-          <h2>Before and after</h2>
+          <h2 id="before-after">Before and after</h2>
           <p>Here is a typical ChatGPT paragraph and an edited version that keeps every point:</p>
           <div className="home-columns">
             <figure className="home-sample">
@@ -190,9 +262,17 @@ export default function AiWordsToAvoid() {
             sentence is six words, the last is twenty-two.
           </p>
 
-          <h2>A prompt that keeps ChatGPT away from these words</h2>
+          <h2 id="prompt">A prompt that keeps ChatGPT away from these words</h2>
           <p>If you draft with a chatbot, add this to your prompt. It will not catch everything, especially in long answers, so check the result.</p>
           <pre className="prompt-box">{PROMPT}</pre>
+
+          <h2 id="practice">Practice the skill, not only the list</h2>
+          <p>
+            A banned-word list treats the symptom. The habits underneath are ordinary revision skills: choosing the exact word, varying sentence
+            length, and using a transition only when it names a real relationship. These free lessons and five-minute practice sets from{' '}
+            <Link href="/">Natural Quill Writing Studio</Link> teach each one. They are written for grades 6 to 12 and need no account.
+          </p>
+          <SkillBridge only={['word-choice', 'rhythm', 'transitions', 'concision']} showEdit={false} />
 
           <h2>Check your own writing</h2>
           <p>
@@ -200,6 +280,20 @@ export default function AiWordsToAvoid() {
             a whole essay or paper in one pass, the <Link href="/converter">Natural Quill humanizer</Link> rewrites each paragraph and keeps your citations and numbers
             exactly as written. Writing for a journal or a class? See the{' '}
             <Link href="/research-paper-humanizer">research paper humanizer</Link>.
+          </p>
+
+          <h2 id="faq">Common questions</h2>
+          <div className="home-faq">
+            {FAQS.map(({ q, a }) => (
+              <details key={q}>
+                <summary>{q}</summary>
+                <p>{a}</p>
+              </details>
+            ))}
+          </div>
+          <p>
+            For how detector reports work and what they can&apos;t show, read{' '}
+            <Link href="/blog/understanding-ai-writing-detectors">Can AI detectors be wrong?</Link>
           </p>
         </article>
       </main>

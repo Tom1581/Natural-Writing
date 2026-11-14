@@ -2,11 +2,11 @@ import { ImageResponse } from 'next/og';
 import QuillGlyph from '@/components/QuillGlyph';
 
 /**
- * Share card for the Writing Converter and its content pages. Writing Studio owns the site root,
+ * Share card for the AI Humanizer and its content pages. Writing Studio owns the site root,
  * so each top-level converter folder has an opengraph-image.tsx that renders this card, and
  * /social/converter-card serves it at a stable URL.
  */
-export const CONVERTER_OG_ALT = 'Natural Quill Writing Converter: turn AI drafts into natural, human writing';
+export const CONVERTER_OG_ALT = 'Natural Quill AI Humanizer: turn AI drafts into natural, human writing';
 const size = { width: 1200, height: 630 };
 
 export function converterOgCard() {

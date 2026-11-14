@@ -5,7 +5,7 @@ import { getCatalog } from '@/lib/learning/public';
 import { BAND_LABELS, BAND_ORDER } from '@/lib/learning/levels';
 
 export const metadata: Metadata = {
-  title: 'Writing Prompts for Kindergarten to Grade 12: Opinion, Informative and Narrative',
+  title: 'Free Writing Prompts by Grade, Kindergarten to Grade 12',
   description:
     'Free writing prompts from kindergarten to grade 12: picture prompts for young writers, opinion and argument, informative and explanatory, and narrative tasks, with success checklists and planning questions. High-school prompts include paired source texts.',
   alternates: { canonical: '/learn/prompts' },

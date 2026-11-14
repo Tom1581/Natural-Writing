@@ -22,7 +22,7 @@ export default function GlobalNotFound() {
             <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>That page doesn’t exist or has moved.</p>
             <p style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center' }}>
               <Link href="/" style={{ color: 'var(--accent-blue-hover)' }}>Writing Studio</Link>
-              <Link href="/converter" style={{ color: 'var(--accent-blue-hover)' }}>Writing Converter</Link>
+              <Link href="/converter" style={{ color: 'var(--accent-blue-hover)' }}>AI Humanizer</Link>
             </p>
           </div>
         </main>

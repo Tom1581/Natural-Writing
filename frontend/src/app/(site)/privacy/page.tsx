@@ -18,7 +18,7 @@ export default function PrivacyPage() {
         <header className="page-hero">
           <h1>Privacy Policy</h1>
           <p className="article-lede">This page explains what information Natural Quill handles when you use the site and writing tools.</p>
-          <p>Last updated: October 13, 2026</p>
+          <p>Last updated: November 12, 2026</p>
         </header>
 
         <section>
@@ -56,6 +56,15 @@ export default function PrivacyPage() {
             understand page visits and tool use. Google and other third-party advertising vendors may place and read
             cookies on your browser, or use web beacons, IP addresses, and other identifiers, to serve and measure ads.
             Google may use advertising cookies to show ads based on visits to this site and other sites.
+          </p>
+          <p>
+            We also count page visits with Vercel Web Analytics, which does not use cookies or build a profile of
+            you. It records the page address without any query string, and general details such as country, device
+            type, and the site that linked here. Sign-in and payment confirmation pages are not counted.
+          </p>
+          <p>
+            Writing Studio (the home page and pages under <code>/learn</code>) does not load the Google code above
+            and shows no ads. Its own notice is at <a href="/learn/privacy">Privacy for families and teachers</a>.
           </p>
           <p>
             You can manage personalized Google ads in{' '}

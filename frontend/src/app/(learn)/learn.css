@@ -155,6 +155,9 @@ p { margin: 0 0 1em; }
 
 .lw-list { padding-left: 1.2em; margin: 0 0 1em; }
 .lw-list li { margin-bottom: 0.35em; }
+/* Lists whose items start with a skill icon: the icon is the marker, so no bullet as well. */
+.lw-list-icons { list-style: none; padding-left: 0; }
+.lw-list-icons li { margin-bottom: 0.6em; }
 .lw-checklist { list-style: none; padding: 0; margin: 0; }
 .lw-checklist li { padding-left: 28px; position: relative; margin-bottom: 8px; }
 .lw-checklist li::before { content: ''; position: absolute; left: 0; top: 4px; width: 16px; height: 16px; border-radius: 5px; border: 2px solid var(--lw-accent); }
@@ -176,7 +179,7 @@ p { margin: 0 0 1em; }
 
 /* ─── Landing ───────────────────────────────────────────────────────────── */
 
-.lw-hero { display: grid; gap: 28px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); align-items: center; padding: 24px 0 40px; }
+.lw-hero { display: grid; gap: 28px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); align-items: center; padding: 24px 0 28px; }
 .lw-hero p.lw-lede { font-size: 1.15rem; color: var(--lw-ink-2); max-width: 36em; }
 .lw-steps { counter-reset: step; display: grid; gap: 12px; }
 .lw-step { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: start; }
@@ -290,7 +293,9 @@ p { margin: 0 0 1em; }
 html[data-spacing='wide'] .lw-writing, html[data-spacing='wide'] .lw-lesson, html[data-spacing='wide'] .lw-submitted { line-height: 2.05; letter-spacing: 0.02em; word-spacing: 0.08em; }
 @media (max-width: 760px) {
   .lw-header-inner { padding-top: 8px; padding-bottom: 8px; }
-  .lw-nav { order: 3; width: 100%; margin-left: 0; overflow-x: auto; flex-wrap: nowrap; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); }
+  /* The four public links fit from 360px wide; the longer signed-in menu scrolls, and the link cut off at the edge shows there is more. */
+  .lw-nav { order: 3; width: 100%; margin-left: 0; overflow-x: auto; flex-wrap: nowrap; justify-content: space-between; scrollbar-width: none; }
+  .lw-nav a { padding: 8px 8px; font-size: 0.9rem; white-space: nowrap; }
   .lw-header-tools { margin-left: auto; }
 }
 
@@ -431,6 +436,11 @@ a.lw-code:hover { text-decoration: underline; }
 .lw-article h2 { margin-top: 32px; }
 .lw-article p, .lw-article li { line-height: 1.7; }
 .lw-toc { border-left: 3px solid var(--lw-line); padding-left: 14px; margin: 16px 0 24px; }
+/* Comparison tables inside guides: the first cell of each row is its label. */
+.lw-guide-table { margin: 6px 0 18px; }
+.lw-guide-table caption { text-align: left; margin-bottom: 6px; color: var(--lw-ink-3); font-size: 0.88rem; }
+.lw-guide-table tbody th { text-transform: none; letter-spacing: 0; font-size: inherit; font-weight: 500; color: var(--lw-ink); }
+.lw-guide-table td, .lw-guide-table tbody th { line-height: 1.5; }
 @media print {
   .lw-crumbs, .lw-btn-row, .lw-noprint { display: none !important; }
   .lw-rubric-table { font-size: 10pt; }
@@ -543,10 +553,29 @@ a.lw-code:hover { text-decoration: underline; }
 }
 @media (max-width: 640px) { .nq-switcher-who, .nq-switcher-brand { display: none; } }
 
-/* Home-page pointer to the Writing Converter for returning adult users. */
-.lw-converter-note { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-top: 28px; padding: 14px 18px; border: 1px solid var(--lw-line); border-radius: var(--lw-radius); background: var(--lw-surface); }
-.lw-converter-note p { margin: 0; max-width: 52em; font-size: 0.93rem; color: var(--lw-ink-2); }
-.lw-converter-note strong { color: var(--lw-ink); }
+/* Home page: the two doors under the hero, one per product, in each product's own color. */
+.lw-doors { margin-top: 4px; }
+.lw-doors > h2 { font-size: 0.75rem; font-family: var(--lw-font-body); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--lw-ink-3); margin: 0 0 10px; }
+.lw-doors-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
+.lw-door { --door: #11705a; display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: start; padding: 18px 20px; border: 1px solid var(--lw-line); border-top: 3px solid var(--door); border-radius: var(--lw-radius); background: var(--lw-surface); box-shadow: var(--lw-shadow); }
+.lw-door[data-product='converter'] { --door: #2f5fd0; }
+.lw-door .nq-switcher-icon { width: 42px; height: 42px; border-radius: 11px; }
+.lw-door-who { margin: 0 0 2px; font-size: 0.8rem; font-weight: 600; color: var(--lw-ink-3); }
+.lw-door h3 { margin: 0 0 6px; font-size: 1.2rem; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.lw-door h3 span { font-family: var(--lw-font-body); font-size: 0.82rem; font-weight: 700; color: var(--door); }
+.lw-door p { margin: 0; font-size: 0.93rem; color: var(--lw-ink-2); }
+.lw-door p.lw-door-links { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.93rem; }
+.lw-door-links a { font-weight: 600; }
+.lw-door-links a:first-child::after { content: ' →'; }
+@media (prefers-color-scheme: dark) {
+  .lw-door { --door: #6fd8b8; }
+  .lw-door[data-product='converter'] { --door: #9db8ff; }
+}
+@media (max-width: 480px) { .lw-door { padding: 16px; gap: 12px; } .lw-door .nq-switcher-icon { width: 34px; height: 34px; border-radius: 9px; } }
+
+/* Footer row naming Natural Quill's tools for adults. */
+.lw-footer-family { max-width: 1120px; margin: 0 auto; padding: 14px 20px 22px; border-top: 1px solid var(--lw-line); display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.85rem; color: var(--lw-ink-3); }
+.lw-footer-family nav { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 
 /* Guest feedback: how to keep progress. */
 .lw-guest-save { margin-top: 16px; }

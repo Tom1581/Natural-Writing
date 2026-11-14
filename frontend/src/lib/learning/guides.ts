@@ -1,30 +1,52 @@
 /**
- * Guides for parents and teachers. Written for this site; each one links to the lessons,
- * rubrics and grade pages it refers to so readers can act on it.
+ * Guides for parents, teachers and older students. Written for this site; each one links to the
+ * lessons, rubrics and grade pages it refers to so readers can act on it.
  */
+
+/** A comparison that readers scan by row, shown as a real table. The first cell of each row is its label. */
+export interface GuideTable {
+  caption: string;
+  head: string[];
+  rows: string[][];
+}
 
 export interface GuideSection {
   heading: string;
   paragraphs: string[];
   list?: string[];
+  table?: GuideTable;
 }
 
 export interface Guide {
   slug: string;
+  /** The page heading. */
   title: string;
+  /**
+   * The title shown in search results, 60 characters or fewer with the searched words first.
+   * Set it when `title` is longer than that or phrased differently from how people search.
+   */
+  seoTitle?: string;
   description: string;
-  audience: 'Parents' | 'Teachers' | 'Parents and teachers';
+  audience: 'Parents' | 'Teachers' | 'Parents and teachers' | 'Students and teachers';
   published: string;
   updated: string;
   intro: string;
   sections: GuideSection[];
   related: { label: string; href: string }[];
+  /**
+   * Articles on the humanizer side of the site that continue this guide's topic for adults.
+   * Shown under a note that those pages carry ads, and never to a student signed in with a code.
+   */
+  fromBlog?: { label: string; href: string }[];
+  /** Ids of practice sets and lessons whose idea this guide explains; those pages link back to it. */
+  explains?: string[];
 }
 
 export const GUIDES: Guide[] = [
   {
     slug: 'help-your-child-with-writing',
     title: 'How to Help Your Child With Writing (Without Writing It for Them)',
+    seoTitle: 'How to Help Your Child With Writing: A Parent’s Guide',
     description:
       'Practical ways for parents to support a child’s writing at home: what to ask before, during and after a draft, how to talk about feedback, and what to avoid.',
     audience: 'Parents',
@@ -87,6 +109,7 @@ export const GUIDES: Guide[] = [
   {
     slug: 'how-to-read-a-writing-rubric',
     title: 'How to Read a Writing Rubric (and What “Level 3” Really Means)',
+    seoTitle: 'How to Read a Writing Rubric (and What “Level 3” Means)',
     description:
       'A plain-language guide to four-level writing rubrics: what each level means, why levels are not percentages, and how to use a rubric to plan a revision.',
     audience: 'Parents and teachers',
@@ -141,14 +164,22 @@ export const GUIDES: Guide[] = [
   {
     slug: 'opinion-vs-argument-writing',
     title: 'Opinion vs Argument Writing: What Changes From Kindergarten to Grade 12',
+    seoTitle: 'Opinion vs Argument Writing: The Difference, Grade by Grade',
     description:
       'How persuasive writing grows across the school years: from “I like… because” in kindergarten to qualified, source-based arguments in grades 11–12, with what to teach at each stage.',
     audience: 'Teachers',
     published: '2026-11-04',
-    updated: '2026-11-04',
+    updated: '2026-11-13',
     intro:
       'In the Common Core, students write “opinion pieces” through grade 5 and “arguments” from grade 6. Other curricula use different words (persuasive writing in England and Australia, persuasive texts in Ontario), but the progression is similar. Knowing what changes helps you teach the next step instead of repeating the last one.',
     sections: [
+      {
+        heading: 'The difference in short',
+        paragraphs: [
+          'An opinion piece says what the writer thinks and gives reasons for it. An argument makes a claim that someone could reasonably dispute, supports it with evidence, explains how the evidence supports the claim, and answers the other side. Opinion writing rests on the writer’s own reasons; argument writing has to hold up for a reader who disagrees.',
+          'The Common Core uses the two words for different grades: students write “opinion pieces” that support “a point of view with reasons” up to grade 5, and “arguments to support claims with clear reasons and relevant evidence” from grade 6. The sections below show what is added at each stage.',
+        ],
+      },
       {
         heading: 'Kindergarten to grade 2: tell what you think and why',
         paragraphs: [
@@ -193,12 +224,14 @@ export const GUIDES: Guide[] = [
     related: [
       { label: 'Lesson: Answer the strongest objection (grades 9–10)', href: '/learn/lessons/g910-counterclaim' },
       { label: 'Lesson: Make sources talk to each other (grades 11–12)', href: '/learn/lessons/g1112-synthesis' },
+      { label: 'Guide: Objective tone, with examples', href: '/learn/guides/objective-tone' },
       { label: 'Lesson: Say why with “because” (K–2)', href: '/learn/lessons/k2-because' },
     ],
   },
   {
     slug: 'teaching-counterclaims',
     title: 'Teaching Counterclaims in High School: A Step-by-Step Approach',
+    seoTitle: 'How to Teach Counterclaims in High School, Step by Step',
     description:
       'A practical sequence for teaching grades 9–12 students to present opposing views fairly and respond to them, with sentence frames, common mistakes and a quick check.',
     audience: 'Teachers',
@@ -263,6 +296,7 @@ export const GUIDES: Guide[] = [
   {
     slug: 'early-writing-kindergarten-to-grade-2',
     title: 'Early Writing in Kindergarten to Grade 2: Drawing, Telling and Sound Spelling',
+    seoTitle: 'K–2 Writing: Drawing, Telling and Sound Spelling Explained',
     description:
       'What writing looks like for 5- to 8-year-olds, why sound spelling (invented spelling) is a good sign, how scribing helps, and how to give feedback a young child can use.',
     audience: 'Parents and teachers',
@@ -317,6 +351,7 @@ export const GUIDES: Guide[] = [
   {
     slug: 'ai-writing-feedback-in-the-classroom',
     title: 'Using AI Writing Feedback in the Classroom: What It Can and Can’t Do',
+    seoTitle: 'AI Writing Feedback for Teachers: What It Can and Can’t Do',
     description:
       'An honest guide for teachers: where AI feedback on student writing helps, where it goes wrong, and the safeguards that keep the teacher in charge.',
     audience: 'Teachers',
@@ -370,15 +405,20 @@ export const GUIDES: Guide[] = [
       { label: 'How it works', href: '/learn/how-it-works' },
       { label: 'Writing rubrics', href: '/learn/rubrics' },
     ],
+    fromBlog: [
+      { label: 'What AI writing detector reports can and cannot tell you', href: '/blog/understanding-ai-writing-detectors' },
+      { label: 'AI words to avoid: the stock phrases chatbots overuse, with plain alternatives', href: '/blog/ai-words-to-avoid' },
+    ],
   },
   {
     slug: 'school-years-compared',
     title: 'US Grades, Canadian Grades, UK Years and Australian Years Compared',
+    seoTitle: 'US Grades vs UK Years vs Australian Years: Conversion Chart',
     description:
-      'How school years line up for writing in the United States, Canada (Ontario), England and Australia, from kindergarten and Foundation to grade 12 and Year 13, and why England counts one year ahead.',
+      'A conversion chart for school years by age: US and Canadian grades, England’s years and key stages, and Australian years, from kindergarten to grade 12. US grade 5 is Year 6 in England.',
     audience: 'Parents and teachers',
     published: '2026-11-04',
-    updated: '2026-11-04',
+    updated: '2026-11-13',
     intro:
       'Families who move, tutors who work across countries, and teachers who borrow resources all run into the same question: which grade is “Year 6”? This guide lines up the four systems Writing Studio supports.',
     sections: [
@@ -389,23 +429,39 @@ export const GUIDES: Guide[] = [
         ],
       },
       {
-        heading: 'Primary and elementary years',
-        paragraphs: [''],
-        list: [
-          'Ages 5–6: US kindergarten · Ontario kindergarten · England Year 1 · Australia Foundation',
-          'Ages 6–7: US grade 1 · Ontario grade 1 · England Year 2 · Australia Year 1',
-          'Ages 8–9: US grade 3 · Ontario grade 3 · England Year 4 · Australia Year 3',
-          'Ages 10–11: US grade 5 · Ontario grade 5 · England Year 6 (end of key stage 2) · Australia Year 5',
-        ],
+        heading: 'Conversion chart: grades and years by age',
+        paragraphs: ['Each row is one age group. The ages are the usual ages during that school year.'],
+        table: {
+          caption: 'School years by age in the United States, Ontario, England and Australia',
+          head: ['Usual age', 'United States', 'Canada (Ontario)', 'England', 'Australia'],
+          rows: [
+            ['5–6', 'Kindergarten', 'Kindergarten, year 2', 'Year 1 (key stage 1)', 'Foundation'],
+            ['6–7', 'Grade 1', 'Grade 1', 'Year 2 (key stage 1)', 'Year 1'],
+            ['7–8', 'Grade 2', 'Grade 2', 'Year 3 (key stage 2)', 'Year 2'],
+            ['8–9', 'Grade 3', 'Grade 3', 'Year 4 (key stage 2)', 'Year 3'],
+            ['9–10', 'Grade 4', 'Grade 4', 'Year 5 (key stage 2)', 'Year 4'],
+            ['10–11', 'Grade 5', 'Grade 5', 'Year 6 (key stage 2)', 'Year 5'],
+            ['11–12', 'Grade 6', 'Grade 6', 'Year 7 (key stage 3)', 'Year 6'],
+            ['12–13', 'Grade 7', 'Grade 7', 'Year 8 (key stage 3)', 'Year 7'],
+            ['13–14', 'Grade 8', 'Grade 8', 'Year 9 (key stage 3)', 'Year 8'],
+            ['14–15', 'Grade 9', 'Grade 9', 'Year 10 (key stage 4)', 'Year 9'],
+            ['15–16', 'Grade 10', 'Grade 10', 'Year 11 (key stage 4)', 'Year 10'],
+            ['16–17', 'Grade 11', 'Grade 11', 'Year 12 (sixth form)', 'Year 11'],
+            ['17–18', 'Grade 12', 'Grade 12', 'Year 13 (sixth form)', 'Year 12'],
+          ],
+        },
       },
       {
-        heading: 'Secondary and high school',
+        heading: 'Conversions people ask about most',
         paragraphs: [''],
         list: [
-          'Ages 11–12: US grade 6 · Ontario grade 6 · England Year 7 (key stage 3) · Australia Year 6',
-          'Ages 14–15: US grade 9 · Ontario grade 9 · England Year 10 (key stage 4) · Australia Year 9',
-          'Ages 16–17: US grade 11 · Ontario grade 11 · England Year 12 · Australia Year 11',
-          'Ages 17–18: US grade 12 · Ontario grade 12 · England Year 13 · Australia Year 12',
+          'Year 7 in England is US grade 6 (ages 11–12). It is the first year of secondary school in England and often the first year of middle school in the US.',
+          'Year 9 in England is US grade 8 (ages 13–14).',
+          'Year 10 in England is US grade 9 (ages 14–15): the start of GCSE courses in England and usually the start of high school in the US.',
+          'Year 11 in England is US grade 10 (ages 15–16), the year students in England sit their GCSEs.',
+          'Years 12 and 13 in England (sixth form) are US grades 11 and 12.',
+          'Australian year numbers match US grade numbers, so Year 8 in Australia is US grade 8. The first year of school is Foundation in the national curriculum; states and territories call it Kindergarten, Prep, Reception, Pre-primary or Transition.',
+          'Ontario grade numbers match US grade numbers, so grade 10 in Ontario is US grade 10. Ontario kindergarten is a two-year program; its second year matches US kindergarten.',
         ],
       },
       {
@@ -418,7 +474,8 @@ export const GUIDES: Guide[] = [
       {
         heading: 'A caution',
         paragraphs: [
-          'Start dates and birthday cut-offs differ by state, province and country, so a child may be a year either side of these rows. Use the table as a guide and look at the writing goals for the grades either side if you are unsure.',
+          'Start dates and birthday cut-offs differ by state, province and country, so a child may be a year either side of these rows. Use the chart as a guide and look at the writing goals for the grades either side if you are unsure.',
+          'The chart shows England. Wales uses the same year numbers. Scotland and Northern Ireland count differently: Scotland has Primary 1 to Primary 7 and then S1 to S6, and Northern Ireland starts Year 1 a year earlier than England, so its Year 8 is England’s Year 7.',
         ],
       },
     ],
@@ -431,6 +488,7 @@ export const GUIDES: Guide[] = [
   {
     slug: 'narrative-writing-by-grade',
     title: 'Narrative Writing From Kindergarten to Grade 12: What Changes',
+    seoTitle: 'Narrative Writing by Grade: Kindergarten to Grade 12',
     description:
       'How story writing develops across the school years, from telling events in order to controlling pace, voice and meaning, with what to teach next at each stage.',
     audience: 'Parents and teachers',
@@ -487,6 +545,7 @@ export const GUIDES: Guide[] = [
   {
     slug: 'teaching-informative-writing',
     title: 'Teaching Informative Writing: From Listing Facts to Explaining Them',
+    seoTitle: 'Teaching Informative Writing: From Facts to Explanation',
     description:
       'Why informative essays turn into fact lists, and five moves that teach students to explain: a controlling idea, grouping, “which means”, analogies and a conclusion with a point.',
     audience: 'Teachers',
@@ -535,6 +594,7 @@ export const GUIDES: Guide[] = [
   {
     slug: 'writing-with-sources',
     title: 'Writing With Sources: Quoting, Paraphrasing and Avoiding Plagiarism',
+    seoTitle: 'Writing With Sources: Quote, Paraphrase, Avoid Plagiarism',
     description:
       'A practical guide for grades 6–12: when to quote and when to paraphrase, how to introduce and explain evidence, and simple habits that prevent accidental plagiarism.',
     audience: 'Parents and teachers',
@@ -584,7 +644,12 @@ export const GUIDES: Guide[] = [
     related: [
       { label: 'Practice: Introduce, quote, explain', href: '/learn/practice/d910-integrate-quotes' },
       { label: 'Practice: Synthesis sentences', href: '/learn/practice/d1112-synthesis-sentences' },
+      { label: 'Guide: Objective tone, with examples', href: '/learn/guides/objective-tone' },
       { label: 'Lesson: Make sources talk to each other', href: '/learn/lessons/g1112-synthesis' },
+    ],
+    fromBlog: [
+      { label: 'How to revise an AI-assisted essay without losing your argument', href: '/blog/revise-ai-assisted-essay' },
+      { label: 'What AI writing detector reports can and cannot tell you', href: '/blog/understanding-ai-writing-detectors' },
     ],
   },
   {
@@ -638,6 +703,7 @@ export const GUIDES: Guide[] = [
   {
     slug: 'year-6-writing-expectations-england',
     title: 'Year 6 Writing in England: What “Working at the Expected Standard” Means',
+    seoTitle: 'Year 6 Writing in England: The Expected Standard Explained',
     description:
       'A plain-English guide for parents and teachers to the end of key stage 2 writing teacher assessment framework: what pupils are expected to show by the end of Year 6, with practical examples.',
     audience: 'Parents and teachers',
@@ -689,6 +755,126 @@ export const GUIDES: Guide[] = [
       { label: 'US grades, UK years and Australian years compared', href: '/learn/guides/school-years-compared' },
     ],
   },
+  {
+    slug: 'objective-tone',
+    title: 'Objective Tone: Definition, Examples and How to Write It',
+    description:
+      'What objective tone means in writing, with side-by-side subjective and objective examples, six ways to fix a biased sentence, and free practice for grades 9–12.',
+    audience: 'Students and teachers',
+    published: '2026-11-13',
+    updated: '2026-11-13',
+    intro:
+      'Objective tone means writing that reports facts and reasoning without showing how the writer feels about them. Teachers ask for it in arguments, reports and analysis from about grade 9, and many students are told to “sound more objective” without being shown how. This guide gives a definition, examples you can compare, and the moves that change a sentence.',
+    sections: [
+      {
+        heading: 'What objective tone means',
+        paragraphs: [
+          'A sentence has an objective tone when a reader cannot tell from the wording alone how the writer feels about the subject. The writer may still hold a strong position. What changes is where the persuasion comes from: evidence and reasoning, not emotional or loaded words.',
+          'Objective does not mean having no opinion. An argument essay takes a side and can still be objective in tone, because it states its claim plainly, gives evidence, and treats other views fairly.',
+          'Objective is also different from formal. “The committee’s catastrophic decision” is formal but not objective. “The committee’s decision cost the school $40,000” is both.',
+        ],
+      },
+      {
+        heading: 'Subjective and objective examples',
+        paragraphs: [
+          'Each pair below makes the same point twice. The objective version keeps the point and changes where its force comes from. The people, places and numbers in this guide’s examples are invented for illustration.',
+        ],
+        table: {
+          caption: 'The same idea in a subjective and an objective tone',
+          head: ['Subjective', 'Objective', 'What changed'],
+          rows: [
+            [
+              'The new schedule is a disaster for students.',
+              'Under the new schedule, students have 25 minutes for lunch, down from 40.',
+              'A judging word became a fact the reader can weigh.',
+            ],
+            [
+              'I feel that the author is completely wrong about recycling.',
+              'The author’s claim about recycling leaves out the cost of collection.',
+              '“I feel” and “completely wrong” became a specific objection.',
+            ],
+            [
+              'Everyone knows that homework is pointless.',
+              'In our class survey, 18 of 30 students said homework rarely helped them.',
+              '“Everyone knows” became a source and a number.',
+            ],
+            [
+              'The mayor ignored residents and rammed the plan through.',
+              'The council approved the plan 5–2 after one public meeting.',
+              'Loaded verbs became what happened.',
+            ],
+            [
+              'This amazing experiment clearly proves that plants need light.',
+              'The plants kept in the dark grew 2 cm and those in light grew 9 cm, which supports the hypothesis.',
+              '“Amazing” and “clearly proves” became results and a claim as strong as the data.',
+            ],
+          ],
+        },
+      },
+      {
+        heading: 'Six ways to make a sentence more objective',
+        paragraphs: [''],
+        list: [
+          'Cut opinion markers. “I think”, “I believe” and “in my opinion” point at you instead of the evidence. State the claim, then support it.',
+          'Swap loaded words for neutral ones. “Admitted” suggests guilt and “claimed” suggests doubt, while “said” and “stated” only report. “Scheme” judges; “plan” names.',
+          'Replace intensifiers with a fact. “Extremely expensive” tells the reader how to feel. “$4,000 per student” lets them decide.',
+          'Say who says so. “Studies show” and “experts agree” hide the source. Name it: “a 2022 report by the city auditor found that…”',
+          'Match certainty to the evidence. One survey “suggests” something; it does not “prove” it. Use “may”, “often” or “in this sample” when the evidence is limited.',
+          'Describe the other side in words its supporters would accept. “Opponents argue that the fee is unfair to renters” is fair. “Opponents complain about the fee” is not.',
+        ],
+      },
+      {
+        heading: 'Objective tone by subject',
+        paragraphs: [''],
+        list: [
+          'Argument essay: the claim is yours, and the wording stays fair. “The district should start high school at 8:30. When Lakeview made that change, first-period absences fell by a third.”',
+          'Science report: describe what was measured, in the past tense, and keep the conclusion as strong as the data. “After ten days, seedlings in the 20 °C group were 3 cm taller on average.”',
+          'History and social studies: give judgments to the people who made them. “The governor called the strike illegal; union leaders said it was their only option.”',
+          'Summary of a text: report the author’s points without adding your verdict. Write “the author argues that…”, not “the author brilliantly shows…”.',
+        ],
+      },
+      {
+        heading: 'When a personal voice is the right choice',
+        paragraphs: [
+          'Objective tone is a tool for arguments, reports and analysis. Personal narratives, reflections, reviews and many speeches are meant to show how the writer feels, and the first person belongs there. Some teachers and style guides also accept “I” in academic writing when you describe what you did, as in “I surveyed 30 students”. Check the task, and ask if you are unsure.',
+        ],
+      },
+      {
+        heading: 'Common mistakes',
+        paragraphs: [''],
+        list: [
+          'Hiding the claim. Objective does not mean vague. “There are many views on school start times” avoids the task. State your position.',
+          'Overusing the passive voice. “Mistakes were made” hides who made them. Use the passive when the actor is unknown or unimportant, not to sound formal.',
+          'Writing “some people say”. If you cannot name who says it, the sentence is not evidence.',
+          'Trading one loaded word for another. “The plan is problematic” still judges. Say what the problem is.',
+        ],
+      },
+      {
+        heading: 'Where curricula ask for it',
+        paragraphs: [
+          'In the United States, the Common Core asks students in grades 9–12 to “establish and maintain a formal style and objective tone while attending to the norms and conventions of the discipline in which they are writing” (standards W.9-10.1.d and W.9-10.2.e, with the same wording at W.11-12.1.d and W.11-12.2.e). In grades 6–8 the matching standards ask for “a formal style” only.',
+          'The Australian Curriculum introduces the idea earlier. Year 4 students “identify the subjective language of opinion and feeling, and the objective language of factual reporting” (AC9E4LA02), and Year 6 students “understand the uses of objective and subjective language, and identify bias” (AC9E6LA02).',
+        ],
+      },
+      {
+        heading: 'How to practice',
+        paragraphs: [
+          'The fastest way to learn the difference is to revise your own sentences. Take a paragraph you have written, underline every word that tells the reader how to feel, and replace each one with a fact, a source, or nothing at all. Then try the practice set below, which gives feedback on each answer.',
+        ],
+      },
+    ],
+    related: [
+      { label: 'Practice: Formal, objective tone (grades 9–10)', href: '/learn/practice/d910-formal-tone' },
+      { label: 'Lesson: Words that fit the reader (grades 9–10)', href: '/learn/lessons/g910-audience-style' },
+      { label: 'Lesson: Words that carry the right certainty (grades 11–12)', href: '/learn/lessons/g1112-nuance' },
+      { label: 'Practice: Qualify a claim (grades 11–12)', href: '/learn/practice/d1112-qualify-claims' },
+      { label: 'Common Core writing standards by grade', href: '/learn/curriculum/us-ccss' },
+    ],
+    explains: ['d910-formal-tone'],
+  },
 ];
 
 export const getGuide = (slug: string) => GUIDES.find((g) => g.slug === slug);
+
+/** The guide that explains the idea behind a practice set or lesson, if there is one. */
+export const guideFor = (contentId: string) => GUIDES.find((g) => g.explains?.includes(contentId));

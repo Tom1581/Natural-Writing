@@ -14,6 +14,12 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        // Search Console shows this mistyped address in results; it was a 404.
+        source: "/blog/ai-avoid-words",
+        destination: "/blog/ai-words-to-avoid",
+        permanent: true,
+      },
+      {
         source: "/blog/how-to-make-chatgpt-essay-undetectable",
         destination: "/blog/revise-ai-assisted-essay",
         permanent: true,

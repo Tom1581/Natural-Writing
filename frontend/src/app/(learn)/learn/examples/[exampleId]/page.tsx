@@ -7,7 +7,7 @@ import PictureSet from '@/components/learning/PictureSet';
 import { BandChip, SkillIcon } from '@/components/learning/icons';
 import { BAND_LABELS, LEVEL_LABELS, UK_YEARS_BY_BAND } from '@/lib/learning/levels';
 import { getCatalog, getExamplePublic, SITE_URL } from '@/lib/learning/public';
-import { GENRE_NAMES, ldJson, PUBLISHER } from '@/lib/learning/seo';
+import { GENRE_NAMES, genreWord, ldJson, PUBLISHER } from '@/lib/learning/seo';
 import type { ExampleView } from '@/lib/learning/types';
 
 type Props = { params: Promise<{ exampleId: string }> };
@@ -21,10 +21,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ex = await getExamplePublic((await params).exampleId);
   if (!ex) return { title: 'Example not found' };
   const kind = GENRE_NAMES[ex.genre].toLowerCase();
-  const title = `${BAND_LABELS[ex.band]} ${GENRE_NAMES[ex.genre]} Writing Example: “${ex.title}”`;
+  const title = `${genreWord(ex.genre, ex.band)} Writing Example, ${BAND_LABELS[ex.band]}: “${ex.title}”`;
   const description = `An annotated ${kind} writing example for ${BAND_LABELS[ex.band].toLowerCase()} (${UK_YEARS_BY_BAND[ex.band]} in England), rated skill by skill on our rubric, with notes on what works and how to go further.`;
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical: `/learn/examples/${ex.id}` },
     openGraph: { title, description, url: `${SITE_URL}/learn/examples/${ex.id}`, type: 'article' },

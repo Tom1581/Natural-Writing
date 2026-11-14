@@ -20,7 +20,7 @@ export default function BlogIndex() {
     <main style={{ minHeight: '100vh', background: '#07070a', color: '#ffffff', fontFamily: 'var(--font-body)' }}>
       <div style={{ maxWidth: '760px', margin: '0 auto', padding: '4rem 1.5rem' }}>
         <Link href="/converter" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#2563eb', fontSize: '0.875rem', textDecoration: 'none', marginBottom: '2.5rem' }}>
-          ← Back to the Writing Converter
+          ← Back to the AI Humanizer
         </Link>
 
         <h1 style={{ fontSize: '2.25rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '0.75rem' }}>

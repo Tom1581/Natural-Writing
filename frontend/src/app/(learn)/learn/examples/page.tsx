@@ -7,7 +7,7 @@ import { getCatalog } from '@/lib/learning/public';
 import { GENRE_NAMES, itemListLd, ldJson } from '@/lib/learning/seo';
 
 export const metadata: Metadata = {
-  title: 'Writing Examples by Grade: Annotated Model Pieces From Kindergarten to Grade 12',
+  title: 'Writing Examples by Grade: Annotated Model Pieces, K–12',
   description:
     'Annotated opinion, argument, informative and narrative writing examples for every grade band from kindergarten to grade 12, each rated on our rubric with notes on what works.',
   alternates: { canonical: '/learn/examples' },

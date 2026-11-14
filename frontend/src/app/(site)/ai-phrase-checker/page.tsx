@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import PhraseChecker from '@/components/PhraseChecker';
 import SiteNav from '@/components/SiteNav';
+import SkillBridge from '@/components/SkillBridge';
 import { AI_PHRASES } from '@/lib/aiPhrases';
 import { OG_IMAGE, SITE_URL } from '@/lib/posts';
 
@@ -164,6 +165,17 @@ export default function AiPhraseCheckerPage() {
             use the <Link href="/converter">Natural Quill humanizer</Link>. For academic work, the <Link href="/research-paper-humanizer">research paper humanizer</Link>{' '}
             asks the editor to preserve citations and numbers; check the output before using it.
           </p>
+        </section>
+
+        <section>
+          <h2>Learn the skill behind each flag</h2>
+          <p>
+            Each thing the checker flags maps to a revision skill. These free lessons and five-minute practice sets from{' '}
+            <Link href="/">Natural Quill Writing Studio</Link> teach them. They are written for grades 6 to 12, work for adult writers too, and need no account.
+          </p>
+          <div style={{ marginTop: '1.1rem' }}>
+            <SkillBridge only={['word-choice', 'rhythm', 'transitions']} showEdit={false} />
+          </div>
         </section>
 
         <section>

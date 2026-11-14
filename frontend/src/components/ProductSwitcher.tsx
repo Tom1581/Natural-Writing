@@ -5,8 +5,9 @@ export type Product = 'converter' | 'studio';
 
 /**
  * One mark per product, drawn on a 24px grid in currentColor: a pencil with a tick for practice
- * that gets feedback, and a draft page turning into a finished page for the converter. Each sits
- * on its own tinted tile so the two products differ by shape and by color.
+ * that gets feedback, and a draft page turning into a finished page for the humanizer. Each sits
+ * on its own tinted tile so the two products differ by shape and by color. ("converter" is the
+ * humanizer's id and URL; its name everywhere a person reads it is "AI Humanizer".)
  */
 const ICONS: Record<Product, ReactNode> = {
   studio: (
@@ -29,10 +30,21 @@ const ICONS: Record<Product, ReactNode> = {
   ),
 };
 
-const PRODUCTS: { id: Product; href: string; name: string; who: string }[] = [
+export const PRODUCTS: { id: Product; href: string; name: string; who: string }[] = [
   { id: 'studio', href: '/', name: 'Writing Studio', who: 'K–12 writing practice with feedback' },
-  { id: 'converter', href: '/converter', name: 'Writing Converter', who: 'Optional tool for adults revising AI drafts' },
+  { id: 'converter', href: '/converter', name: 'AI Humanizer', who: 'For adults revising AI-assisted drafts' },
 ];
+
+/** A product's mark on its tinted tile; the tile colors come from each section's stylesheet. */
+export function ProductIcon({ product, size = 16 }: { product: Product; size?: number }) {
+  return (
+    <span className="nq-switcher-icon" data-product={product} aria-hidden="true">
+      <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
+        {ICONS[product]}
+      </svg>
+    </span>
+  );
+}
 
 /**
  * The one control shared by both parts of the site: a thin bar above each section's own
@@ -49,11 +61,7 @@ export default function ProductSwitcher({ current, variant, hide = [] }: { curre
           {items.map((p) => (
             <li key={p.id}>
               <Link href={p.href} aria-current={p.id === current ? 'page' : undefined}>
-                <span className="nq-switcher-icon" data-product={p.id} aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
-                    {ICONS[p.id]}
-                  </svg>
-                </span>
+                <ProductIcon product={p.id} />
                 <strong>{p.name}</strong>
                 <span className="nq-switcher-who">{p.who}</span>
               </Link>

@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/learning/Breadcrumbs';
 import { BAND_LABELS } from '@/lib/learning/levels';
 import { GRADES, getGrade, gradeFromSlug, gradeSlug, SITE_URL, usGradeName } from '@/lib/learning/public';
-import { GENRE_NAMES, ldJson, PUBLISHER } from '@/lib/learning/seo';
+import { GENRE_NAMES, gradeAges, ldJson, ordinalGrade, PUBLISHER } from '@/lib/learning/seo';
 import type { GradeView } from '@/lib/learning/types';
 
 type Props = { params: Promise<{ slug: string }> };
@@ -23,10 +23,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!grade || !view) return { title: 'Grade not found' };
   const name = usGradeName(grade);
   const others = otherNames(view);
-  const title = `${name} Writing Practice: Prompts, Lessons and Rubrics`;
-  const description = `What ${name.toLowerCase()} writers work on, with ${view.prompts.length} free writing prompts, ${view.lessons.length} short lessons, rubrics and the official writing standards for ${name} (${others.join(', ')}).`;
+  // "Grade 8" is how Canada, Australia and much of Asia search; "8th grade" is how the US does.
+  const title = grade === 'K' ? 'Kindergarten Writing Practice: Prompts, Lessons and Rubrics' : `${name} (${ordinalGrade(grade)}) Writing Practice: Prompts and Lessons`;
+  // The other countries' names for this year come first: in Search Console (Oct 14–Nov 10, 2026) searchers
+  // in the UK and Australia saw the site 295 times and clicked once, and "Grade 8" is not their word.
+  const abroad = others.filter((o) => !o.endsWith('Ontario'));
+  const description = `${name} writing practice (${abroad.join(', ')}; ${gradeAges(grade)}): ${view.prompts.length} free writing prompts, ${view.lessons.length} short lessons, rubrics and the official writing standards.`;
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical: `/learn/grades/${gradeSlug(grade)}` },
     openGraph: { title, description, url: `${SITE_URL}/learn/grades/${gradeSlug(grade)}`, type: 'website' },
@@ -118,7 +122,7 @@ export default async function GradePage({ params }: Props) {
           {view.rubrics.map((r) => (
             <div key={r.id} className="lw-card">
               <h3>{GENRE_NAMES[r.genre]}</h3>
-              <ul className="lw-list lw-small">
+              <ul className="lw-list lw-list-icons lw-small">
                 {r.goals.map((g) => (
                   <li key={g.skillId}>
                     <strong className="lw-skill-label">

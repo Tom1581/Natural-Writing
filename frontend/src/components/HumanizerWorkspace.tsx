@@ -17,6 +17,7 @@ import LoginModal from '@/components/LoginModal';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import AIGeneratorPanel from '@/components/AIGeneratorPanel';
 import PricingModal from '@/components/PricingModal';
+import SkillChanges from '@/components/SkillChanges';
 import { supabase } from '@/lib/supabase';
 import { authHeaders } from '@/lib/authHeaders';
 import BrandMark from '@/components/BrandMark';
@@ -686,6 +687,7 @@ export default function HumanizerWorkspace() {
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: 'hidden' }}>
                 {metrics ? (
                   <div style={{ padding: '1.25rem 1.75rem' }}>
+                    {outputMetrics && <SkillChanges before={metrics} after={outputMetrics} />}
                     {metrics.detectedLanguage && metrics.detectedLanguage !== 'en' && (
                       <p style={{ fontSize: '0.65rem', color: 'var(--text-dark)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Language detected: {metrics.detectedLanguage}</p>
                     )}
@@ -747,7 +749,7 @@ export default function HumanizerWorkspace() {
                   </div>
                 ) : (
                   <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(96,165,250,0.4)', fontSize: '0.8rem' }}>
-                    Paste your text and click <strong style={{ color: 'rgba(96,165,250,0.7)' }}>Convert to Natural Writing</strong> to see AI-detection metrics here.
+                    Paste your text and click <strong style={{ color: 'rgba(96,165,250,0.7)' }}>Convert to Natural Writing</strong> to see writing diagnostics here.
                   </div>
                 )}
               </motion.div>

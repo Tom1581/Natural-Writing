@@ -74,7 +74,7 @@ export default function PricingPage() {
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-          <Link href="/converter" style={{ color: '#2563eb', fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block', marginBottom: '2rem' }}>← Back to the Writing Converter</Link>
+          <Link href="/converter" style={{ color: '#2563eb', fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block', marginBottom: '2rem' }}>← Back to the AI Humanizer</Link>
           <h1 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '1rem' }}>Simple, honest pricing</h1>
           <p style={{ fontSize: '1.1rem', color: '#888899', maxWidth: '500px', margin: '0 auto', lineHeight: 1.6 }}>
             Choose a one-time word pack or an optional monthly plan. 400 words free — no signup.

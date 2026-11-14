@@ -86,7 +86,7 @@ export default function Post() {
           <p>
             A writing tool can provide a second version to compare against your draft. Natural Quill lets you try a short rewrite at no charge. Its output is a suggestion: review every sentence, verify sources yourself, and keep your own judgment about what belongs in the final piece. If you are choosing among tools, use the <Link href="/blog/choosing-ai-writing-editor-for-students">same sample and checklist</Link> to compare them fairly.
           </p>
-          <Link href="/converter" className="page-cta">Try the writing editor</Link>
+          <Link href="/converter" className="page-cta">Try the AI Humanizer</Link>
         </article>
       </main>
     </div>

@@ -33,14 +33,26 @@ export function generateStaticParams() {
   return FRAMEWORK_SLUGS.map((framework) => ({ framework }));
 }
 
+/**
+ * Each country names its curriculum differently, and people search in those words: "KS2 English
+ * curriculum" in England, "expectations" in Ontario, "year level" in Australia.
+ */
+const SEO_TITLES: Record<string, string> = {
+  'us-ccss': 'Common Core Writing Standards by Grade, K–12, With Lessons',
+  'ca-on': 'Ontario Language and English Curriculum: Writing by Grade',
+  'uk-eng': 'National Curriculum English Writing: KS1, KS2, KS3 and KS4',
+  'au-ac9': 'Australian Curriculum v9.0 English: Writing by Year Level',
+};
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const view = await getCurriculum((await params).framework);
   if (!view) return { title: 'Curriculum not found' };
   const fw = view.framework;
   const range = `${view.grades[0].label} to ${view.grades[view.grades.length - 1].label}`;
   return {
-    title: `${fw.shortName} Writing Standards, ${range}: Aligned Lessons`,
-    description: `Writing practice aligned to the ${fw.name} (${fw.version}), ${range}. Official wording for opinion, informative and narrative writing, sentences, word choice and conventions, with a lesson for each skill.`,
+    title: { absolute: SEO_TITLES[fw.id] ?? `${fw.shortName} Writing Standards by Grade` },
+    // What a searcher wants comes first; the version details are on the page.
+    description: `The official writing statements from the ${fw.name.replace(/^The /, '')}, ${range}, quoted word for word, with a free lesson for each skill.`,
     alternates: { canonical: `/learn/curriculum/${fw.id}` },
   };
 }

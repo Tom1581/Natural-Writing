@@ -20,7 +20,7 @@ import { Type } from 'class-transformer';
 import { TOPICS, type FrameworkId } from './content';
 
 /** Version of the adult-facing learning notice at /learn/privacy. Bump when it changes. */
-export const LEARNING_NOTICE_VERSION = '2026-11-05';
+export const LEARNING_NOTICE_VERSION = '2026-11-12';
 
 export const MAX_DRAFT_CHARS = 12000;
 export const MAX_SUBMISSION_WORDS = 1200;

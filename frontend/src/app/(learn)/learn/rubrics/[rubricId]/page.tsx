@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/learning/Breadcrumbs';
 import { BAND_LABELS, LEVEL_LABELS, UK_YEARS_BY_BAND } from '@/lib/learning/levels';
 import { getCatalog, getRubricPublic, gradeSlug, SITE_URL } from '@/lib/learning/public';
-import { ldJson, PUBLISHER } from '@/lib/learning/seo';
+import { AU_YEARS_BY_BAND, BAND_GRADE_WORDS, genreWord, ldJson, PUBLISHER } from '@/lib/learning/seo';
 
 type Props = { params: Promise<{ rubricId: string }> };
 
@@ -18,10 +18,11 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const rubric = await getRubricPublic((await params).rubricId);
   if (!rubric) return { title: 'Rubric not found' };
-  const title = `${rubric.title} Rubric (Free, Printable)`;
-  const description = `A four-level ${rubric.title.toLowerCase()} rubric covering ${rubric.dimensions.map((d) => d.name.toLowerCase()).join(', ')}, with scored student-style examples. ${BAND_LABELS[rubric.band]} (${UK_YEARS_BY_BAND[rubric.band]} in England).`;
+  const genre = genreWord(rubric.genre, rubric.band);
+  const title = `${genre} Writing Rubric: ${BAND_GRADE_WORDS[rubric.band]}`;
+  const description = `Free, printable ${genre.toLowerCase()} writing rubric for ${BAND_LABELS[rubric.band].toLowerCase()} (${UK_YEARS_BY_BAND[rubric.band]} in England, ${AU_YEARS_BY_BAND[rubric.band]} in Australia). Four levels for ${rubric.dimensions.map((d) => d.name.toLowerCase()).join(', ')}, with scored examples.`;
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical: `/learn/rubrics/${rubric.id}` },
     openGraph: { title, description, url: `${SITE_URL}/learn/rubrics/${rubric.id}`, type: 'article' },
@@ -54,7 +55,9 @@ export default async function RubricPage({ params }: Props) {
       <h1>{rubric.title} rubric</h1>
       <ReviewBadge itemId={rubric.id} />
       <p className="lw-lede" style={{ maxWidth: '46em' }}>
-        Each skill is rated from 1 to 4 for one piece of writing. Level 3 means the piece meets the goal for the task. Levels are categories for
+        A free rubric for {genreWord(rubric.genre, rubric.band).toLowerCase()} writing in{' '}
+        {BAND_GRADE_WORDS[rubric.band].replace('Kindergarten', 'kindergarten').replace('Grade', 'grade')} ({UK_YEARS_BY_BAND[rubric.band]} in England,{' '}
+        {AU_YEARS_BY_BAND[rubric.band]} in Australia). Each skill is rated from 1 to 4 for one piece of writing. Level 3 means the piece meets the goal for the task. Levels are categories for
         feedback, not percentages or a grade-level score.
       </p>
       {rubric.bandInfo?.status === 'early_access' && (

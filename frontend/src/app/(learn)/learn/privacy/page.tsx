@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 /** Keep in sync with LEARNING_NOTICE_VERSION in backend/src/learning/learning.dto.ts. */
-const NOTICE_VERSION = '2026-11-05';
+const NOTICE_VERSION = '2026-11-12';
 
 export default function LearningPrivacyPage() {
   return (
@@ -55,6 +55,12 @@ export default function LearningPrivacyPage() {
           </li>
           <li>We don’t sell student information, use it for advertising, or use it to train our own AI models.</li>
           <li>Learning pages don’t show ads and don’t load advertising or marketing analytics scripts.</li>
+          <li>
+            To learn which public pages are useful, we count visits with a cookie-free tool (Vercel Web Analytics). It records the page address
+            and general details such as country, device type and the site that linked here. It sets no cookies, builds no profile and doesn’t
+            follow anyone to other sites. Nothing is counted while a student is signed in with a code, or on any page that shows a student’s
+            writing, feedback or reports.
+          </li>
         </ul>
       </section>
 

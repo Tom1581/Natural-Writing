@@ -1,3 +1,4 @@
+import { guideFor } from '@/lib/learning/guides';
 import type { Metadata } from 'next';
 import Breadcrumbs from '@/components/learning/Breadcrumbs';
 import Link from 'next/link';
@@ -28,6 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function DrillPage({ params }: Props) {
   const drill = await getDrillPublic((await params).drillId);
   if (!drill) notFound();
+  const guide = guideFor(drill.id);
   return (
     <div className="lw-lesson">
       <Breadcrumbs items={[{ name: 'Practice', href: '/learn/practice' }, { name: drill.title, href: `/learn/practice/${drill.id}` }]} />
@@ -40,6 +42,11 @@ export default async function DrillPage({ params }: Props) {
       {drill.lesson && (
         <p style={{ marginTop: 16 }}>
           Want the full lesson? <Link href={`/learn/lessons/${drill.lesson.id}`}>{drill.lesson.title}</Link>
+        </p>
+      )}
+      {guide && (
+        <p style={{ marginTop: 16 }}>
+          Want the idea explained with examples? <Link href={`/learn/guides/${guide.slug}`}>{guide.title}</Link>
         </p>
       )}
       <div style={{ marginTop: 24 }}>

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { getCatalog } from '@/lib/learning/public';
 
 export const metadata: Metadata = {
-  title: 'Curriculum Alignment: US, Canada, UK and Australia Writing Standards',
+  title: 'Writing Standards by Country: US, Canada, UK, Australia',
   description:
     'How Writing Studio lessons and rubrics map to Common Core (US), the Ontario Language curriculum (Canada), the National Curriculum in England, and the Australian Curriculum v9.0, with official wording quoted for every grade and year.',
   alternates: { canonical: '/learn/curriculum' },

@@ -4,27 +4,37 @@ import HomeContent, { FAQS } from '@/components/HomeContent';
 import { SITE_URL } from '@/lib/posts';
 
 // Update this date whenever you ship a significant change to the converter page
-const LAST_UPDATED = '2026-11-05';
+const LAST_UPDATED = '2026-11-12';
 const CONVERTER_URL = `${SITE_URL}/converter`;
 
 export const metadata: Metadata = {
-  title: { absolute: 'Natural Quill Writing Editor: Compare and Review AI-Assisted Drafts' },
+  // People search for this tool by name ("quill humanizer", "natural quill ai humanizer"), and the
+  // site root now belongs to Writing Studio, so the name has to be in this title.
+  title: { absolute: 'Natural Quill AI Humanizer: Revise AI Drafts Into Natural Writing' },
   description:
-    'Compare alternative wording for essays, reports, and articles. Natural Quill checks some details but asks you to review meaning and sources. Try 400 words free.',
+    'Paste an AI-assisted essay, report, or article and compare a more natural rewrite in the tone you choose. Natural Quill checks citations and numbers and asks you to review the meaning. Try 400 words free.',
   alternates: { canonical: CONVERTER_URL },
+  openGraph: {
+    type: 'website',
+    url: CONVERTER_URL,
+    siteName: 'Natural Quill',
+    title: 'Natural Quill AI Humanizer: Revise AI Drafts Into Natural Writing',
+    description: 'Compare a more natural rewrite of an AI-assisted draft, see the writing skill behind each change, and check citations and numbers. 400 words free.',
+  },
 };
 
 const jsonLd = [
   {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: 'Natural Quill',
+    name: 'Natural Quill AI Humanizer',
+    alternateName: 'Natural Quill',
     url: CONVERTER_URL,
     operatingSystem: 'Web Browser',
     applicationCategory: 'WritingApp',
     inLanguage: 'en',
     description:
-      'Natural Quill suggests alternative wording for drafts in academic, formal, and casual tones. Users should verify citations, numbers, and meaning.',
+      'The Natural Quill AI Humanizer suggests more natural wording for AI-assisted drafts in academic, formal, and casual tones, and names the writing skill behind each change. Users should verify citations, numbers, and meaning.',
     featureList: [
       'Paragraph-by-paragraph AI text rewriting',
       'Academic, formal, natural, conversational, and blog tones',
@@ -32,6 +42,7 @@ const jsonLd = [
       'Automated checks for common citation and number patterns',
       'PDF and DOCX upload',
       'Descriptive writing diagnostics',
+      'Links from each change to a free lesson on the skill behind it',
     ],
     screenshot: `${SITE_URL}/social/converter-card`,
     dateModified: LAST_UPDATED,

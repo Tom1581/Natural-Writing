@@ -3,6 +3,7 @@ import Link from 'next/link';
 import AdSenseAd from '@/components/AdSenseAd';
 import PostMeta from '@/components/PostMeta';
 import SiteNav from '@/components/SiteNav';
+import SkillBridge from '@/components/SkillBridge';
 import { OG_IMAGE, SITE_URL } from '@/lib/posts';
 
 const SLUG = 'revise-ai-assisted-essay';
@@ -53,7 +54,14 @@ export default function Post() {
           <h2>5. Keep a record of the process</h2>
           <p>Save your outline, notes, sources, and draft history according to your course rules. If a teacher asks how you developed the work, you can explain your reasoning and revisions. A detector score is not a substitute for that process; see our <Link href="/blog/understanding-ai-writing-detectors">guide to interpreting AI-writing reports</Link>.</p>
           <p>Natural Quill can suggest a clearer version of a paragraph, but it cannot verify a citation, decide whether the argument is yours, or grant permission to use AI in a course. If you try it, submit only text you are comfortable sending to an AI service and review each suggestion yourself. See the <Link href="/privacy">privacy policy</Link> before pasting sensitive material.</p>
-          <Link href="/converter" className="page-cta">Try the writing editor</Link>
+
+          <h2>Practice the skills in this guide</h2>
+          <p>
+            Steps 3 and 4 depend on skills that improve with practice: matching a claim to its evidence, citing consistently, and choosing the exact
+            word. These free lessons from <Link href="/">Natural Quill Writing Studio</Link> teach each one with a model, a non-example and a short task.
+          </p>
+          <SkillBridge only={['certainty', 'sources', 'word-choice']} showEdit={false} />
+          <Link href="/converter" className="page-cta">Try the AI Humanizer</Link>
         </article>
       </main>
     </div>

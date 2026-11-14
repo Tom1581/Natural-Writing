@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import ConverterCallout from '@/components/learning/ConverterCallout';
+import ProductDoors from '@/components/learning/ProductDoors';
 import HeroIllustration from '@/components/learning/HeroIllustration';
 import { getCatalog, gradeSlug, SITE_URL, usGradeName } from '@/lib/learning/public';
 import { BAND_LABELS, BAND_ORDER } from '@/lib/learning/levels';
@@ -122,7 +122,7 @@ export default async function StudioHome() {
         </div>
         <HeroIllustration />
       </section>
-      <ConverterCallout />
+      <ProductDoors />
 
       <section className="lw-section">
         <h2>How it works</h2>

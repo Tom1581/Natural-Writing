@@ -1,3 +1,4 @@
+import AdultOnly from '@/components/learning/AdultOnly';
 import type { Metadata } from 'next';
 import Breadcrumbs from '@/components/learning/Breadcrumbs';
 import Link from 'next/link';
@@ -49,6 +50,20 @@ export default function ForTeachers() {
           Check your school or district’s policies on student data before using any online service; this is an early version.
         </p>
       </section>
+      <AdultOnly>
+        <section className="lw-card">
+          <h2 style={{ fontSize: '1.2rem' }}>AI and student writing</h2>
+          <p>
+            Writing Studio never writes for a student. If you are also dealing with AI-written work, these Natural Quill articles for adults may
+            help: <a href="/blog/understanding-ai-writing-detectors">what AI writing detector reports can and cannot tell you</a>, and{' '}
+            <a href="/blog/ai-words-to-avoid">the stock phrases chatbots overuse</a>, which make a useful word-choice lesson. Our guide to{' '}
+            <Link href="/learn/guides/ai-writing-feedback-in-the-classroom">AI writing feedback in the classroom</Link> covers the safeguards we use.
+          </p>
+          <p className="lw-small lw-muted" style={{ margin: 0 }}>
+            The two articles are on the AI Humanizer side of Natural Quill, which is written for adults and shows ads.
+          </p>
+        </section>
+      </AdultOnly>
       <Link className="lw-btn lw-btn-primary" href="/learn/school">
         Set up a school
       </Link>

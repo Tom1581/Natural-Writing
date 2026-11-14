@@ -5,6 +5,7 @@ import ProductSwitcher from '@/components/ProductSwitcher';
 import { Suspense } from 'react';
 import GoogleTagEvents from '@/components/GoogleTagEvents';
 import SiteFooter from '@/components/SiteFooter';
+import VisitCounter from '@/components/VisitCounter';
 import '../globals.css';
 
 // Bundled font files keep production builds independent of Google Fonts availability.
@@ -82,7 +83,7 @@ const jsonLd = [
     alternateName: ['NaturalQuill', 'Natural Writing'],
     url: SITE_URL,
     inLanguage: 'en',
-    description: 'Natural Quill makes Writing Studio, K–12 writing practice with specific feedback, and the Writing Converter, an optional tool for adults revising AI-assisted drafts into natural writing.',
+    description: 'Natural Quill makes Writing Studio, K–12 writing practice with specific feedback, and the AI Humanizer, a tool for adults revising AI-assisted drafts into natural writing.',
     publisher: { '@type': 'Organization', name: 'Natural Quill', url: SITE_URL },
   },
   {
@@ -91,7 +92,7 @@ const jsonLd = [
     name: 'Natural Quill',
     url: SITE_URL,
     logo: `${SITE_URL}/apple-icon`,
-    description: 'Natural Quill makes Writing Studio, K–12 writing practice with specific feedback, and the Writing Converter, an optional tool for adults revising AI-assisted drafts into natural writing.',
+    description: 'Natural Quill makes Writing Studio, K–12 writing practice with specific feedback, and the AI Humanizer, a tool for adults revising AI-assisted drafts into natural writing.',
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'stockitupcs@gmail.com',
@@ -171,6 +172,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ProductSwitcher current="converter" variant="dark" />
         {children}
         <SiteFooter />
+        {/* The same cookie-free visit count runs on Writing Studio, so one report covers the whole site. */}
+        <VisitCounter scope="site" />
       </body>
     </html>
   );

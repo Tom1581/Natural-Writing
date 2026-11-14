@@ -1,3 +1,4 @@
+import AdultOnly from '@/components/learning/AdultOnly';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -19,12 +20,14 @@ const anchor = (heading: string) => heading.toLowerCase().replace(/[^a-z0-9]+/g,
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const guide = getGuide((await params).slug);
   if (!guide) return { title: 'Guide not found' };
+  // Guides carry their own search title (60 characters or fewer), so the brand suffix is left off.
+  const title = guide.seoTitle ?? guide.title;
   return {
-    title: guide.title,
+    title: { absolute: title },
     description: guide.description,
     alternates: { canonical: `/learn/guides/${guide.slug}` },
     openGraph: {
-      title: guide.title,
+      title,
       description: guide.description,
       url: `${SITE_URL}/learn/guides/${guide.slug}`,
       type: 'article',
@@ -76,6 +79,37 @@ export default async function GuidePage({ params }: Props) {
           {s.paragraphs.filter(Boolean).map((p) => (
             <p key={p.slice(0, 40)}>{p}</p>
           ))}
+          {s.table && (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="lw-table lw-guide-table">
+                <caption>{s.table.caption}</caption>
+                <thead>
+                  <tr>
+                    {s.table.head.map((h) => (
+                      <th key={h} scope="col">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {s.table.rows.map((row) => (
+                    <tr key={row[0]}>
+                      {row.map((cell, i) =>
+                        i === 0 ? (
+                          <th key={cell} scope="row">
+                            {cell}
+                          </th>
+                        ) : (
+                          <td key={`${i}-${cell.slice(0, 24)}`}>{cell}</td>
+                        ),
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
           {s.list && (
             <ul className="lw-list">
               {s.list.map((li) => (
@@ -95,6 +129,23 @@ export default async function GuidePage({ params }: Props) {
           ))}
         </ul>
       </section>
+      {guide.fromBlog && (
+        <AdultOnly>
+          <section className="lw-section lw-card">
+            <h2 style={{ fontSize: '1.15rem', marginTop: 0 }}>For adults: more from Natural Quill on AI and writing</h2>
+            <ul className="lw-list">
+              {guide.fromBlog.map((r) => (
+                <li key={r.href}>
+                  <a href={r.href}>{r.label}</a>
+                </li>
+              ))}
+            </ul>
+            <p className="lw-small lw-muted" style={{ margin: 0 }}>
+              These articles are on the AI Humanizer side of Natural Quill, which is written for adults and shows ads.
+            </p>
+          </section>
+        </AdultOnly>
+      )}
     </article>
   );
 }
